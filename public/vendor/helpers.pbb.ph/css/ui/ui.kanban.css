@@ -1,0 +1,119 @@
+.ui-kanban {
+  display: inline-flex;
+  gap: 12px;
+  width: max-content;
+  min-width: 100%;
+  box-sizing: border-box;
+  max-width: none;
+  overflow: visible;
+  padding: 2px;
+}
+
+.ui-kanban-lane {
+  width: min(320px, 88vw);
+  flex: 0 0 min(320px, 88vw);
+  border: 1px solid var(--ui-border, #2b3750);
+  border-radius: 10px;
+  background: var(--ui-bg-soft, #101c31);
+  padding: 10px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 10px;
+  min-height: 0;
+}
+
+.ui-kanban-lane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ui-kanban-count {
+  border: 1px solid var(--ui-border, #2b3750);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: var(--ui-muted, #9fb2d8);
+}
+
+.ui-kanban-cards {
+  display: grid;
+  gap: 8px;
+  min-height: 120px;
+  overflow-y: auto;
+  align-content: start;
+  align-items: start;
+}
+
+.ui-kanban-cards.is-drop-target {
+  border: 1px dashed #6ea6ff;
+  border-radius: 8px;
+  padding: 6px;
+  background: rgba(57, 102, 176, 0.12);
+}
+
+.ui-kanban-cards.is-drop-target .ui-kanban-card {
+  position: relative;
+}
+
+.ui-kanban-card.is-drop-before::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: -7px;
+  height: 3px;
+  border-radius: 999px;
+  background: #6ea6ff;
+  box-shadow: 0 0 0 1px rgba(110, 166, 255, 0.18);
+}
+
+.ui-kanban-cards.is-drop-at-end::after {
+  content: "";
+  display: block;
+  height: 3px;
+  border-radius: 999px;
+  background: #6ea6ff;
+  box-shadow: 0 0 0 1px rgba(110, 166, 255, 0.18);
+  margin-top: 4px;
+}
+
+.ui-kanban-card {
+  border: 1px solid var(--ui-border, #2b3750);
+  border-radius: 8px;
+  background: rgba(7, 17, 34, 0.55);
+  padding: 8px;
+  display: grid;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.ui-kanban-card:hover {
+  border-color: #446598;
+}
+
+.ui-kanban-card.is-dragging {
+  opacity: 0.55;
+}
+
+.ui-kanban-card-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ui-kanban-card-meta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ui-muted, #9fb2d8);
+}
+
+.ui-kanban-empty {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ui-muted, #9fb2d8);
+  border: 1px dashed var(--ui-border, #2b3750);
+  border-radius: 8px;
+  padding: 8px;
+}

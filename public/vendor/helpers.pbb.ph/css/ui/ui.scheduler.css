@@ -1,0 +1,145 @@
+.ui-scheduler {
+  border: 1px solid var(--ui-border, #2b3750);
+  border-radius: 10px;
+  background: rgba(11, 18, 32, 0.72);
+  padding: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.ui-scheduler.is-chrome-less {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.ui-scheduler-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.ui-scheduler-header-left,
+.ui-scheduler-header-right {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ui-scheduler-title {
+  text-align: center;
+  font-size: 16px;
+}
+
+.ui-scheduler-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.ui-scheduler-weekday {
+  font-size: 11px;
+  color: var(--ui-muted, #9fb2d8);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+
+.ui-scheduler-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.ui-scheduler-day {
+  min-height: 92px;
+  border: 1px solid rgba(43, 55, 80, 0.75);
+  border-radius: 8px;
+  background: rgba(10, 18, 32, 0.68);
+  color: var(--ui-text, #d7e0f4);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 6px;
+  padding: 6px;
+  text-align: left;
+}
+
+.ui-scheduler-day.is-muted {
+  opacity: 0.6;
+}
+
+.ui-scheduler-day.is-today {
+  border-color: #62a3ff;
+}
+
+.ui-scheduler-day-label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ui-scheduler-day-events {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+
+.ui-scheduler-event {
+  border: 1px solid rgba(74, 133, 255, 0.65);
+  border-radius: 6px;
+  background: rgba(37, 77, 150, 0.25);
+  color: var(--ui-text, #d7e0f4);
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: left;
+  padding: 3px 6px;
+}
+
+.ui-scheduler-more {
+  font-size: 11px;
+  color: var(--ui-muted, #9fb2d8);
+}
+
+.ui-scheduler-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.ui-scheduler-week-col {
+  border: 1px solid rgba(43, 55, 80, 0.75);
+  border-radius: 8px;
+  background: rgba(10, 18, 32, 0.68);
+  min-height: 180px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 8px;
+  padding: 8px;
+}
+
+.ui-scheduler-week-col.is-today {
+  border-color: #62a3ff;
+}
+
+.ui-scheduler-week-col-head {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ui-scheduler-week-events {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+
+.ui-scheduler-event.is-week {
+  font-size: 12px;
+  padding: 5px 7px;
+}
+
+.ui-scheduler-empty {
+  margin: 0;
+  font-size: 11px;
+  color: var(--ui-muted, #9fb2d8);
+}

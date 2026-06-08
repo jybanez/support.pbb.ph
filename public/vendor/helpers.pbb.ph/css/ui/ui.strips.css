@@ -1,0 +1,28 @@
+.ui-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+}
+
+.ui-strip-item {
+  border: 1px solid var(--ui-border-strong);
+  background: var(--ui-bg-soft);
+  color: var(--ui-text);
+  border-radius: var(--ui-radius-pill);
+  padding: 5px 11px;
+  font-family: var(--ui-font);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.ui-strip-item.is-active {
+  border-color: #4ad177;
+  background: #133125;
+  color: #dbffe9;
+}
+
+[data-theme="light"] .ui-strip-item.is-active {
+  border-color: #2ea95d;
+  background: #d8f3e4;
+  color: #123623;
+}

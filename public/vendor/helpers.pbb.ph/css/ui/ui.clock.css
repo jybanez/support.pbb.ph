@@ -1,0 +1,104 @@
+.ui-clock {
+  --ui-clock-bg: rgba(13, 21, 35, 0.9);
+  --ui-clock-border: var(--ui-border, #2b3750);
+  --ui-clock-accent: #8aa2c8;
+  --ui-clock-text: var(--ui-text, #d7e0f4);
+  --ui-clock-muted: var(--ui-muted, #9fb2d8);
+  display: inline-grid;
+  gap: 2px;
+  width: max-content;
+  max-width: 100%;
+  min-width: 118px;
+  border: 1px solid var(--ui-clock-border);
+  border-left: 3px solid var(--ui-clock-accent);
+  border-right: 3px solid var(--ui-clock-accent);
+  border-radius: 0;
+  background: var(--ui-clock-bg);
+  color: var(--ui-clock-text);
+  box-sizing: border-box;
+  padding: 7px 12px 6px;
+  line-height: 1;
+  text-align: center;
+}
+
+.ui-clock--sm {
+  min-width: 112px;
+  padding: 6px 10px 5px;
+}
+
+.ui-clock--lg {
+  min-width: 152px;
+  padding: 10px 14px 9px;
+}
+
+.ui-clock.is-chrome-less {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.ui-clock-label {
+  color: var(--ui-clock-muted);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ui-clock-time {
+  color: var(--ui-clock-text);
+  font-size: 15px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.ui-clock-date {
+  color: var(--ui-clock-muted);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ui-clock--sm .ui-clock-time {
+  font-size: 14px;
+}
+
+.ui-clock--lg .ui-clock-label,
+.ui-clock--lg .ui-clock-date {
+  font-size: 10px;
+}
+
+.ui-clock--lg .ui-clock-time {
+  font-size: 20px;
+}
+
+.ui-clock--info {
+  --ui-clock-accent: #64b5f6;
+  --ui-clock-bg: rgba(57, 102, 176, 0.2);
+}
+
+.ui-clock--success {
+  --ui-clock-accent: #49c27f;
+  --ui-clock-bg: rgba(73, 194, 127, 0.16);
+}
+
+.ui-clock--warn {
+  --ui-clock-accent: #f4b350;
+  --ui-clock-bg: rgba(128, 82, 12, 0.72);
+}
+
+.ui-clock--danger,
+.ui-clock--critical {
+  --ui-clock-accent: #ff6b6b;
+  --ui-clock-bg: rgba(111, 25, 35, 0.66);
+}
+
+.ui-clock.is-stopped {
+  opacity: 0.82;
+}

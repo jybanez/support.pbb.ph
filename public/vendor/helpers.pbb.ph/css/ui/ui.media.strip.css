@@ -1,0 +1,121 @@
+.ui-media-strip {
+  display: flex;
+  gap: 8px;
+}
+
+.ui-media-strip.is-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+  padding-bottom: 2px;
+}
+
+.ui-media-strip.is-wrap {
+  flex-wrap: wrap;
+}
+
+.ui-media-thumb {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--ui-border, #29406d);
+  border-radius: 8px;
+  background: #0c1017;
+  padding: 0;
+  cursor: pointer;
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.ui-media-thumb:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.ui-media-thumb:hover {
+  border-color: var(--ui-accent, #4f8cff);
+}
+
+.ui-media-thumb.is-processing:hover {
+  border-color: var(--ui-border, #29406d);
+}
+
+.ui-media-thumb-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ui-media-thumb-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.ui-media-thumb-play {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 12, 20, 0.3);
+}
+
+.ui-media-thumb-play svg {
+  width: 24px;
+  height: 24px;
+  fill: rgba(240, 246, 255, 0.95);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
+}
+
+.ui-media-thumb-processing {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  padding: 6px;
+  background:
+    radial-gradient(circle at center, rgba(76, 97, 132, 0.26), rgba(12, 16, 23, 0.94)),
+    linear-gradient(180deg, rgba(22, 31, 48, 0.92), rgba(11, 18, 32, 0.98));
+  text-align: center;
+}
+
+.ui-media-thumb-processing-spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid rgba(150, 185, 255, 0.28);
+  border-top-color: rgba(228, 244, 255, 0.96);
+  animation: ui-media-strip-processing-spin 0.85s linear infinite;
+}
+
+.ui-media-thumb-processing-label {
+  max-width: 100%;
+  font-size: 10px;
+  line-height: 1.15;
+  color: rgba(228, 244, 255, 0.94);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-media-thumb-processing-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes ui-media-strip-processing-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

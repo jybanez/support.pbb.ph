@@ -1,0 +1,223 @@
+.ui-dialog-body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--ui-space-2, 8px);
+}
+
+.ui-dialog-body--compact {
+  align-items: center;
+}
+
+.ui-dialog-text {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ui-dialog-body--compact .ui-dialog-text {
+  align-self: center;
+}
+
+.ui-dialog-message {
+  margin: 0;
+  color: var(--ui-text);
+}
+
+.ui-dialog-description {
+  margin: 0;
+  color: var(--ui-muted, #9fb2d8);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ui-dialog-error {
+  margin: 0;
+  color: #ff9aa6;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ui-dialog-variant-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  min-width: 72px;
+  border-radius: 999px;
+  color: var(--ui-dialog-accent, #9fb2d8);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ui-dialog-variant-icon svg {
+  width: 46px;
+  height: 46px;
+  fill: currentColor;
+}
+
+.ui-dialog .ui-modal {
+  overflow: hidden;
+  min-height: 280px;
+}
+
+.ui-dialog .ui-modal-header {
+  position: relative;
+}
+
+.ui-dialog .ui-modal-header::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--ui-dialog-accent, transparent);
+}
+
+.ui-dialog--success {
+  --ui-dialog-accent: #4fd29b;
+}
+
+.ui-dialog--info {
+  --ui-dialog-accent: #79a9ff;
+}
+
+.ui-dialog--warning {
+  --ui-dialog-accent: #f4c14f;
+}
+
+.ui-dialog--error {
+  --ui-dialog-accent: #ff7d7d;
+}
+
+.ui-dialog--success .ui-modal-header {
+  background: linear-gradient(180deg, rgba(26, 57, 46, 0.34), rgba(13, 21, 38, 0.86));
+}
+
+.ui-dialog--info .ui-modal-header {
+  background: linear-gradient(180deg, rgba(33, 60, 108, 0.34), rgba(13, 21, 38, 0.86));
+}
+
+.ui-dialog--warning .ui-modal-header {
+  background: linear-gradient(180deg, rgba(82, 56, 18, 0.34), rgba(13, 21, 38, 0.86));
+}
+
+.ui-dialog--error .ui-modal-header {
+  background: linear-gradient(180deg, rgba(92, 25, 33, 0.34), rgba(13, 21, 38, 0.86));
+}
+
+.ui-dialog--success .ui-dialog-message {
+  color: #dff8ec;
+}
+
+.ui-dialog--success .ui-dialog-description {
+  color: #bfe8d5;
+}
+
+.ui-dialog--success .ui-dialog-variant-icon {
+  background: rgba(79, 210, 155, 0.16);
+}
+
+.ui-dialog--info .ui-dialog-message {
+  color: #dbe9ff;
+}
+
+.ui-dialog--info .ui-dialog-description {
+  color: #bfd7ff;
+}
+
+.ui-dialog--info .ui-dialog-variant-icon {
+  background: rgba(121, 169, 255, 0.16);
+}
+
+.ui-dialog--warning .ui-dialog-message {
+  color: #fff0cc;
+}
+
+.ui-dialog--warning .ui-dialog-description {
+  color: #f6dca2;
+}
+
+.ui-dialog--warning .ui-dialog-variant-icon {
+  background: rgba(244, 193, 79, 0.16);
+}
+
+.ui-dialog--error .ui-dialog-message {
+  color: #ffdfe3;
+}
+
+.ui-dialog--error .ui-dialog-description {
+  color: #f4b8c0;
+}
+
+.ui-dialog--error .ui-dialog-error {
+  color: #ffb4be;
+}
+
+.ui-dialog--error .ui-dialog-variant-icon {
+  background: rgba(255, 125, 125, 0.16);
+}
+
+.ui-dialog-prompt-body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--ui-space-2, 8px);
+}
+
+.ui-dialog-prompt-body .ui-input,
+.ui-dialog-prompt-body textarea,
+.ui-dialog-prompt-body select {
+  grid-column: 1 / -1;
+}
+
+.ui-dialog-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ui-space-2, 8px);
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .ui-dialog-body,
+  .ui-dialog-prompt-body {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    align-content: start;
+    gap: var(--ui-space-3, 12px);
+    padding-block: var(--ui-space-2, 8px);
+  }
+
+  .ui-dialog-body--compact {
+    align-items: start;
+  }
+
+  .ui-dialog-variant-icon {
+    width: 112px;
+    height: 112px;
+    min-width: 112px;
+  }
+
+  .ui-dialog-variant-icon svg {
+    width: 68px;
+    height: 68px;
+  }
+
+  .ui-dialog-text {
+    width: 100%;
+    max-width: 28rem;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .ui-dialog-prompt-body .ui-dialog-text {
+    justify-items: stretch;
+    text-align: left;
+  }
+
+  .ui-dialog-prompt-body .ui-input,
+  .ui-dialog-prompt-body textarea,
+  .ui-dialog-prompt-body select {
+    width: 100%;
+    max-width: 28rem;
+    grid-column: auto;
+  }
+}

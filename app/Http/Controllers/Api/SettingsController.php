@@ -1,0 +1,55 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Support\Settings\SupportSettings;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+
+class SettingsController extends BaseApiController
+{
+    public function show(Request $request, SupportSettings $settings)
+    {
+        abort_unless($request->user()?->role === 'admin', 403);
+
+        return $this->ok([
+            'settings' => $settings->all(),
+        ]);
+    }
+
+    public function update(Request $request, SupportSettings $settings)
+    {
+        abort_unless($request->user()?->role === 'admin', 403);
+
+        $validated = $request->validate([
+            'alert_level' => ['required', 'string', Rule::in(['Normal', 'Elevated', 'Critical'])],
+            'sitrep_cadence' => ['required', 'integer', 'min:1', 'max:1440'],
+            'relay_url' => ['required', 'url', 'max:255'],
+            'relay_token' => ['nullable', 'string', 'max:4096'],
+            'relay_handler_token' => ['nullable', 'string', 'max:4096'],
+            'realtime_url' => ['required', 'url', 'max:255'],
+            'realtime_client_code' => ['nullable', 'string', 'max:4096'],
+            'server_project_code' => ['nullable', 'string', 'max:4096'],
+            'admin_project_code' => ['nullable', 'string', 'max:4096'],
+            'realtime_backend_ingress_secret' => ['nullable', 'string', 'max:4096'],
+        ]);
+
+        $next = $settings->update([
+            'alertLevel' => $validated['alert_level'],
+            'consolidationCadenceMinutes' => (int) $validated['sitrep_cadence'],
+            'relayUrl' => $validated['relay_url'],
+            'relayToken' => $validated['relay_token'] ?? '',
+            'relayHandlerToken' => $validated['relay_handler_token'] ?? '',
+            'realtimeUrl' => $validated['realtime_url'],
+            'realtimeClientCode' => $validated['realtime_client_code'] ?? '',
+            'serverProjectCode' => $validated['server_project_code'] ?? '',
+            'adminProjectCode' => $validated['admin_project_code'] ?? '',
+            'realtimeBackendIngressSecret' => $validated['realtime_backend_ingress_secret'] ?? '',
+        ]);
+
+        return $this->ok([
+            'settings' => $next,
+            'touched_at' => now()->toIso8601String(),
+        ]);
+    }
+}

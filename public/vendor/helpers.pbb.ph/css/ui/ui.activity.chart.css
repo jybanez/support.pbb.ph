@@ -1,0 +1,392 @@
+.ui-activity-chart {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--ui-text, #dce9ff);
+}
+
+.ui-activity-chart-empty {
+  margin: 0;
+  color: var(--ui-text-muted, #9fb1cf);
+  border: 1px dashed var(--ui-border, #2f4e85);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.ui-activity-chart-header {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ui-activity-chart-eyebrow {
+  color: var(--ui-text-muted, #9fb1cf);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.ui-activity-chart-title {
+  color: var(--ui-text, #dce9ff);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.ui-activity-chart-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ui-activity-chart-summary-main {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ui-activity-chart-summary-main strong {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.ui-activity-chart-summary-main span {
+  color: var(--ui-text-muted, #9fb1cf);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+.ui-activity-chart-stats,
+.ui-activity-chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ui-activity-chart-stat,
+.ui-activity-chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--ui-border-soft, #2a3d60);
+  border-radius: 999px;
+  background: var(--ui-surface, #0d172c);
+  color: var(--ui-text-muted, #9fb1cf);
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.ui-activity-chart-stat b {
+  color: var(--ui-text, #dce9ff);
+}
+
+.ui-activity-chart-scroll {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--ui-border-soft, #2a3d60);
+  border-radius: 8px;
+  background: var(--ui-surface, #0d172c);
+}
+
+.ui-activity-chart-matrix {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.ui-activity-chart-matrix th,
+.ui-activity-chart-matrix td {
+  border-bottom: 1px solid rgba(87, 116, 162, 0.22);
+  padding: 6px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.ui-activity-chart-matrix thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: var(--ui-surface-strong, #111b31);
+  color: var(--ui-text-muted, #9fb1cf);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ui-activity-chart-matrix thead th:first-child,
+.ui-activity-chart-project {
+  position: sticky;
+  left: 0;
+  width: 180px;
+  max-width: 180px;
+  text-align: left;
+  background: var(--ui-surface-strong, #111b31);
+}
+
+.ui-activity-chart-matrix thead th:first-child {
+  z-index: 5;
+}
+
+.ui-activity-chart-project {
+  z-index: 3;
+}
+
+.ui-activity-chart-project button,
+.ui-activity-chart-project-button {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ui-text, #dce9ff);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 6px 8px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.ui-activity-chart-project button:hover,
+.ui-activity-chart-project-button:hover,
+.ui-activity-chart-project button:focus-visible,
+.ui-activity-chart-project-button:focus-visible,
+.ui-activity-chart-project button.is-selected,
+.ui-activity-chart-project-button.is-selected {
+  outline: none;
+  background: rgba(123, 181, 255, 0.14);
+  color: #ffffff;
+}
+
+.ui-activity-chart-cell-wrap {
+  width: 52px;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.ui-activity-chart-cell,
+.ui-activity-chart-spark-bar {
+  border-radius: 6px;
+  cursor: pointer;
+  color: #e8f1ff;
+  font: inherit;
+  transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+
+.ui-activity-chart-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 32px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.ui-activity-chart-spark-bar {
+  border: 1px solid rgba(120, 153, 204, 0.22);
+}
+
+.ui-activity-chart-cell-value {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ui-activity-chart-cell-wrap--level-0 {
+  background: rgba(50, 67, 98, 0.46);
+}
+
+.ui-activity-chart-cell-wrap--level-1 {
+  background: rgba(57, 104, 161, 0.42);
+}
+
+.ui-activity-chart-cell-wrap--level-2 {
+  background: rgba(66, 133, 205, 0.52);
+}
+
+.ui-activity-chart-cell-wrap--level-3 {
+  background: rgba(79, 151, 231, 0.66);
+}
+
+.ui-activity-chart-cell-wrap--level-4 {
+  background: rgba(99, 178, 255, 0.82);
+}
+
+.ui-activity-chart-cell:hover,
+.ui-activity-chart-spark-bar:hover,
+.ui-activity-chart-cell:focus-visible,
+.ui-activity-chart-spark-bar:focus-visible,
+.ui-activity-chart-cell.is-selected,
+.ui-activity-chart-spark-bar.is-selected,
+.ui-activity-chart-bar.is-selected {
+  outline: none;
+  border-color: #8fc2ff;
+  box-shadow: 0 0 0 2px rgba(123, 181, 255, 0.24);
+}
+
+.ui-activity-chart-cell:hover,
+.ui-activity-chart-cell:focus-visible,
+.ui-activity-chart-cell.is-selected {
+  box-shadow: none;
+}
+
+.ui-activity-chart-cell:focus-visible {
+  outline: 2px solid rgba(232, 241, 255, 0.65);
+  outline-offset: 2px;
+}
+
+.ui-activity-chart-cell-wrap.is-selected {
+  box-shadow: inset 0 0 0 2px rgba(232, 241, 255, 0.5);
+}
+
+.ui-activity-chart-cell:hover,
+.ui-activity-chart-spark-bar:hover {
+  transform: translateY(-1px);
+}
+
+.ui-activity-chart-total,
+.ui-activity-chart-bar-total {
+  color: var(--ui-text-muted, #9fb1cf);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ui-activity-chart-bars,
+.ui-activity-chart-sparklines {
+  display: grid;
+  gap: 8px;
+}
+
+.ui-activity-chart-bar-row,
+.ui-activity-chart-spark-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) minmax(180px, 1fr) minmax(44px, auto);
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  border: 1px solid var(--ui-border-soft, #2a3d60);
+  border-radius: 8px;
+  background: var(--ui-surface, #0d172c);
+  padding: 8px;
+}
+
+.ui-activity-chart-bar {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: 24px;
+  border: 1px solid rgba(120, 153, 204, 0.22);
+  border-radius: 999px;
+  background: rgba(47, 62, 92, 0.42);
+  overflow: hidden;
+  padding: 0;
+  cursor: pointer;
+}
+
+.ui-activity-chart-bar-segment {
+  min-width: 4px;
+}
+
+.ui-activity-chart-bar-segment.is-broadcast,
+.ui-activity-chart-swatch.is-broadcast {
+  background: #4f8df7;
+}
+
+.ui-activity-chart-bar-segment.is-direct,
+.ui-activity-chart-swatch.is-direct {
+  background: #d29b34;
+}
+
+.ui-activity-chart-bar-segment.is-targeted,
+.ui-activity-chart-swatch.is-targeted {
+  background: #39b58f;
+}
+
+.ui-activity-chart-bar-segment.is-other,
+.ui-activity-chart-swatch.is-other {
+  background: #6e7f9d;
+}
+
+.ui-activity-chart-spark {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(10px, 1fr);
+  align-items: end;
+  gap: 4px;
+  min-height: 48px;
+  border: 1px solid rgba(87, 116, 162, 0.22);
+  border-radius: 8px;
+  background: rgba(8, 15, 28, 0.48);
+  padding: 6px;
+}
+
+.ui-activity-chart-spark-bar {
+  align-self: end;
+  width: 100%;
+  height: var(--ui-activity-height, 8%);
+  min-height: 6px;
+  background: #63b2ff;
+  padding: 0;
+}
+
+.ui-activity-chart-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.ui-activity-chart-swatch--level-0 {
+  background: rgba(50, 67, 98, 0.8);
+}
+
+.ui-activity-chart-swatch--level-1 {
+  background: rgba(57, 104, 161, 0.8);
+}
+
+.ui-activity-chart-swatch--level-2 {
+  background: rgba(66, 133, 205, 0.85);
+}
+
+.ui-activity-chart-swatch--level-3 {
+  background: rgba(79, 151, 231, 0.9);
+}
+
+.ui-activity-chart-swatch--level-4 {
+  background: rgba(99, 178, 255, 0.96);
+}
+
+.ui-activity-chart-legend-label {
+  color: var(--ui-text-muted, #9fb1cf);
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .ui-activity-chart-summary {
+    align-items: flex-start;
+  }
+
+  .ui-activity-chart-bar-row,
+  .ui-activity-chart-spark-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-activity-chart-bar-total {
+    justify-self: end;
+  }
+}

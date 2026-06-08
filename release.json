@@ -1,0 +1,47 @@
+{
+  "name": "PBB Support System",
+  "slug": "pbb-support",
+  "version": "0.1.0",
+  "build": {
+    "id": "pbb-support-0.1.0-foundation",
+    "git_commit": null,
+    "built_at": null
+  },
+  "runtime": {
+    "type": "laravel",
+    "php": "^8.2",
+    "node": ">=22"
+  },
+  "relay": {
+    "target_system": "sitrep.ingestor"
+  },
+  "policies": {
+    "consolidation_cadence_minutes": 15,
+    "latest_valid_sitrep_per_source_hub_wins": true,
+    "outbound_relay_latest_only": true
+  },
+  "repository": {
+    "type": "github",
+    "owner": null,
+    "repo": null,
+    "url": null
+  },
+  "updates": {
+    "source": "github-releases",
+    "channel": "testing"
+  },
+  "update": {
+    "compatibility": "initial-foundation",
+    "requires_database_migration": true,
+    "database_migration": {
+      "policy": "additive",
+      "destructive": false,
+      "drops_tables": false,
+      "drops_columns": false,
+      "overwrites_existing_data": false
+    },
+    "requires_data_prep_rerun": false,
+    "requires_service_restart": true,
+    "rollback_supported": false
+  }
+}

@@ -1,0 +1,101 @@
+.ui-path-picker {
+  --ui-path-picker-border: var(--ui-border, #2a3448);
+  --ui-path-picker-muted: var(--ui-text-muted, #9fb2d8);
+  --ui-path-picker-warning: var(--ui-warning, #f6b44b);
+  --ui-path-picker-error: var(--ui-danger, #ff5f67);
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ui-path-picker-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ui-path-picker-label {
+  font-weight: 600;
+}
+
+.ui-path-picker-required {
+  flex: 0 0 auto;
+  border: 1px solid var(--ui-path-picker-border);
+  border-radius: 999px;
+  padding: 2px 7px;
+  color: var(--ui-path-picker-muted);
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.ui-path-picker-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ui-path-picker-input {
+  min-width: 0;
+  font-family: Consolas, "Courier New", monospace;
+}
+
+.ui-path-picker-browse,
+.ui-path-picker-clear {
+  white-space: nowrap;
+}
+
+.ui-path-picker-status,
+.ui-path-picker-help {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.ui-path-picker-status {
+  color: var(--ui-path-picker-muted);
+}
+
+.ui-path-picker-status[data-tone="warning"] {
+  color: color-mix(in srgb, var(--ui-path-picker-warning) 78%, var(--ui-text, #edf2ff));
+}
+
+.ui-path-picker-status[data-tone="error"] {
+  color: color-mix(in srgb, var(--ui-path-picker-error) 78%, var(--ui-text, #edf2ff));
+}
+
+.ui-path-picker-status[data-tone="success"] {
+  color: var(--ui-success, #70d795);
+}
+
+.ui-path-picker-help {
+  color: var(--ui-path-picker-muted);
+}
+
+.ui-path-picker.is-warning .ui-path-picker-input,
+.ui-path-picker.is-error .ui-path-picker-input {
+  border-color: color-mix(in srgb, var(--ui-path-picker-warning) 54%, var(--ui-path-picker-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ui-path-picker-warning) 12%, transparent);
+}
+
+.ui-path-picker.is-error .ui-path-picker-input {
+  border-color: color-mix(in srgb, var(--ui-path-picker-error) 54%, var(--ui-path-picker-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ui-path-picker-error) 12%, transparent);
+}
+
+.ui-path-picker.is-browsing .ui-path-picker-browse {
+  cursor: wait;
+}
+
+@media (max-width: 640px) {
+  .ui-path-picker-control {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ui-path-picker-browse,
+  .ui-path-picker-clear {
+    width: 100%;
+  }
+}

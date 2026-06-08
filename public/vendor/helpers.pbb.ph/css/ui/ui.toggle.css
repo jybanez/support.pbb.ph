@@ -1,0 +1,207 @@
+.ui-toggle-button {
+  appearance: none;
+  border: 1px solid var(--ui-border-strong, #344769);
+  background: var(--ui-bg-soft, #101c31);
+  color: var(--ui-text, #d7e0f4);
+  border-radius: var(--ui-radius-pill, 999px);
+  min-height: 36px;
+  padding: 7px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  font: 600 13px/1.2 var(--ui-font, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif);
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease, opacity 140ms ease, transform 120ms ease;
+  user-select: none;
+  vertical-align: middle;
+  text-decoration: none;
+}
+
+.ui-toggle-button:hover:not(.is-disabled) {
+  border-color: #5876a8;
+  background: #142340;
+}
+
+.ui-toggle-button:focus-visible {
+  outline: none;
+  border-color: #69a4ff;
+  box-shadow: 0 0 0 2px rgba(92, 147, 230, 0.22);
+}
+
+.ui-toggle-button:active:not(.is-disabled) {
+  transform: translateY(1px);
+}
+
+.ui-toggle-button.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+  transform: none;
+}
+
+.ui-toggle-button.is-quiet:not(.is-pressed) {
+  background: transparent;
+}
+
+.ui-toggle-button.is-icon-only {
+  min-width: 36px;
+  padding-inline: 9px;
+}
+
+.ui-toggle-button__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.75;
+  flex: 0 0 auto;
+}
+
+.ui-toggle-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.ui-toggle-button__icon svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ui-toggle-button__label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ui-toggle-button__badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ui-toggle-button__spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-top-color: currentColor;
+  animation: ui-toggle-spin 0.8s linear infinite;
+}
+
+.ui-toggle-button--sm {
+  min-height: 30px;
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+.ui-toggle-button--lg {
+  min-height: 42px;
+  padding: 9px 14px;
+  font-size: 14px;
+}
+
+.ui-toggle-button--chip {
+  min-height: 30px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.ui-toggle-button--ghost {
+  background: transparent;
+}
+
+.ui-toggle-button--icon {
+  min-width: 36px;
+  width: 36px;
+  padding-inline: 0;
+}
+
+.ui-toggle-button--segmented {
+  border-radius: 10px;
+}
+
+.ui-toggle-button--neutral.is-pressed {
+  background: #1b2d4e;
+  border-color: #5a7fbe;
+  color: #eff5ff;
+}
+
+.ui-toggle-button--success.is-pressed {
+  background: rgba(33, 126, 95, 0.28);
+  border-color: #42d7a0;
+  color: #dffef3;
+}
+
+.ui-toggle-button--info.is-pressed {
+  background: rgba(38, 103, 196, 0.28);
+  border-color: #6ab4ff;
+  color: #ebf7ff;
+}
+
+.ui-toggle-button--warning.is-pressed {
+  background: rgba(170, 119, 18, 0.28);
+  border-color: #f1c454;
+  color: #fff7de;
+}
+
+.ui-toggle-button--danger.is-pressed {
+  background: rgba(151, 38, 65, 0.28);
+  border-color: #ff7194;
+  color: #ffe9ef;
+}
+
+.ui-toggle-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.ui-toggle-group__item {
+  min-width: 0;
+}
+
+.ui-toggle-group--segmented {
+  gap: 0;
+  border: 1px solid var(--ui-border-strong, #344769);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--ui-bg-soft, #101c31);
+}
+
+.ui-toggle-group--segmented .ui-toggle-group__item + .ui-toggle-group__item {
+  border-left: 1px solid var(--ui-border-soft, #2a3d60);
+}
+
+.ui-toggle-group--segmented .ui-toggle-button {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  min-height: 36px;
+}
+
+.ui-toggle-group--segmented .ui-toggle-button:hover:not(.is-disabled) {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+@keyframes ui-toggle-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

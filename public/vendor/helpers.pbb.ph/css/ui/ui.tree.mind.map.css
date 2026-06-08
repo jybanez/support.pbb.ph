@@ -1,0 +1,77 @@
+.ui-tree-mind-map {
+  display: grid;
+  min-width: 0;
+  border: 1px solid #263146;
+  border-radius: 8px;
+  background: #0b1220;
+  overflow: hidden;
+}
+
+.ui-tree-mind-map.is-chrome-less {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.ui-tree-mind-map__viewport {
+  position: relative;
+  min-height: 240px;
+  overflow: hidden;
+  background: #07111f;
+}
+
+.ui-tree-mind-map__canvas {
+  display: block;
+  width: 100%;
+  min-height: 240px;
+  touch-action: none;
+  cursor: grab;
+}
+
+.ui-tree-mind-map__canvas:active {
+  cursor: grabbing;
+}
+
+.ui-tree-mind-map__canvas:focus-visible {
+  outline: 2px solid #7fb2ff;
+  outline-offset: -2px;
+}
+
+.ui-tree-mind-map__mirror {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.ui-tree-mind-map__mirror-node {
+  display: block;
+}
+
+.ui-tree-mind-map__empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: #9fb2d8;
+  font-size: 14px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.ui-tree-mind-map__empty[hidden] {
+  display: none;
+}
+
+[data-theme="light"] .ui-tree-mind-map {
+  border-color: #cad4e7;
+  background: #f7faff;
+}
+
+[data-theme="light"] .ui-tree-mind-map__viewport {
+  background: #f7faff;
+}

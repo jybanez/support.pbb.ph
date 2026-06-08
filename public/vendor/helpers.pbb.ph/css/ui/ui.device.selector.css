@@ -1,0 +1,298 @@
+.ui-device-selector {
+  --ui-device-selector-bg: rgba(13, 21, 35, 0.72);
+  --ui-device-selector-border: var(--ui-border, #2b3750);
+  --ui-device-selector-text: var(--ui-text, #d7e0f4);
+  --ui-device-selector-muted: var(--ui-muted, #9fb2d8);
+  --ui-device-selector-accent: #7db7ff;
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--ui-device-selector-border);
+  border-radius: 8px;
+  background: var(--ui-device-selector-bg);
+  color: var(--ui-device-selector-text);
+  padding: 12px;
+}
+
+.ui-device-selector--compact {
+  display: inline-grid;
+  grid-template-columns: minmax(96px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: min(100%, 420px);
+  min-height: 34px;
+  padding: 6px 8px;
+}
+
+.ui-device-selector-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ui-device-selector--compact .ui-device-selector-header {
+  align-items: center;
+}
+
+.ui-device-selector-title-wrap {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ui-device-selector-title {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-device-selector-description,
+.ui-device-selector-detail {
+  color: var(--ui-device-selector-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.ui-device-selector-detail {
+  min-height: 16px;
+}
+
+.ui-device-selector--compact .ui-device-selector-detail {
+  display: none;
+}
+
+.ui-device-selector-status {
+  flex: 0 0 auto;
+  min-width: 9ch;
+  border: 1px solid var(--ui-device-selector-border);
+  border-radius: 999px;
+  color: var(--ui-device-selector-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+  padding: 5px 8px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ui-device-selector-status.is-ready {
+  border-color: color-mix(in oklab, #49c27f 58%, var(--ui-device-selector-border));
+  color: #7edfa6;
+}
+
+.ui-device-selector-status.is-loading,
+.ui-device-selector-status.is-testing,
+.ui-device-selector-status.is-needs-user-action {
+  border-color: color-mix(in oklab, #f4b350 60%, var(--ui-device-selector-border));
+  color: #f4c97d;
+}
+
+.ui-device-selector-status.is-error,
+.ui-device-selector-status.is-test-failed,
+.ui-device-selector-status.is-permission-denied {
+  border-color: color-mix(in oklab, #ff6b6b 60%, var(--ui-device-selector-border));
+  color: #ff9999;
+}
+
+.ui-device-selector-controls {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ui-device-selector--compact .ui-device-selector-controls {
+  grid-template-columns: minmax(120px, 1fr) auto;
+}
+
+.ui-device-selector-select {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  box-sizing: border-box;
+  border: 1px solid var(--ui-device-selector-border);
+  border-radius: 7px;
+  background: rgba(5, 10, 20, 0.58);
+  color: var(--ui-device-selector-text);
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0;
+  padding: 0 9px;
+}
+
+.ui-device-selector-select-host {
+  min-width: 0;
+}
+
+.ui-device-selector-select-host .ui-select-trigger {
+  min-height: 34px;
+  border-radius: 7px;
+  background: rgba(5, 10, 20, 0.58);
+}
+
+.ui-device-selector-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.66;
+}
+
+.ui-device-selector-menu {
+  position: relative;
+  min-width: 0;
+}
+
+.ui-device-selector-menu-trigger {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  box-sizing: border-box;
+  border: 1px solid var(--ui-device-selector-border);
+  border-radius: 7px;
+  background: rgba(5, 10, 20, 0.58);
+  color: var(--ui-device-selector-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0;
+  padding: 0 9px;
+  text-align: left;
+}
+
+.ui-device-selector-menu-trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.66;
+}
+
+.ui-device-selector-menu-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-device-selector-menu-caret {
+  color: var(--ui-device-selector-muted);
+  font-size: 13px;
+}
+
+.ui-device-selector-menu-list {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  max-height: 220px;
+  box-sizing: border-box;
+  overflow: auto;
+  border: 1px solid var(--ui-device-selector-border);
+  border-radius: 8px;
+  background: #0d1523;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+  padding: 6px;
+}
+
+.ui-device-selector-list {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ui-device-selector-menu-item,
+.ui-device-selector-list-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--ui-device-selector-border);
+  border-radius: 8px;
+  background: rgba(5, 10, 20, 0.38);
+  color: var(--ui-device-selector-text);
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: 0;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.ui-device-selector-menu-item {
+  border-color: transparent;
+  background: transparent;
+}
+
+.ui-device-selector-menu-item:hover,
+.ui-device-selector-list-item:hover,
+.ui-device-selector-menu-item.is-selected,
+.ui-device-selector-list-item.is-selected {
+  border-color: #4f89ff;
+  background: rgba(79, 137, 255, 0.14);
+}
+
+.ui-device-selector-option-label {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-device-selector-option-meta {
+  color: var(--ui-device-selector-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.ui-device-selector-menu-empty,
+.ui-device-selector-list-empty {
+  color: var(--ui-device-selector-muted);
+  font-size: 12px;
+  padding: 8px;
+}
+
+.ui-device-selector-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ui-device-selector--compact .ui-device-selector-action {
+  min-height: 30px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .ui-device-selector,
+  .ui-device-selector--compact {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .ui-device-selector-controls,
+  .ui-device-selector--compact .ui-device-selector-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-device-selector-actions {
+    justify-content: flex-start;
+  }
+}

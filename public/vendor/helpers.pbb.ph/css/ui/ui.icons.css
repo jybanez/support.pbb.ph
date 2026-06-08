@@ -1,0 +1,10 @@
+.ui-icon {
+  display: inline-block;
+  vertical-align: middle;
+  flex: 0 0 auto;
+  color: currentColor;
+}
+
+.ui-icon.is-status {
+  stroke-width: 2;
+}

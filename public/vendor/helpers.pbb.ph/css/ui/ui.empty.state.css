@@ -1,0 +1,49 @@
+.ui-empty-state {
+  border: 1px dashed var(--ui-border, #2b3750);
+  border-radius: 10px;
+  background: rgba(11, 18, 32, 0.7);
+  padding: 14px;
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.ui-empty-state.is-chrome-less {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.ui-empty-state-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  color: #9dc4ff;
+}
+
+.ui-empty-state-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+}
+
+.ui-empty-state-title {
+  margin: 0;
+  font-size: 16px;
+}
+
+.ui-empty-state-description {
+  margin: 0;
+  color: var(--ui-muted, #9fb2d8);
+  font-size: 13px;
+}
+
+.ui-empty-state-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

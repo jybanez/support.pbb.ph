@@ -1,0 +1,109 @@
+.ui-tree {
+  border: 1px solid var(--ui-border, #2b3750);
+  border-radius: 10px;
+  background: var(--ui-bg-soft, #101c31);
+  padding: 8px;
+}
+
+.ui-tree.is-chrome-less {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.ui-tree-list {
+  display: grid;
+  gap: 2px;
+}
+
+.ui-tree-viewport {
+  position: relative;
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid rgba(43, 55, 80, 0.55);
+  background: rgba(8, 16, 28, 0.6);
+}
+
+.ui-tree-rows-layer {
+  position: relative;
+  min-height: 100%;
+}
+
+.ui-tree-item {
+  display: grid;
+  gap: 4px;
+}
+
+.ui-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 2px 4px;
+  border-radius: 8px;
+}
+
+.ui-tree-row.is-selected {
+  background: rgba(70, 117, 186, 0.2);
+}
+
+.ui-tree-toggle,
+.ui-tree-label {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ui-text, #d7e0f4);
+}
+
+.ui-tree-toggle {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-tree-toggle svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  transition: transform 160ms ease;
+}
+
+.ui-tree-toggle.is-open svg {
+  transform: rotate(180deg);
+}
+
+.ui-tree-toggle.is-empty {
+  opacity: 0.45;
+}
+
+.ui-tree-toggle.is-loading {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.ui-tree-label {
+  font-size: 13px;
+  text-align: left;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.ui-tree-label:hover {
+  border-color: var(--ui-border, #2b3750);
+  background: rgba(61, 93, 145, 0.15);
+}
+
+.ui-tree-check {
+  accent-color: #4f95ff;
+}
+
+.ui-tree-empty {
+  margin: 0;
+  color: var(--ui-muted, #9fb2d8);
+  padding: 8px;
+}

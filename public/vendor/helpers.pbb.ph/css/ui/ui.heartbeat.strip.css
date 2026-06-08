@@ -1,0 +1,179 @@
+.ui-heartbeat-strip {
+  --ui-heartbeat-bg: rgba(13, 21, 35, 0.72);
+  --ui-heartbeat-border: var(--ui-border, #2b3750);
+  --ui-heartbeat-text: var(--ui-text, #d7e0f4);
+  --ui-heartbeat-muted: var(--ui-muted, #9fb2d8);
+  --ui-heartbeat-online: #49c27f;
+  --ui-heartbeat-stale: #f4b350;
+  --ui-heartbeat-offline: #ff6b6b;
+  --ui-heartbeat-unknown: #6f7f9d;
+  --ui-heartbeat-ok: #49c27f;
+  --ui-heartbeat-partial: #f4b350;
+  --ui-heartbeat-missed: #ff6b6b;
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--ui-heartbeat-border);
+  border-radius: 8px;
+  background: var(--ui-heartbeat-bg);
+  color: var(--ui-heartbeat-text);
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 7px 8px;
+}
+
+.ui-heartbeat-strip--compact {
+  max-width: 100%;
+}
+
+.ui-heartbeat-strip--regular {
+  gap: 7px;
+  padding: 9px 10px;
+  font-size: 13px;
+}
+
+.ui-heartbeat-strip--chromeless {
+  border-color: transparent;
+  background: transparent;
+  padding: 0;
+}
+
+.ui-heartbeat-strip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 8px;
+}
+
+.ui-heartbeat-strip-status {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 6px;
+  color: var(--ui-heartbeat-text);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ui-heartbeat-strip-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--ui-heartbeat-unknown);
+  box-shadow: 0 0 0 2px rgba(111, 127, 157, 0.18);
+}
+
+.ui-heartbeat-strip-status[data-status="online"] .ui-heartbeat-strip-status-dot {
+  background: var(--ui-heartbeat-online);
+  box-shadow: 0 0 0 2px rgba(73, 194, 127, 0.18);
+}
+
+.ui-heartbeat-strip-status[data-status="stale"] .ui-heartbeat-strip-status-dot {
+  background: var(--ui-heartbeat-stale);
+  box-shadow: 0 0 0 2px rgba(244, 179, 80, 0.18);
+}
+
+.ui-heartbeat-strip-status[data-status="offline"] .ui-heartbeat-strip-status-dot {
+  background: var(--ui-heartbeat-offline);
+  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.18);
+}
+
+.ui-heartbeat-strip-status-text,
+.ui-heartbeat-strip-average,
+.ui-heartbeat-strip-age {
+  min-width: 0;
+  overflow: hidden;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+}
+
+.ui-heartbeat-strip-average {
+  color: var(--ui-heartbeat-text);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ui-heartbeat-strip-age {
+  color: var(--ui-heartbeat-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ui-heartbeat-strip-buckets {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(2px, 1fr);
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgba(143, 163, 196, 0.14);
+  gap: 1px;
+}
+
+.ui-heartbeat-strip--regular .ui-heartbeat-strip-buckets {
+  height: 16px;
+  border-radius: 4px;
+}
+
+.ui-heartbeat-strip-bucket {
+  display: block;
+  min-width: 0;
+  height: 100%;
+  background: var(--ui-heartbeat-bucket-color, var(--ui-heartbeat-unknown));
+}
+
+.ui-heartbeat-strip-bucket--ok {
+  background: var(--ui-heartbeat-ok);
+}
+
+.ui-heartbeat-strip-bucket--partial {
+  background: var(--ui-heartbeat-partial);
+}
+
+.ui-heartbeat-strip-bucket--missed {
+  background: var(--ui-heartbeat-missed);
+}
+
+.ui-heartbeat-strip-bucket--unknown {
+  background: var(--ui-heartbeat-unknown);
+  opacity: 0.48;
+}
+
+.ui-heartbeat-strip .ui-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+  white-space: nowrap;
+}
+
+.ui-heartbeat-strip--online {
+  --ui-heartbeat-border: color-mix(in oklab, var(--ui-heartbeat-online) 48%, var(--ui-border, #2b3750));
+}
+
+.ui-heartbeat-strip--stale {
+  --ui-heartbeat-border: color-mix(in oklab, var(--ui-heartbeat-stale) 48%, var(--ui-border, #2b3750));
+}
+
+.ui-heartbeat-strip--offline {
+  --ui-heartbeat-border: color-mix(in oklab, var(--ui-heartbeat-offline) 48%, var(--ui-border, #2b3750));
+}
+
+.ui-heartbeat-strip.is-status-hidden .ui-heartbeat-strip-header,
+.ui-heartbeat-strip.is-age-hidden .ui-heartbeat-strip-header {
+  justify-content: flex-start;
+}

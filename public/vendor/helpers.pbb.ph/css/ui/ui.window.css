@@ -1,0 +1,314 @@
+.ui-window-manager {
+  --ui-window-shadow: 0 16px 40px rgba(0, 0, 0, 0.38);
+  --ui-window-z-base: 1200;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ui-window-manager.is-fixed {
+  position: fixed;
+}
+
+.ui-window-manager-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ui-window-manager-taskbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--ui-border, #263146);
+  background: rgba(9, 15, 25, 0.92);
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+  z-index: calc(var(--ui-window-z-base) + 1000);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #73819b #101826;
+}
+
+.ui-window-manager-taskbar::-webkit-scrollbar {
+  height: 10px;
+}
+
+.ui-window-manager-taskbar::-webkit-scrollbar-track {
+  background: #101826;
+}
+
+.ui-window-manager-taskbar::-webkit-scrollbar-thumb {
+  background: #73819b;
+  border-radius: 999px;
+}
+
+.ui-window-manager-taskbar::-webkit-scrollbar-thumb:hover {
+  background: #8b99b5;
+}
+
+.ui-window-manager-taskbar[hidden] {
+  display: none !important;
+}
+
+.ui-window-manager.is-taskbar-hidden .ui-window-manager-taskbar {
+  display: none;
+}
+
+.ui-window {
+  position: absolute;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--ui-border, #263146);
+  border-radius: 14px;
+  background: #111826;
+  color: var(--ui-text, #d7e0f4);
+  box-shadow: var(--ui-window-shadow);
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.ui-window.is-animating {
+  transition:
+    left 180ms ease,
+    top 180ms ease,
+    width 180ms ease,
+    height 180ms ease,
+    opacity 180ms ease;
+  will-change: left, top, width, height, opacity;
+}
+
+.ui-window.is-active {
+  border-color: #5d86da;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.46);
+}
+
+.ui-window.is-maximized {
+  border-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.ui-window.is-minimized {
+  display: none;
+}
+
+.ui-window-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #24314a;
+  background: linear-gradient(180deg, rgba(20, 33, 55, 0.98), rgba(13, 23, 38, 0.98));
+  user-select: none;
+  cursor: move;
+}
+
+.ui-window-title-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.ui-window-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 700 14px/1.2 var(--ui-font, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif);
+  color: #ffffff;
+}
+
+.ui-window-header-actions,
+.ui-window-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ui-window-header-actions {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ui-window-controls {
+  flex: 0 0 auto;
+}
+
+.ui-window-control {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #334563;
+  border-radius: 8px;
+  background: #0b1423;
+  color: #d7e0f4;
+  cursor: pointer;
+  font: 600 14px/1 var(--ui-font, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif);
+}
+
+.ui-window-control:hover {
+  border-color: #4a5f86;
+  background: #101a2b;
+}
+
+.ui-window-control.is-close:hover {
+  border-color: #ad5161;
+  background: #3a1720;
+}
+
+.ui-window-body {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px;
+  background: #111826;
+}
+
+.ui-window-body.is-content-fill {
+  display: grid;
+  padding: 0;
+  overflow: hidden;
+}
+
+.ui-window-body.is-content-fill > * {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.ui-window-resize-handle {
+  position: absolute;
+  z-index: 2;
+}
+
+.ui-window-resize-handle.is-n,
+.ui-window-resize-handle.is-s {
+  left: 10px;
+  right: 10px;
+  height: 8px;
+}
+
+.ui-window-resize-handle.is-e,
+.ui-window-resize-handle.is-w {
+  top: 10px;
+  bottom: 10px;
+  width: 8px;
+}
+
+.ui-window-resize-handle.is-n { top: -4px; cursor: n-resize; }
+.ui-window-resize-handle.is-s { bottom: -4px; cursor: s-resize; }
+.ui-window-resize-handle.is-e { right: -4px; cursor: e-resize; }
+.ui-window-resize-handle.is-w { left: -4px; cursor: w-resize; }
+
+.ui-window-resize-handle.is-ne,
+.ui-window-resize-handle.is-nw,
+.ui-window-resize-handle.is-se,
+.ui-window-resize-handle.is-sw {
+  width: 12px;
+  height: 12px;
+}
+
+.ui-window-resize-handle.is-ne { top: -4px; right: -4px; cursor: ne-resize; }
+.ui-window-resize-handle.is-nw { top: -4px; left: -4px; cursor: nw-resize; }
+.ui-window-resize-handle.is-se { bottom: -4px; right: -4px; cursor: se-resize; }
+.ui-window-resize-handle.is-sw { bottom: -4px; left: -4px; cursor: sw-resize; }
+
+.ui-window.is-maximized .ui-window-resize-handle {
+  display: none;
+}
+
+.ui-window-taskbar-item {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 220px;
+  min-height: 30px;
+  padding: 0 4px 0 0;
+  border: 1px solid #334563;
+  border-radius: 999px;
+  background: #0b1423;
+}
+
+.ui-window-taskbar-item.is-active {
+  border-color: #5d86da;
+  background: #15243b;
+  box-shadow: inset 0 0 0 1px rgba(141, 181, 255, 0.2);
+}
+
+.ui-window-taskbar-item.is-minimized {
+  background: #0a111d;
+  opacity: 0.92;
+}
+
+.ui-window-taskbar-button,
+.ui-window-taskbar-close {
+  border: 0;
+  background: transparent;
+  color: #d7e0f4;
+  border-radius: 999px;
+  min-height: 30px;
+  cursor: pointer;
+}
+
+.ui-window-taskbar-button {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 180px;
+  padding: 0 12px;
+}
+
+.ui-window-taskbar-close {
+  width: 24px;
+  padding: 0;
+  justify-content: center;
+  align-items: center;
+  display: inline-flex;
+}
+
+.ui-window-taskbar-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-window-taskbar-item:hover {
+  border-color: #4a5f86;
+  background: #101a2b;
+}
+
+.ui-window-taskbar-item.is-active:hover {
+  background: #1a2d49;
+}
+
+.ui-window-taskbar-button:hover,
+.ui-window-taskbar-close:hover {
+  background: rgba(255, 255, 255, 0.06);
+}

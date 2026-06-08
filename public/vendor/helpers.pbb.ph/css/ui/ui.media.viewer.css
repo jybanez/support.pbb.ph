@@ -1,0 +1,311 @@
+.ui-media-viewer-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 2600;
+  pointer-events: none;
+}
+
+.ui-media-viewer-shell[hidden] {
+  display: none;
+}
+
+.ui-media-viewer-shell.is-open {
+  pointer-events: auto;
+}
+
+.ui-media-viewer-shell .ui-media-viewer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 5, 10, 0.82);
+  backdrop-filter: blur(2px);
+}
+
+.ui-media-viewer-shell .ui-media-viewer {
+  position: absolute;
+  inset: 3vh 3vw;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: 0;
+  border: 1px solid var(--ui-border, #29406d);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(8, 14, 26, 0.98), rgba(4, 8, 16, 0.98));
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.48);
+  overflow: hidden;
+}
+
+.ui-media-viewer-header,
+.ui-media-viewer-toolbar,
+.ui-media-viewer-footer {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(56, 82, 134, 0.72);
+}
+
+.ui-media-viewer-footer {
+  border-bottom: 0;
+  border-top: 1px solid rgba(56, 82, 134, 0.72);
+}
+
+.ui-media-viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ui-media-viewer-heading {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ui-media-viewer-title,
+.ui-media-viewer-counter {
+  margin: 0;
+}
+
+.ui-media-viewer-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ui-text-strong, #f2f6ff);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-media-viewer-counter {
+  font-size: 12px;
+  color: var(--ui-text-muted, #9fb2d8);
+}
+
+.ui-media-viewer-close {
+  min-width: 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+}
+
+.ui-media-viewer-close svg,
+.ui-media-viewer-nav svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.ui-media-viewer-body {
+  position: relative;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 12px;
+  padding: 16px;
+  background:
+    radial-gradient(circle at top right, rgba(79, 140, 255, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.72));
+}
+
+.ui-media-viewer-body.is-nav-hidden {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ui-media-viewer-nav {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  align-self: center;
+}
+
+.ui-media-viewer-nav[hidden] {
+  display: none;
+}
+
+.ui-media-viewer-viewport {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  border: 1px solid rgba(56, 82, 134, 0.72);
+  border-radius: 12px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(7, 11, 18, 0.92), rgba(0, 0, 0, 0.98));
+  outline: none;
+}
+
+.ui-media-viewer-viewport:focus-visible,
+.ui-media-viewer-nav:focus-visible,
+.ui-media-viewer-close:focus-visible,
+.ui-media-viewer-toolbar .ui-button:focus-visible {
+  outline: 2px solid var(--ui-accent, #5a8dff);
+  outline-offset: 2px;
+}
+
+.ui-media-viewer-transform {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.ui-media-viewer-pan-layer {
+  position: absolute;
+  will-change: left, top;
+}
+
+.ui-media-viewer-pan-layer.is-panning {
+  transition: none;
+}
+
+.ui-media-viewer-pan-surface {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+
+.ui-media-viewer-pan-surface[hidden] {
+  display: none;
+}
+
+.ui-media-viewer-pan-surface.is-active:active {
+  cursor: grabbing;
+}
+
+.ui-media-viewer-media-host {
+  position: relative;
+  width: auto;
+  height: auto;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  cursor: default;
+}
+
+.ui-media-viewer-media {
+  position: absolute;
+  inset: 0;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.ui-media-viewer-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ui-media-viewer-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+.ui-media-viewer-transform[data-fit="cover"] .ui-media-viewer-image,
+.ui-media-viewer-transform[data-fit="cover"] .ui-media-viewer-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ui-media-viewer-transform[data-fit="original"] .ui-media-viewer-image,
+.ui-media-viewer-transform[data-fit="original"] .ui-media-viewer-video {
+  inset: 0;
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100%;
+  transform: none;
+}
+
+.ui-media-viewer-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  background: rgba(10, 16, 28, 0.96);
+}
+
+.ui-media-viewer-toolbar[hidden] {
+  display: none;
+}
+
+.ui-media-viewer-toolbar .ui-button.is-active {
+  border-color: rgba(95, 227, 153, 0.76);
+  color: #dfffe9;
+  background: rgba(29, 88, 56, 0.42);
+}
+
+.ui-media-viewer-audiograph-host {
+  padding: 0 16px 16px;
+  background: rgba(10, 16, 28, 0.96);
+}
+
+.ui-media-viewer-audiograph-host:empty {
+  display: none;
+}
+
+.ui-media-viewer-audiograph-host .ui-audiograph {
+  border-radius: 12px;
+}
+
+.ui-media-viewer-footer[hidden] {
+  display: none;
+}
+
+.ui-media-viewer-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px 16px;
+  margin: 0;
+}
+
+.ui-media-viewer-meta dt {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ui-text-muted, #9fb2d8);
+}
+
+.ui-media-viewer-meta dd {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ui-text, #dce8ff);
+}
+
+@media (max-width: 900px) {
+  .ui-media-viewer-shell .ui-media-viewer {
+    inset: 2vh 2vw;
+  }
+
+  .ui-media-viewer-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .ui-media-viewer-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    background: rgba(10, 16, 28, 0.9);
+  }
+
+  .ui-media-viewer-nav-prev {
+    left: 26px;
+  }
+
+  .ui-media-viewer-nav-next {
+    right: 26px;
+  }
+}

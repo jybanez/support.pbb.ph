@@ -1,0 +1,330 @@
+.ui-chart {
+  --ui-chart-item-color: #64b5f6;
+  --ui-chart-border: rgba(124, 150, 190, 0.28);
+  --ui-chart-text: #d7e0f4;
+  --ui-chart-muted: #9fb2d8;
+  --ui-chart-panel: rgba(12, 18, 31, 0.72);
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  color: var(--ui-chart-text);
+}
+
+.ui-chart--sm {
+  gap: 8px;
+  font-size: 12px;
+}
+
+.ui-chart--lg {
+  gap: 16px;
+}
+
+.ui-chart-header {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ui-chart-title {
+  margin: 0;
+  color: var(--ui-chart-text);
+  font-size: 16px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.ui-chart--sm .ui-chart-title {
+  font-size: 13px;
+}
+
+.ui-chart--lg .ui-chart-title {
+  font-size: 18px;
+}
+
+.ui-chart-description {
+  margin: 0;
+  color: var(--ui-chart-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.ui-chart-state {
+  min-height: 96px;
+  border: 1px dashed var(--ui-chart-border);
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  color: var(--ui-chart-muted);
+  background: var(--ui-chart-panel);
+  text-align: center;
+}
+
+.ui-chart-state--error {
+  border-color: rgba(255, 107, 107, 0.45);
+  color: #ffb3b3;
+}
+
+.ui-chart-plot,
+.ui-chart-donut-wrap,
+.ui-chart-stacked-list {
+  min-width: 0;
+  border: 1px solid var(--ui-chart-border);
+  border-radius: 8px;
+  background: var(--ui-chart-panel);
+  padding: 10px;
+  overflow: hidden;
+}
+
+.ui-chart-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 150px;
+  overflow: visible;
+}
+
+.ui-chart--sm .ui-chart-svg {
+  min-height: 110px;
+}
+
+.ui-chart--lg .ui-chart-svg {
+  min-height: 190px;
+}
+
+.ui-chart-axis {
+  stroke: rgba(159, 178, 216, 0.35);
+  stroke-width: 1;
+}
+
+.ui-chart-axis-label,
+.ui-chart-y-label,
+.ui-chart-value-text,
+.ui-chart-donut-total,
+.ui-chart-donut-label {
+  fill: currentColor;
+  font-family: inherit;
+}
+
+.ui-chart-axis-label {
+  fill: var(--ui-chart-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ui-chart-y-label {
+  fill: var(--ui-chart-text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ui-chart-value-text {
+  fill: var(--ui-chart-text);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.ui-chart-item {
+  --ui-chart-item-color: #64b5f6;
+  color: var(--ui-chart-item-color);
+  outline: none;
+}
+
+.ui-chart-item--neutral,
+.ui-chart-segment.ui-chart-item--neutral,
+.ui-chart-legend-swatch.ui-chart-item--neutral {
+  --ui-chart-item-color: #8aa2c8;
+}
+
+.ui-chart-item--info,
+.ui-chart-segment.ui-chart-item--info,
+.ui-chart-legend-swatch.ui-chart-item--info {
+  --ui-chart-item-color: #64b5f6;
+}
+
+.ui-chart-item--success,
+.ui-chart-segment.ui-chart-item--success,
+.ui-chart-legend-swatch.ui-chart-item--success {
+  --ui-chart-item-color: #49c27f;
+}
+
+.ui-chart-item--warning,
+.ui-chart-segment.ui-chart-item--warning,
+.ui-chart-legend-swatch.ui-chart-item--warning {
+  --ui-chart-item-color: #f4b350;
+}
+
+.ui-chart-item--danger,
+.ui-chart-segment.ui-chart-item--danger,
+.ui-chart-legend-swatch.ui-chart-item--danger {
+  --ui-chart-item-color: #ff7a7a;
+}
+
+.ui-chart-item--critical,
+.ui-chart-segment.ui-chart-item--critical,
+.ui-chart-legend-swatch.ui-chart-item--critical {
+  --ui-chart-item-color: #ff4d6d;
+}
+
+.ui-chart-bar-rect {
+  fill: var(--ui-chart-item-color);
+  stroke: color-mix(in oklab, var(--ui-chart-item-color) 72%, #ffffff);
+  stroke-width: 1;
+}
+
+.ui-chart-item[role="button"] {
+  cursor: pointer;
+}
+
+.ui-chart-item[role="button"]:focus .ui-chart-bar-rect,
+.ui-chart-item[role="button"]:hover .ui-chart-bar-rect,
+.ui-chart-item[role="button"]:focus,
+.ui-chart-item[role="button"]:hover {
+  filter: drop-shadow(0 0 7px color-mix(in oklab, var(--ui-chart-item-color) 52%, transparent));
+}
+
+.ui-chart--donut .ui-chart-item {
+  fill: var(--ui-chart-item-color);
+  stroke: #0b1220;
+  stroke-width: 2;
+}
+
+.ui-chart-donut-svg {
+  max-width: 260px;
+  margin: 0 auto;
+}
+
+.ui-chart-donut-total {
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.ui-chart-donut-label {
+  fill: var(--ui-chart-muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.ui-chart-stacked-list {
+  display: grid;
+  gap: 10px;
+}
+
+.ui-chart-stacked-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ui-chart-stacked-label {
+  min-width: 0;
+  color: var(--ui-chart-text);
+  font-size: 12px;
+  font-weight: 850;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-chart-stacked-track {
+  height: 22px;
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(124, 150, 190, 0.26);
+  border-radius: 999px;
+  background: rgba(7, 13, 24, 0.74);
+}
+
+.ui-chart-segment {
+  --ui-chart-item-color: #64b5f6;
+  min-width: 2px;
+  background: var(--ui-chart-item-color);
+  outline: none;
+}
+
+.ui-chart-segment[role="button"] {
+  cursor: pointer;
+}
+
+.ui-chart-segment[role="button"]:focus,
+.ui-chart-segment[role="button"]:hover {
+  box-shadow: inset 0 0 0 2px #ffffff;
+}
+
+.ui-chart-stacked-total {
+  color: var(--ui-chart-text);
+  font-size: 12px;
+  font-weight: 850;
+  text-align: right;
+}
+
+.ui-chart-sparkline-line {
+  fill: none;
+  stroke: #64b5f6;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ui-chart--sparkline .ui-chart-item {
+  fill: #64b5f6;
+  stroke: #0b1220;
+  stroke-width: 2;
+}
+
+.ui-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  min-width: 0;
+}
+
+.ui-chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--ui-chart-muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.ui-chart-legend-swatch {
+  --ui-chart-item-color: #64b5f6;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--ui-chart-item-color);
+  flex: 0 0 auto;
+}
+
+.ui-chart-legend-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-chart-summary {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .ui-chart-stacked-row {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .ui-chart-stacked-total {
+    text-align: left;
+  }
+}

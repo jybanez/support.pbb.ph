@@ -1,0 +1,95 @@
+:root {
+  --hh-font: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  --hh-radius: 10px;
+  --hh-space-1: 6px;
+  --hh-space-2: 10px;
+  --hh-space-3: 14px;
+}
+
+.hh-incident-teams-assignments,
+.hh-incident-teams-assignments-editor,
+.hh-incident-teams-assignments-viewer,
+.hh-incident-types,
+.hh-incident-types-details-editor,
+.hh-incident-types-details-viewer {
+  font-family: var(--hh-font);
+  border-radius: var(--hh-radius);
+  padding: var(--hh-space-3);
+  border: 1px solid;
+}
+
+.hh-incident-teams-assignments[data-theme],
+.hh-incident-teams-assignments-editor[data-theme],
+.hh-incident-teams-assignments-viewer[data-theme],
+.hh-incident-types[data-theme],
+.hh-incident-types-details-editor[data-theme],
+.hh-incident-types-details-viewer[data-theme] {
+  --hh-bg: var(--ui-bg, #12161c);
+  --hh-bg-soft: var(--ui-bg-soft, #1b2230);
+  --hh-text: var(--ui-text, #edf2ff);
+  --hh-text-soft: var(--ui-text-muted, #b8c2d9);
+  --hh-border: var(--ui-border, #2a3448);
+  --hh-border-strong: var(--ui-border-strong, var(--hh-border));
+  --hh-accent: var(--ui-accent, #4f74b9);
+  --hh-success: var(--ui-success, #5ad27f);
+  --hh-warning: var(--ui-warning, #f4be49);
+  --hh-danger: var(--ui-danger, #ff5f67);
+  --hh-overlay: var(--ui-overlay, rgba(0, 0, 0, 0.42));
+  background: var(--hh-bg);
+  color: var(--hh-text);
+  border-color: var(--hh-border);
+}
+
+.hh-title {
+  margin: 0 0 var(--hh-space-2);
+  font-size: 1rem;
+}
+
+.hh-empty,
+.hh-meta,
+.hh-row {
+  margin: 0 0 var(--hh-space-1);
+  color: var(--hh-text-soft);
+}
+
+.hh-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--hh-space-2);
+}
+
+.hh-item,
+.hh-type-section,
+.hh-content,
+.hh-form {
+  border: 1px solid var(--hh-border);
+  background: var(--hh-bg-soft);
+  border-radius: 8px;
+  padding: var(--hh-space-2);
+}
+
+.hh-form {
+  display: grid;
+  gap: var(--hh-space-2);
+}
+
+.hh-field {
+  display: grid;
+  gap: var(--hh-space-1);
+}
+
+.hh-input,
+.hh-button {
+  font: inherit;
+  border-radius: 7px;
+  border: 1px solid var(--hh-border);
+  background: var(--hh-bg);
+  color: var(--hh-text);
+  padding: 8px 10px;
+}
+
+.hh-button {
+  cursor: pointer;
+}

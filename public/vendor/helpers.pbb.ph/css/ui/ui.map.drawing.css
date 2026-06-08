@@ -1,0 +1,195 @@
+.ui-map-drawing {
+  --ui-map-drawing-bg: rgba(13, 21, 35, 0.88);
+  --ui-map-drawing-border: var(--ui-border, #2b3750);
+  --ui-map-drawing-text: var(--ui-text, #d7e0f4);
+  --ui-map-drawing-muted: var(--ui-muted, #9fb2d8);
+  --ui-map-drawing-accent: #64b5f6;
+  display: inline-flex;
+  align-items: stretch;
+  gap: 8px;
+  max-width: 100%;
+  border: 1px solid var(--ui-map-drawing-border);
+  border-radius: 8px;
+  background: var(--ui-map-drawing-bg);
+  color: var(--ui-map-drawing-text);
+  box-sizing: border-box;
+  padding: 8px;
+}
+
+.ui-map-drawing--vertical {
+  flex-direction: column;
+  width: max-content;
+}
+
+.ui-map-drawing--horizontal {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.ui-map-drawing--external {
+  width: 100%;
+}
+
+.ui-map-drawing--sm {
+  gap: 6px;
+  padding: 6px;
+}
+
+.ui-map-drawing--lg {
+  gap: 10px;
+  padding: 10px;
+}
+
+.ui-map-drawing--success {
+  --ui-map-drawing-accent: #49c27f;
+}
+
+.ui-map-drawing--warning {
+  --ui-map-drawing-accent: #f4b350;
+}
+
+.ui-map-drawing--danger,
+.ui-map-drawing--critical {
+  --ui-map-drawing-accent: #ff6b6b;
+}
+
+.ui-map-drawing.is-chrome-less {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.ui-map-drawing.is-disabled,
+.ui-map-drawing.is-busy {
+  opacity: 0.72;
+}
+
+.ui-map-drawing-group {
+  display: inline-flex;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ui-map-drawing--vertical .ui-map-drawing-group {
+  flex-direction: column;
+}
+
+.ui-map-drawing--horizontal .ui-map-drawing-group {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.ui-map-drawing-button {
+  display: inline-grid;
+  grid-template-columns: 22px minmax(0, auto);
+  align-items: center;
+  gap: 6px;
+  min-width: 34px;
+  min-height: 34px;
+  border: 1px solid rgba(119, 148, 190, 0.48);
+  border-radius: 7px;
+  background: rgba(11, 18, 32, 0.88);
+  color: var(--ui-map-drawing-text);
+  box-sizing: border-box;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 5px 8px;
+}
+
+.ui-map-drawing--sm .ui-map-drawing-button {
+  min-width: 30px;
+  min-height: 30px;
+  grid-template-columns: 18px minmax(0, auto);
+  font-size: 11px;
+  padding: 4px 6px;
+}
+
+.ui-map-drawing--lg .ui-map-drawing-button {
+  min-width: 40px;
+  min-height: 40px;
+  grid-template-columns: 26px minmax(0, auto);
+  font-size: 13px;
+}
+
+.ui-map-drawing-button:hover {
+  border-color: color-mix(in oklab, var(--ui-map-drawing-accent) 64%, #ffffff);
+}
+
+.ui-map-drawing-button:focus-visible {
+  outline: 2px solid var(--ui-map-drawing-accent);
+  outline-offset: 2px;
+}
+
+.ui-map-drawing-button.is-active {
+  border-color: var(--ui-map-drawing-accent);
+  background: color-mix(in oklab, var(--ui-map-drawing-accent) 24%, rgba(11, 18, 32, 0.92));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ui-map-drawing-accent) 55%, transparent);
+}
+
+.ui-map-drawing-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.ui-map-drawing-button-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  min-width: 0;
+  color: var(--ui-map-drawing-accent);
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ui-map-drawing-button-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-map-drawing--labels-none .ui-map-drawing-button,
+.ui-map-drawing--labels-auto.ui-map-drawing--map .ui-map-drawing-button {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  padding-inline: 5px;
+}
+
+.ui-map-drawing--labels-none .ui-map-drawing-button-label,
+.ui-map-drawing--labels-auto.ui-map-drawing--map .ui-map-drawing-button-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.ui-map-drawing-measurement {
+  min-width: 0;
+  border: 1px solid rgba(119, 148, 190, 0.35);
+  border-radius: 7px;
+  background: rgba(8, 14, 25, 0.78);
+  color: var(--ui-map-drawing-muted);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.25;
+  padding: 7px 8px;
+  text-align: center;
+}
+
+.ui-map-drawing--horizontal .ui-map-drawing-measurement {
+  display: inline-flex;
+  align-items: center;
+}
+
+.ui-map-drawing-empty {
+  color: var(--ui-map-drawing-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}

@@ -1,0 +1,164 @@
+.ui-map-marker {
+  --ui-map-marker-color: #8aa2c8;
+  --ui-map-marker-bg: rgba(13, 21, 35, 0.92);
+  --ui-map-marker-size: 34px;
+  --ui-map-marker-count-size: 18px;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: var(--ui-map-marker-size);
+  height: var(--ui-map-marker-size);
+  color: var(--ui-map-marker-color);
+  line-height: 1;
+  pointer-events: auto;
+  transform: translateZ(0);
+}
+
+.ui-map-marker--sm {
+  --ui-map-marker-size: 26px;
+  --ui-map-marker-count-size: 15px;
+}
+
+.ui-map-marker--lg {
+  --ui-map-marker-size: 44px;
+  --ui-map-marker-count-size: 22px;
+}
+
+.ui-map-marker--info {
+  --ui-map-marker-color: #64b5f6;
+}
+
+.ui-map-marker--success {
+  --ui-map-marker-color: #49c27f;
+}
+
+.ui-map-marker--warning {
+  --ui-map-marker-color: #f4b350;
+}
+
+.ui-map-marker--danger,
+.ui-map-marker--critical {
+  --ui-map-marker-color: #ff6b6b;
+}
+
+.ui-map-marker.is-muted {
+  opacity: 0.52;
+}
+
+.ui-map-marker-shape {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: calc(var(--ui-map-marker-size) - 6px);
+  height: calc(var(--ui-map-marker-size) - 6px);
+  border: 2px solid var(--ui-map-marker-color);
+  background: color-mix(in oklab, var(--ui-map-marker-color) 18%, var(--ui-map-marker-bg));
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+  box-sizing: border-box;
+}
+
+.ui-map-marker-icon {
+  display: inline-grid;
+  place-items: center;
+  transform: none;
+}
+
+.ui-map-marker-shape--pin {
+  border-radius: 999px 999px 999px 4px;
+  transform: rotate(-45deg);
+}
+
+.ui-map-marker-shape--pin .ui-map-marker-icon {
+  transform: rotate(45deg);
+}
+
+.ui-map-marker-shape--dot {
+  border-radius: 999px;
+}
+
+.ui-map-marker-shape--hub {
+  width: calc(var(--ui-map-marker-size) - 8px);
+  height: calc(var(--ui-map-marker-size) - 8px);
+  border-radius: 6px;
+  transform: rotate(45deg);
+}
+
+.ui-map-marker-shape--hub .ui-map-marker-icon {
+  transform: rotate(-45deg);
+}
+
+.ui-map-marker-shape--cluster {
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 5px color-mix(in oklab, var(--ui-map-marker-color) 18%, transparent),
+    0 8px 18px rgba(0, 0, 0, 0.28);
+}
+
+.ui-map-marker-shape--hotspot {
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 6px color-mix(in oklab, var(--ui-map-marker-color) 16%, transparent),
+    0 0 0 12px color-mix(in oklab, var(--ui-map-marker-color) 8%, transparent),
+    0 8px 18px rgba(0, 0, 0, 0.28);
+}
+
+.ui-map-marker-shape--route {
+  width: var(--ui-map-marker-size);
+  height: 12px;
+  border-width: 0;
+  border-top: 5px dashed var(--ui-map-marker-color);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ui-map-marker-count {
+  position: absolute;
+  top: -4px;
+  right: -5px;
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--ui-map-marker-count-size);
+  height: var(--ui-map-marker-count-size);
+  border: 1px solid color-mix(in oklab, var(--ui-map-marker-color) 58%, #0b1220);
+  border-radius: 999px;
+  background: #0b1220;
+  color: var(--ui-map-marker-color);
+  font-size: 10px;
+  font-weight: 850;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+
+.ui-map-marker.is-selected .ui-map-marker-shape,
+.ui-map-marker.is-active .ui-map-marker-shape {
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--ui-map-marker-color) 28%, transparent),
+    0 10px 22px rgba(0, 0, 0, 0.34);
+}
+
+.ui-map-marker.is-pulsing::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 2px solid var(--ui-map-marker-color);
+  border-radius: 999px;
+  opacity: 0.35;
+  animation: ui-map-marker-pulse 1.4s ease-out infinite;
+}
+
+.ui-map-marker--route.is-pulsing::before {
+  inset: 8px 0;
+  border-radius: 999px;
+}
+
+@keyframes ui-map-marker-pulse {
+  from {
+    opacity: 0.45;
+    transform: scale(0.84);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}

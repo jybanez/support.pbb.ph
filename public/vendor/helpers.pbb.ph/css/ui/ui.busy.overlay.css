@@ -1,0 +1,123 @@
+.ui-busy-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+.ui-busy-overlay[hidden] {
+  display: none;
+}
+
+.ui-busy-overlay.is-scoped {
+  position: absolute;
+  z-index: 6;
+  border-radius: inherit;
+}
+
+.ui-busy-overlay.is-scoped .ui-busy-overlay-backdrop {
+  border-radius: inherit;
+}
+
+.ui-busy-overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 10, 18, 0.68);
+  backdrop-filter: blur(3px);
+}
+
+.ui-busy-overlay.is-backdropless .ui-busy-overlay-backdrop {
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.ui-busy-overlay-content,
+.ui-busy-overlay-spinner,
+.ui-busy-overlay-message,
+.ui-busy-overlay-actions {
+  position: relative;
+  z-index: 1;
+}
+
+.ui-busy-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: min(100%, 360px);
+  text-align: center;
+}
+
+.ui-busy-overlay-spinner {
+  width: 90px;
+  height: 90px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: ui-busy-overlay-spin 760ms linear infinite;
+}
+
+.ui-busy-overlay-spinner-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ui-busy-overlay-spinner-track,
+.ui-busy-overlay-spinner-indicator {
+  stroke-width: 8px;
+}
+
+.ui-busy-overlay-spinner-track {
+  stroke: rgba(125, 163, 228, 0.2);
+}
+
+.ui-busy-overlay-spinner-indicator {
+  stroke: #79a9ff;
+  stroke-linecap: round;
+  stroke-dasharray: 70 55;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+.ui-busy-overlay-message {
+  max-width: min(80%, 360px);
+  color: var(--ui-text, #d7e0f4);
+  font: 600 13px/1.35 var(--ui-font, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif);
+}
+
+.ui-busy-overlay-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-busy-overlay-actions[hidden],
+.ui-busy-overlay-cancel[hidden] {
+  display: none;
+}
+
+@keyframes ui-busy-overlay-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .ui-busy-overlay {
+    padding:
+      calc(20px + env(safe-area-inset-top, 0px))
+      calc(20px + env(safe-area-inset-right, 0px))
+      calc(20px + env(safe-area-inset-bottom, 0px))
+      calc(20px + env(safe-area-inset-left, 0px));
+  }
+}

@@ -1,0 +1,117 @@
+.hh-incident-types-details-viewer {
+  display: grid;
+  gap: var(--hh-space-2);
+}
+
+.hh-incident-types-details-viewer .hh-type-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.hh-incident-types-details-viewer .hh-title {
+  margin-bottom: 0;
+}
+
+.hh-incident-types-details-viewer .hh-type-title-wrap {
+  display: grid;
+  gap: 4px;
+}
+
+.hh-incident-types-details-viewer .hh-type-section {
+  display: grid;
+  gap: var(--hh-space-2);
+}
+
+.hh-incident-types-details-viewer .hh-content {
+  display: grid;
+  gap: 8px;
+}
+
+.hh-incident-types-details-viewer .hh-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 164px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+}
+
+.hh-incident-types-details-viewer .hh-row-label {
+  color: var(--hh-text-soft);
+}
+
+.hh-incident-types-details-viewer .hh-row-value {
+  color: var(--hh-text);
+  font-weight: 500;
+  min-width: 0;
+}
+
+.hh-incident-types-details-viewer .hh-row-group {
+  align-items: start;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.hh-incident-types-details-viewer .hh-group-value {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.hh-incident-types-details-viewer .hh-group-value-item {
+  box-sizing: border-box;
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--hh-border);
+  border-radius: 7px;
+  padding: 8px 10px;
+  background: var(--hh-bg);
+  min-width: 0;
+  width: 100%;
+}
+
+.hh-incident-types-details-viewer .hh-group-value-title {
+  color: var(--hh-text-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.hh-incident-types-details-viewer .hh-group-value-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.55fr) minmax(0, 1fr);
+  gap: 10px;
+  min-width: 0;
+}
+
+.hh-incident-types-details-viewer .hh-group-value-label {
+  color: var(--hh-text-soft);
+  font-weight: 400;
+}
+
+.hh-incident-types-details-viewer .hh-group-value-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .hh-incident-types-details-viewer .hh-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .hh-incident-types-details-viewer .hh-row.hh-row-resource {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .hh-incident-types-details-viewer .hh-row.hh-row-resource .hh-row-value {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .hh-incident-types-details-viewer .hh-group-value-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

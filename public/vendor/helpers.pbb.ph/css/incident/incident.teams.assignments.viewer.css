@@ -1,0 +1,162 @@
+.hh-incident-teams-assignments-viewer .hh-viewer-body {
+  display: grid;
+  gap: 10px;
+}
+
+.hh-incident-teams-assignments-viewer .hh-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.hh-incident-teams-assignments-viewer .hh-stepper {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  --hh-step-gap: 8px;
+  gap: var(--hh-step-gap);
+}
+
+.hh-incident-teams-assignments-viewer .hh-step {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  font-size: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.hh-incident-teams-assignments-viewer .hh-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  width: calc(100% + var(--hh-step-gap));
+  height: 2px;
+  background: var(--hh-border);
+  z-index: 0;
+}
+
+.hh-incident-teams-assignments-viewer .hh-step-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--hh-border);
+  background: var(--hh-bg);
+  position: relative;
+  z-index: 2;
+  line-height: 1;
+  overflow: hidden;
+}
+
+.hh-incident-teams-assignments-viewer .hh-step.is-future .hh-step-icon {
+  color: var(--hh-text-soft);
+  border-color: var(--hh-border-strong);
+}
+
+.hh-incident-teams-assignments-viewer .hh-step.is-future::after {
+  background: var(--hh-border-strong);
+}
+
+.hh-incident-teams-assignments-viewer .hh-step.is-current .hh-step-icon {
+  color: var(--hh-warning);
+  border-color: var(--hh-warning);
+  font-size: 0;
+}
+
+.hh-incident-teams-assignments-viewer .hh-step.is-current .hh-step-icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 10px;
+  height: 10px;
+  border: 2px solid currentColor;
+  border-left-color: transparent;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: block;
+  animation: hh-spin 0.8s linear infinite;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.hh-incident-teams-assignments-viewer .hh-step.is-current::after {
+  background: var(--hh-warning);
+}
+
+.hh-incident-teams-assignments-viewer .hh-step.is-complete .hh-step-icon {
+  color: var(--hh-success);
+  border-color: var(--hh-success);
+}
+
+.hh-incident-teams-assignments-viewer .hh-step.is-complete::after {
+  background: var(--hh-success);
+}
+
+.hh-incident-teams-assignments-viewer .hh-step.is-cancelled .hh-step-icon {
+  color: var(--hh-danger);
+  border-color: var(--hh-danger);
+}
+
+.hh-incident-teams-assignments-viewer .hh-step.is-cancelled::after {
+  background: var(--hh-danger);
+}
+
+.hh-incident-teams-assignments-viewer .hh-cancelled-block {
+  border: 1px solid color-mix(in srgb, var(--hh-danger) 45%, var(--hh-border));
+  background: color-mix(in srgb, var(--hh-danger) 16%, var(--hh-bg));
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.hh-incident-teams-assignments-viewer .hh-notes {
+  display: grid;
+  gap: 8px;
+}
+
+.hh-incident-teams-assignments-viewer .hh-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--hh-text-soft);
+}
+
+.hh-incident-teams-assignments-viewer .hh-notes-list {
+  border: 1px solid var(--hh-border);
+  border-radius: 8px;
+  padding: 8px;
+  display: grid;
+  gap: 4px;
+}
+
+.hh-incident-teams-assignments-viewer .hh-allocations {
+  display: grid;
+  gap: 8px;
+}
+
+.hh-incident-teams-assignments-viewer .hh-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.hh-incident-teams-assignments-viewer .hh-table th,
+.hh-incident-teams-assignments-viewer .hh-table td {
+  border: 1px solid var(--hh-border);
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+@keyframes hh-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

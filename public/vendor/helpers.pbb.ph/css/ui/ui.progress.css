@@ -1,0 +1,189 @@
+.ui-progress {
+  --ui-progress-color: #4f89ff;
+  --ui-progress-track: #1a2740;
+  --ui-progress-text: var(--ui-text, #d7e0f4);
+  display: grid;
+  gap: 8px;
+  color: var(--ui-progress-text);
+}
+
+.ui-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.ui-progress-label {
+  color: var(--ui-muted, #9fb2d8);
+  letter-spacing: 0.02em;
+}
+
+.ui-progress-percent {
+  color: var(--ui-text, #d7e0f4);
+  font-weight: 600;
+}
+
+.ui-progress-track {
+  position: relative;
+  width: 100%;
+  background: var(--ui-progress-track);
+  border: 1px solid var(--ui-border, #2b3750);
+  overflow: hidden;
+}
+
+.ui-progress--sm .ui-progress-track { height: 8px; }
+.ui-progress--md .ui-progress-track { height: 12px; }
+.ui-progress--lg .ui-progress-track { height: 16px; }
+
+.ui-progress.is-rounded .ui-progress-track,
+.ui-progress.is-rounded .ui-progress-fill,
+.ui-progress.is-rounded .ui-progress-segment,
+.ui-progress.is-rounded .ui-progress-step {
+  border-radius: 999px;
+}
+
+.ui-progress-fill {
+  height: 100%;
+  width: 0;
+  background: var(--ui-progress-color);
+  transition: width 180ms ease;
+}
+
+.ui-progress.is-static .ui-progress-fill {
+  transition: none;
+}
+
+.ui-progress.is-glow .ui-progress-fill {
+  box-shadow: 0 0 12px color-mix(in oklab, var(--ui-progress-color) 60%, transparent);
+}
+
+.ui-progress--striped .ui-progress-fill {
+  background-image:
+    repeating-linear-gradient(
+      -45deg,
+      color-mix(in oklab, var(--ui-progress-color) 82%, #ffffff 18%) 0 10px,
+      var(--ui-progress-color) 10px 20px
+    );
+}
+
+.ui-progress--striped.is-animated .ui-progress-fill {
+  animation: ui-progress-stripes 700ms linear infinite;
+}
+
+.ui-progress--gradient .ui-progress-fill {
+  background: linear-gradient(90deg, #5ed6ff 0%, #4f89ff 52%, #7a66ff 100%);
+}
+
+.ui-progress.is-indeterminate .ui-progress-fill {
+  width: 35%;
+}
+
+.ui-progress-fill.is-indeterminate {
+  position: relative;
+  animation: ui-progress-indeterminate 1200ms ease-in-out infinite;
+}
+
+.ui-progress-segments {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 4px;
+}
+
+.ui-progress-segment {
+  height: 10px;
+  border: 1px solid var(--ui-border, #2b3750);
+  background: var(--ui-progress-track);
+}
+
+.ui-progress--sm .ui-progress-segment { height: 8px; }
+.ui-progress--lg .ui-progress-segment { height: 14px; }
+
+.ui-progress-segment.is-active {
+  background: var(--ui-progress-color);
+}
+
+.ui-progress--segmented.is-indeterminate .ui-progress-segment.is-active {
+  animation: ui-progress-pulse 900ms ease-in-out infinite;
+}
+
+.ui-progress-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(22px, 1fr));
+  gap: 8px;
+}
+
+.ui-progress-step {
+  height: 24px;
+  border: 1px solid var(--ui-border, #2b3750);
+  background: var(--ui-progress-track);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--ui-muted, #9fb2d8);
+}
+
+.ui-progress-step.is-active {
+  border-color: color-mix(in oklab, var(--ui-progress-color) 50%, var(--ui-border, #2b3750));
+  background: color-mix(in oklab, var(--ui-progress-color) 35%, #0d1523);
+  color: var(--ui-text, #d7e0f4);
+}
+
+.ui-progress-radial {
+  --size: 86px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin: 2px 0;
+  background:
+    conic-gradient(
+      var(--ui-progress-color) calc(var(--ui-progress-pct, 0) * 1%),
+      var(--ui-progress-track) 0
+    );
+  border: 1px solid var(--ui-border, #2b3750);
+}
+
+.ui-progress--sm .ui-progress-radial { --size: 66px; }
+.ui-progress--lg .ui-progress-radial { --size: 112px; }
+
+.ui-progress-radial--ring::before {
+  content: "";
+  width: 68%;
+  height: 68%;
+  border-radius: 50%;
+  background: var(--ui-bg, #0d1523);
+  border: 1px solid var(--ui-border, #2b3750);
+}
+
+.ui-progress-radial-text {
+  position: absolute;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ui-text, #d7e0f4);
+}
+
+@keyframes ui-progress-stripes {
+  from { background-position: 0 0; }
+  to { background-position: 32px 0; }
+}
+
+@keyframes ui-progress-indeterminate {
+  0% {
+    transform: translateX(-130%);
+  }
+  50% {
+    transform: translateX(70%);
+  }
+  100% {
+    transform: translateX(230%);
+  }
+}
+
+@keyframes ui-progress-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}

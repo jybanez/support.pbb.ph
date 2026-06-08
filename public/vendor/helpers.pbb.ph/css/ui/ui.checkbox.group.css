@@ -1,0 +1,35 @@
+.ui-checkbox-group {
+  display: grid;
+  gap: 8px;
+}
+
+.ui-checkbox-group-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ui-checkbox-group-label {
+  margin: 0;
+}
+
+.ui-checkbox-group-options {
+  display: grid;
+  gap: 8px;
+}
+
+.ui-checkbox-group-option {
+  min-width: 0;
+}
+
+.ui-checkbox-group-help {
+  margin: 0;
+  color: var(--ui-muted, #9fb2d8);
+  font: 400 12px/1.35 var(--ui-font, "Segoe UI", sans-serif);
+}
+
+.ui-checkbox-group.is-disabled,
+.ui-checkbox-group.is-readonly {
+  opacity: 0.72;
+}

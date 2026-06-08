@@ -1,0 +1,220 @@
+.ui-property-editor {
+  --ui-property-editor-label-width: 180px;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.ui-property-editor.is-dense {
+  gap: 10px;
+}
+
+.ui-property-editor-selection {
+  display: grid;
+  grid-template-columns: var(--ui-property-editor-label-width) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--ui-border, #2b3750);
+  border-radius: 12px;
+  background: #101826;
+}
+
+.ui-property-editor-selection-label,
+.ui-property-editor-label {
+  color: var(--ui-text, #d7e0f4);
+  font-weight: 600;
+}
+
+.ui-property-editor-selection-value {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid var(--ui-border-strong, #344769);
+  border-radius: 10px;
+  background: #0f1b30;
+  color: var(--ui-text, #d7e0f4);
+  display: flex;
+  align-items: center;
+}
+
+.ui-property-editor-select-host {
+  min-width: 0;
+}
+
+.ui-property-editor-section {
+  border: 1px solid var(--ui-border, #2b3750);
+  border-radius: 12px;
+  background: #101826;
+  overflow: hidden;
+}
+
+.ui-property-editor-section-header {
+  padding: 12px 14px 10px;
+  display: grid;
+  gap: 4px;
+  border-bottom: 1px solid rgba(52, 71, 105, 0.4);
+}
+
+.ui-property-editor-section-title {
+  color: var(--ui-text, #d7e0f4);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ui-property-editor-section-description {
+  color: var(--ui-text-muted, #9fb2d8);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.ui-property-editor-section-body {
+  display: grid;
+}
+
+.ui-property-editor-row {
+  display: grid;
+  grid-template-columns: var(--ui-property-editor-label-width) minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 12px 14px;
+  border-top: 1px solid rgba(43, 55, 80, 0.55);
+}
+
+.ui-property-editor-section-body > :first-child.ui-property-editor-row,
+.ui-property-editor-section-body > :first-child.ui-property-editor-divider {
+  border-top: 0;
+}
+
+.ui-property-editor.is-dense .ui-property-editor-row {
+  padding-block: 10px;
+}
+
+.ui-property-editor-value {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.ui-property-editor-display,
+.ui-property-editor-input,
+.ui-property-editor-select {
+  min-width: 0;
+}
+
+.ui-property-editor-display {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid var(--ui-border-strong, #344769);
+  border-radius: 10px;
+  background: #0f1b30;
+  color: var(--ui-text, #d7e0f4);
+  display: flex;
+  align-items: center;
+}
+
+.ui-property-editor-textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.ui-property-editor-boolean {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ui-property-editor-checkbox {
+  width: 16px;
+  height: 16px;
+}
+
+.ui-property-editor-boolean-label,
+.ui-property-editor-mixed,
+.ui-property-editor-help {
+  color: var(--ui-text-muted, #9fb2d8);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ui-property-editor-mixed {
+  color: #c3d5f6;
+}
+
+.ui-property-editor-error {
+  color: #ffb8b0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.ui-property-editor-row.is-invalid .ui-property-editor-input,
+.ui-property-editor-row.is-invalid .ui-property-editor-select,
+.ui-property-editor-row.is-invalid .ui-property-editor-display {
+  border-color: #b5606c;
+}
+
+.ui-property-editor-actions {
+  display: flex;
+  align-items: start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ui-property-editor-color,
+.ui-property-editor-color-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+}
+
+.ui-property-editor-color-input {
+  width: 42px;
+  min-width: 42px;
+  height: 34px;
+  border: 1px solid var(--ui-border-strong, #344769);
+  border-radius: 8px;
+  background: #0f1b30;
+  padding: 2px;
+}
+
+.ui-property-editor-color-value {
+  color: var(--ui-text, #d7e0f4);
+  font-size: 13px;
+}
+
+.ui-property-editor-color-swatch {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--ui-border-strong, #344769);
+  border-radius: 7px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px rgba(11, 18, 32, 0.35);
+}
+
+.ui-property-editor-toggle-host {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.ui-property-editor-action {
+  justify-self: start;
+}
+
+.ui-property-editor-divider {
+  height: 1px;
+  background: rgba(43, 55, 80, 0.8);
+  margin: 0 14px;
+}
+
+@media (max-width: 840px) {
+  .ui-property-editor-selection,
+  .ui-property-editor-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-property-editor-actions {
+    justify-content: flex-start;
+  }
+}
