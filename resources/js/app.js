@@ -1,5 +1,6 @@
 import './bootstrap';
 import { createSupportDashboardMap } from './maps/supportDashboardMap.js';
+import { renderSupportStrategy } from './supportStrategy.js';
 
 const root = document.getElementById('app');
 const csrfMeta = document.querySelector('meta[name="csrf-token"]');
@@ -96,6 +97,14 @@ const state = {
         sourceHeartbeats: [],
         activeSection: 'summary',
         mapPoints: [],
+    },
+    supportStrategy: {
+        loading: false,
+        available: false,
+        error: null,
+        activeTab: 'priorities',
+        data: null,
+        reviewedIds: new Set(),
     },
 };
 
@@ -614,6 +623,38 @@ const mountSitrepViewerCss = (css) => {
 };
 
 const currentSitrepSourceId = (source) => String(source?.id || source?.code || source?.name || '').trim();
+
+const renderSupportStrategyPane = () => {
+    const host = document.querySelector('[data-support-strategy-host]');
+    if (!host) return;
+
+    renderSupportStrategy(host, state.supportStrategy, {
+        onSkeleton: mountLoadingSkeletons,
+        onTab(tabId) {
+            state.supportStrategy.activeTab = tabId;
+            renderSupportStrategyPane();
+        },
+        onViewMap(sourceHubId) {
+            if (!sourceHubId) return;
+            sourceDataVisibleIds.delete(sourceHubId);
+            syncSourceBoundaries();
+            renderSourcesRail();
+            dashboardMap?.highlightSourceBoundary?.(sourceHubId);
+            dashboardMap?.fitSourceBoundary?.(sourceHubId, { duration: 650 });
+        },
+        onReviewed(cardId) {
+            if (!cardId) return;
+            state.supportStrategy.reviewedIds.add(cardId);
+            renderSupportStrategyPane();
+        },
+        onViewEvidence() {
+            document.querySelector('[data-current-sitrep-host]')?.scrollIntoView?.({
+                block: 'nearest',
+                inline: 'nearest',
+            });
+        },
+    });
+};
 
 const sourceHeartbeatKeys = (source = {}) => [
     source?.id,
@@ -1210,6 +1251,44 @@ const loadCurrentSitrep = async () => {
     renderSourcesRail();
 };
 
+const loadSupportStrategy = async () => {
+    const host = document.querySelector('[data-support-strategy-host]');
+    if (!host || !state.account) return;
+
+    state.supportStrategy = {
+        ...state.supportStrategy,
+        loading: true,
+        available: false,
+        error: null,
+        data: null,
+    };
+    renderSupportStrategyPane();
+
+    try {
+        const data = await api('/api/sitreps/current/support', {
+            reauthOnUnauthorized: false,
+        });
+
+        state.supportStrategy = {
+            ...state.supportStrategy,
+            loading: false,
+            available: Boolean(data.available),
+            error: null,
+            data,
+        };
+    } catch (error) {
+        state.supportStrategy = {
+            ...state.supportStrategy,
+            loading: false,
+            available: false,
+            error: firstError(error, 'Unable to load support strategy.'),
+            data: null,
+        };
+    }
+
+    renderSupportStrategyPane();
+};
+
 const mountDashboardMapControls = () => {
     const host = document.querySelector('[data-dashboard-map-controls]');
     const map = dashboardMap?.getMap?.() ?? null;
@@ -1323,19 +1402,22 @@ const renderDashboardSplitter = () => {
     if (!host) return;
 
     const splitHostWidth = Math.max(1, host.getBoundingClientRect().width || host.clientWidth || 0);
-    const sitrepInitialRatio = Math.min(0.48, Math.max(0.22, 500 / splitHostWidth));
-
     dashboardSplitter?.destroy?.();
     dashboardSplitter = helpers.createSplitter(host, {
         orientation: 'horizontal',
-        initialRatio: sitrepInitialRatio,
-        minRatio: 0.22,
-        maxRatio: 0.48,
+        initialRatio: Math.min(0.62, Math.max(0.5, 900 / splitHostWidth)),
+        minRatio: 0.42,
+        maxRatio: 0.68,
         className: 'support-dashboard-splitter',
         paneA: createDashboardPane(
-            'is-sitrep',
+            'is-evidence-strategy',
             '',
-            '<div class="support-current-sitrep-host" data-current-sitrep-host></div>',
+            `
+                <div class="support-evidence-strategy-grid">
+                    <div class="support-current-sitrep-host" data-current-sitrep-host></div>
+                    <div class="support-strategy-host" data-support-strategy-host></div>
+                </div>
+            `,
         ),
         paneB: createDashboardMapPane(),
         onResize: () => {
@@ -1345,6 +1427,7 @@ const renderDashboardSplitter = () => {
     mountDashboardMap();
     renderSourcesRail();
     loadCurrentSitrep();
+    loadSupportStrategy();
 };
 
 const render = () => {

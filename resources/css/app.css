@@ -246,7 +246,8 @@ input {
     background: var(--ui-bg-soft);
 }
 
-.support-dashboard-pane.is-sitrep {
+.support-dashboard-pane.is-sitrep,
+.support-dashboard-pane.is-evidence-strategy {
     grid-template-rows: minmax(0, 1fr);
 }
 
@@ -284,8 +285,29 @@ input {
     overflow: auto;
 }
 
-.support-dashboard-pane.is-sitrep .support-dashboard-pane-body {
+.support-dashboard-pane.is-sitrep .support-dashboard-pane-body,
+.support-dashboard-pane.is-evidence-strategy .support-dashboard-pane-body {
     overflow: hidden;
+}
+
+.support-evidence-strategy-grid {
+    height: 100%;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(360px, 0.54fr) minmax(340px, 0.46fr);
+    overflow: hidden;
+}
+
+.support-evidence-strategy-grid .support-current-sitrep-host {
+    min-width: 0;
+    border-right: 1px solid rgba(52, 71, 105, 0.55);
+}
+
+.support-strategy-host {
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(12, 21, 35, 0.98), rgba(10, 18, 31, 0.98));
 }
 
 .support-dashboard-map-pane {
@@ -640,6 +662,214 @@ input {
     min-height: 100%;
     margin: 0;
     box-shadow: none;
+}
+
+.support-strategy-panel {
+    height: 100%;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    overflow: hidden;
+}
+
+.support-strategy-header {
+    padding: 14px 14px 10px;
+    border-bottom: 1px solid rgba(52, 71, 105, 0.5);
+}
+
+.support-strategy-header p,
+.support-strategy-header h2 {
+    margin: 0;
+}
+
+.support-strategy-header h2 {
+    margin-top: 4px;
+    color: var(--ui-text);
+    font-size: 15px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.support-strategy-header p:last-child {
+    margin-top: 5px;
+    color: var(--ui-muted);
+    font-size: 12px;
+}
+
+.support-strategy-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 10px;
+    border-bottom: 1px solid rgba(52, 71, 105, 0.45);
+}
+
+.support-strategy-tab {
+    min-width: 0;
+    height: 32px;
+    border: 1px solid rgba(81, 108, 153, 0.55);
+    border-radius: 6px;
+    background: rgba(15, 27, 45, 0.86);
+    color: var(--ui-muted);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.support-strategy-tab:hover,
+.support-strategy-tab:focus-visible,
+.support-strategy-tab.is-active {
+    color: var(--ui-text);
+    border-color: rgba(94, 234, 212, 0.58);
+    background: rgba(28, 54, 76, 0.92);
+    outline: none;
+}
+
+.support-strategy-content,
+.support-strategy-loading-list {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 10px;
+    display: grid;
+    align-content: start;
+    gap: 10px;
+}
+
+.support-strategy-loading-tabs {
+    padding: 10px;
+}
+
+.support-strategy-card {
+    border: 1px solid rgba(76, 104, 145, 0.62);
+    border-radius: 8px;
+    background: rgba(14, 25, 42, 0.9);
+    padding: 11px;
+    display: grid;
+    gap: 9px;
+    box-shadow: inset 3px 0 0 rgba(84, 200, 245, 0.58);
+}
+
+.support-strategy-card.is-alert-warning {
+    box-shadow: inset 3px 0 0 rgba(246, 189, 59, 0.78);
+}
+
+.support-strategy-card.is-alert-critical {
+    box-shadow: inset 3px 0 0 rgba(255, 107, 107, 0.82);
+}
+
+.support-strategy-card.is-reviewed {
+    opacity: 0.72;
+}
+
+.support-strategy-card > header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: start;
+}
+
+.support-strategy-card span,
+.support-strategy-card em {
+    color: var(--ui-muted);
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.support-strategy-card h3,
+.support-strategy-card p {
+    margin: 0;
+}
+
+.support-strategy-card h3 {
+    margin-top: 3px;
+    color: var(--ui-text);
+    font-size: 14px;
+    line-height: 1.28;
+    overflow-wrap: anywhere;
+}
+
+.support-strategy-card p {
+    color: var(--ui-muted);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.support-strategy-target {
+    color: var(--ui-text) !important;
+}
+
+.support-strategy-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.support-strategy-metrics span {
+    min-width: 0;
+    border: 1px solid rgba(76, 104, 145, 0.5);
+    border-radius: 6px;
+    padding: 7px;
+    background: rgba(9, 18, 31, 0.65);
+    text-transform: none;
+}
+
+.support-strategy-metrics strong {
+    display: block;
+    color: var(--ui-text);
+    font-size: 16px;
+    line-height: 1;
+}
+
+.support-strategy-card-list {
+    display: grid;
+    gap: 5px;
+}
+
+.support-strategy-card-list ul {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--ui-muted);
+    font-size: 12px;
+    line-height: 1.42;
+}
+
+.support-strategy-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.support-strategy-actions button {
+    min-height: 28px;
+    border: 1px solid rgba(83, 118, 169, 0.62);
+    border-radius: 6px;
+    background: rgba(20, 37, 61, 0.92);
+    color: var(--ui-text);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.support-strategy-actions button:hover,
+.support-strategy-actions button:focus-visible {
+    border-color: rgba(94, 234, 212, 0.62);
+    outline: none;
+}
+
+.support-strategy-empty {
+    margin: 10px;
+    border: 1px dashed rgba(91, 123, 168, 0.62);
+    border-radius: 8px;
+    padding: 14px;
+    color: var(--ui-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.support-strategy-empty p {
+    margin: 0;
 }
 
 .support-sitrep-loading {
@@ -1514,6 +1744,16 @@ input {
     .support-dashboard-splitter-host .ui-splitter-pane.is-a {
         border-right: 0;
         border-bottom: 1px solid rgba(52, 71, 105, 0.5);
+    }
+
+    .support-evidence-strategy-grid {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr) minmax(320px, 0.8fr);
+    }
+
+    .support-evidence-strategy-grid .support-current-sitrep-host {
+        border-right: 0;
+        border-bottom: 1px solid rgba(52, 71, 105, 0.55);
     }
 
     .support-dashboard-splitter-host .ui-splitter-divider {
