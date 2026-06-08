@@ -49,19 +49,31 @@ class SupportStrategyBuilder
                 }
 
                 $snapshot = is_array($source['snapshot'] ?? null) ? $source['snapshot'] : [];
-                $sourceHubId = $this->text($source['source_hub_id'] ?? $snapshot['hub_id'] ?? $source['hub_id'] ?? null);
+                $relayHubId = $this->text($source['source_relay_hub_id'] ?? $snapshot['relay_hub_id'] ?? $source['relay_hub_id'] ?? null);
+                $sourceHubId = $this->text($source['source_hub_id'] ?? $snapshot['hub_id'] ?? $source['hub_id'] ?? null)
+                    ?? $relayHubId;
 
                 if ($sourceHubId === null) {
                     continue;
                 }
 
+                $aliases = array_values(array_unique(array_filter([
+                    $sourceHubId,
+                    $relayHubId,
+                    $this->text($source['source_hub_id'] ?? null),
+                    $this->text($snapshot['hub_id'] ?? null),
+                    $this->text($source['hub_id'] ?? null),
+                    $this->text($source['relay_hub_id'] ?? null),
+                ])));
+
                 $profiles[$sourceHubId] = [
                     'source_hub_id' => $sourceHubId,
-                    'source_relay_hub_id' => $this->text($source['source_relay_hub_id'] ?? $snapshot['relay_hub_id'] ?? $source['relay_hub_id'] ?? null),
+                    'source_relay_hub_id' => $relayHubId,
                     'source_hub_name' => $this->text($snapshot['name'] ?? $source['source_hub_name'] ?? $source['name'] ?? null) ?? 'Source hub',
                     'deployment' => $this->text($snapshot['deployment'] ?? $source['deployment'] ?? null),
-                    'alert_level' => $this->text($source['alert_level'] ?? $snapshot['alert_level'] ?? null) ?? ($sourceAlerts[$sourceHubId] ?? null),
+                    'alert_level' => $this->text($source['alert_level'] ?? $snapshot['alert_level'] ?? null) ?? $this->firstAlert($sourceAlerts, $aliases),
                     'snapshot_at' => $this->text($snapshot['snapshot_at'] ?? $source['snapshot_at'] ?? null),
+                    'aliases' => $aliases,
                     'score' => 0,
                     'based_on' => [],
                     'recommended_next_steps' => [],
@@ -453,22 +465,26 @@ class SupportStrategyBuilder
      */
     private function needRows(array $payload): array
     {
-        $rows = $this->rows(data_get($payload, 'needs.rollup.category_demand'));
+        $sourcePath = 'needs.rollup.category_demand';
+        $rows = $this->rows(data_get($payload, $sourcePath));
 
         if ($rows === []) {
-            $rows = $this->rows(data_get($payload, 'needs.rollup.category_groups'));
+            $sourcePath = 'needs.rollup.category_groups';
+            $rows = $this->rows(data_get($payload, $sourcePath));
         }
 
         if ($rows === []) {
-            $rows = $this->rows(data_get($payload, 'needs.rollup.resource_groups'));
+            $sourcePath = 'needs.rollup.resource_groups';
+            $rows = $this->rows(data_get($payload, $sourcePath));
         }
 
         if ($rows === []) {
-            $rows = $this->rows(data_get($payload, 'needs.rollup.items'));
+            $sourcePath = 'needs.rollup.items';
+            $rows = $this->rows(data_get($payload, $sourcePath));
         }
 
         return collect($rows)
-            ->map(function (array $row, int $index): ?array {
+            ->map(function (array $row, int $index) use ($sourcePath): ?array {
                 $category = $this->text($row['category'] ?? $row['resource_category'] ?? $row['resource'] ?? $row['label'] ?? null);
                 $requested = $this->number($row['quantity_requested'] ?? $row['quantity'] ?? $row['requested'] ?? $row['resource_units'] ?? null);
 
@@ -480,7 +496,7 @@ class SupportStrategyBuilder
                     'category' => $category,
                     'requested' => $requested,
                     'location_count' => $this->number($row['location_count'] ?? null),
-                    'evidence_refs' => [sprintf('needs.rollup.category_demand[%d]', $index)],
+                    'evidence_refs' => [sprintf('%s[%d]', $sourcePath, $index)],
                 ];
             })
             ->filter()
@@ -551,10 +567,19 @@ class SupportStrategyBuilder
                     continue;
                 }
 
-                $id = $this->text($sourceSitrep['source_hub_id'] ?? $sourceSitrep['hub_id'] ?? null);
+                $ids = array_values(array_unique(array_filter([
+                    $this->text($sourceSitrep['source_hub_id'] ?? null),
+                    $this->text($sourceSitrep['hub_id'] ?? null),
+                    $this->text($sourceSitrep['source_relay_hub_id'] ?? null),
+                    $this->text($sourceSitrep['relay_hub_id'] ?? null),
+                ])));
                 $alert = $this->text($sourceSitrep['alert_level'] ?? null);
 
-                if ($id !== null && $alert !== null) {
+                if ($alert === null) {
+                    continue;
+                }
+
+                foreach ($ids as $id) {
                     $alerts[$id] = $alert;
                 }
             }
@@ -573,14 +598,28 @@ class SupportStrategyBuilder
         $candidateIds = [
             $location['id'] ?? null,
             $location['hub_id'] ?? null,
+            $location['relay_hub_id'] ?? null,
+            $location['source_relay_hub_id'] ?? null,
             data_get($item, 'data.hub_node.snapshot.hub_id'),
+            data_get($item, 'data.hub_node.snapshot.relay_hub_id'),
             data_get($item, 'data.source_snapshot.hub_node.snapshot.hub_id'),
+            data_get($item, 'data.source_snapshot.hub_node.snapshot.relay_hub_id'),
         ];
 
         foreach ($candidateIds as $candidate) {
             $id = $this->text($candidate);
-            if ($id !== null && isset($profiles[$id])) {
+            if ($id === null) {
+                continue;
+            }
+
+            if (isset($profiles[$id])) {
                 return $id;
+            }
+
+            foreach ($profiles as $profileId => $profile) {
+                if (in_array($id, $profile['aliases'] ?? [], true)) {
+                    return $profileId;
+                }
             }
         }
 
@@ -607,6 +646,21 @@ class SupportStrategyBuilder
         }
 
         return array_values(array_filter($value, 'is_array'));
+    }
+
+    /**
+     * @param array<string, string> $alerts
+     * @param array<int, string> $aliases
+     */
+    private function firstAlert(array $alerts, array $aliases): ?string
+    {
+        foreach ($aliases as $alias) {
+            if (isset($alerts[$alias])) {
+                return $alerts[$alias];
+            }
+        }
+
+        return null;
     }
 
     private function priorityLevel(int $score, mixed $alertLevel): string

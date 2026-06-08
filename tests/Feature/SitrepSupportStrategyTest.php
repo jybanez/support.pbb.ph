@@ -107,6 +107,88 @@ class SitrepSupportStrategyTest extends TestCase
         }
     }
 
+    public function test_current_sitrep_support_strategy_uses_selected_need_source_path_for_evidence_refs(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $payload = $this->consolidatedPayload();
+        unset($payload['needs']['rollup']['category_demand']);
+        $payload['needs']['rollup']['category_groups'] = [
+            [
+                'category' => 'Heavy Equipment / Clearing',
+                'quantity_requested' => 44,
+            ],
+        ];
+
+        ConsolidatedSitrep::query()->create([
+            'status' => ConsolidatedSitrep::STATUS_CURRENT,
+            'alert_level' => 'Normal',
+            'computed_source_alert_level' => 'Critical',
+            'source_sitrep_count' => 1,
+            'sitrep_payload' => $payload,
+            'source_index' => [],
+            'validation_issues' => [],
+            'consolidated_at' => now(),
+        ]);
+
+        $this->getJson('/api/sitreps/current/support')
+            ->assertOk()
+            ->assertJsonPath('data.strategy.matching.0.evidence_refs.0', 'needs.rollup.category_groups[0]');
+    }
+
+    public function test_current_sitrep_support_strategy_matches_relay_hub_only_source_identity(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $payload = $this->consolidatedPayload();
+        $payload['summary']['items'][0]['location'] = [
+            'name' => 'Apas, Cebu City, Cebu',
+            'deployment' => 'barangay',
+            'relay_hub_id' => 'relay-apas',
+        ];
+        $payload['situation']['items'][0]['location'] = [
+            'relay_hub_id' => 'relay-apas',
+        ];
+        $payload['population']['items'][0]['location'] = [
+            'relay_hub_id' => 'relay-apas',
+        ];
+        $payload['needs']['items'][0]['location'] = [
+            'relay_hub_id' => 'relay-apas',
+        ];
+        $payload['source_snapshot']['rollup']['hub_nodes'][0] = [
+            'source_relay_hub_id' => 'relay-apas',
+            'snapshot' => [
+                'relay_hub_id' => 'relay-apas',
+                'name' => 'Apas, Cebu City, Cebu',
+                'deployment' => 'barangay',
+                'brgy_code' => '072217017',
+                'citymun_code' => '072217',
+            ],
+        ];
+        $payload['source_snapshot']['rollup']['source_sitreps'][0] = [
+            'source_relay_hub_id' => 'relay-apas',
+            'alert_level' => 'Critical',
+        ];
+
+        ConsolidatedSitrep::query()->create([
+            'status' => ConsolidatedSitrep::STATUS_CURRENT,
+            'alert_level' => 'Normal',
+            'computed_source_alert_level' => 'Critical',
+            'source_sitrep_count' => 1,
+            'sitrep_payload' => $payload,
+            'source_index' => [],
+            'validation_issues' => [],
+            'consolidated_at' => now(),
+        ]);
+
+        $this->getJson('/api/sitreps/current/support')
+            ->assertOk()
+            ->assertJsonPath('data.strategy.priorities.0.source_hub_id', 'relay-apas')
+            ->assertJsonPath('data.strategy.priorities.0.source_relay_hub_id', 'relay-apas')
+            ->assertJsonPath('data.strategy.priorities.0.priority_level', 'critical')
+            ->assertJsonPath('data.strategy.priorities.0.based_on.0', '14 open reports');
+    }
+
     /**
      * @return array<string, mixed>
      */

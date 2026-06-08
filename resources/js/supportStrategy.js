@@ -118,10 +118,11 @@ const cardBody = (tabId, card) => {
 
 const cardActions = (card) => {
     const sourceId = String(card.source_hub_id || '').trim();
+    const evidenceRef = Array.isArray(card.evidence_refs) ? String(card.evidence_refs[0] || '') : '';
 
     return `
         <div class="support-strategy-actions">
-            <button type="button" data-strategy-action="evidence">View Evidence</button>
+            <button type="button" data-strategy-action="evidence" data-evidence-ref="${escapeHtml(evidenceRef)}">View Evidence</button>
             ${sourceId ? `<button type="button" data-strategy-action="map" data-source-hub-id="${escapeHtml(sourceId)}">View on Map</button>` : ''}
             <button type="button" data-strategy-action="review" data-card-id="${escapeHtml(card.id || '')}">Mark Reviewed</button>
         </div>
@@ -244,6 +245,6 @@ export function renderSupportStrategy(container, supportStrategy, callbacks = {}
     });
 
     container.querySelectorAll('[data-strategy-action="evidence"]').forEach((button) => {
-        button.addEventListener('click', () => callbacks.onViewEvidence?.());
+        button.addEventListener('click', () => callbacks.onViewEvidence?.(button.dataset.evidenceRef || ''));
     });
 }

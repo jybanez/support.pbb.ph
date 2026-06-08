@@ -647,7 +647,14 @@ const renderSupportStrategyPane = () => {
             state.supportStrategy.reviewedIds.add(cardId);
             renderSupportStrategyPane();
         },
-        onViewEvidence() {
+        onViewEvidence(evidenceRef) {
+            const sectionId = String(evidenceRef || '').split('.')[0] || '';
+
+            if (sectionId && state.currentSitrep.sections.some((section) => section.id === sectionId)) {
+                state.currentSitrep.activeSection = sectionId;
+                renderCurrentSitrepPane();
+            }
+
             document.querySelector('[data-current-sitrep-host]')?.scrollIntoView?.({
                 block: 'nearest',
                 inline: 'nearest',
