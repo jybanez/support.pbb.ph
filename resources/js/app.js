@@ -11,7 +11,6 @@ uiLoader.setPreferBundles(true);
 await uiLoader.loadMany([
     'ui.navbar',
     'ui.drawer',
-    'ui.splitter',
     'ui.map.controls',
     'ui.virtual.list',
     'ui.select',
@@ -32,7 +31,6 @@ await uiLoader.loadMany([
 const helpers = {
     createNavbar: await uiLoader.get('ui.navbar', helperLoadOptions),
     createDrawer: await uiLoader.get('ui.drawer', helperLoadOptions),
-    createSplitter: await uiLoader.get('ui.splitter', helperLoadOptions),
     createMapControls: await uiLoader.get('ui.map.controls', helperLoadOptions),
     createVirtualList: await uiLoader.get('ui.virtual.list', helperLoadOptions),
     createSelect: await uiLoader.get('ui.select', helperLoadOptions),
@@ -115,8 +113,6 @@ let accountModal = null;
 let passwordModal = null;
 let usersModal = null;
 let settingsModal = null;
-let dashboardSplitter = null;
-let evidenceStrategySplitter = null;
 let dashboardMap = null;
 let dashboardMapControls = null;
 let dashboardMapResizeObserver = null;
@@ -579,7 +575,17 @@ const dashboard = () => `
         <div class="feature-shell feature-shell-dashboard">
             <section class="feature-content">
                 <div class="support-dashboard-layout">
-                    <div class="support-dashboard-splitter-host" data-dashboard-splitter></div>
+                    <section class="support-dashboard-column is-sitrep" aria-label="Current SITREP">
+                        <div class="support-current-sitrep-host" data-current-sitrep-host></div>
+                    </section>
+                    <section class="support-dashboard-column is-strategy" aria-label="Support strategy">
+                        <div class="support-strategy-host" data-support-strategy-host></div>
+                    </section>
+                    <section class="support-dashboard-map-pane" aria-label="Support operations map">
+                        <div class="support-dashboard-map-canvas" data-dashboard-map-canvas></div>
+                        <div class="support-dashboard-map-empty" data-dashboard-map-empty>Loading support map...</div>
+                        <div class="support-dashboard-map-controls" data-dashboard-map-controls></div>
+                    </section>
                     <section class="support-dashboard-pane support-dashboard-sources-rail" aria-label="SITREP source hubs">
                         <div class="support-dashboard-pane-body">
                             <div data-dashboard-sources-host></div>
@@ -590,46 +596,6 @@ const dashboard = () => `
         </div>
     </section>
 `;
-
-const createDashboardMapPane = () => {
-    const pane = document.createElement('section');
-    pane.className = 'support-dashboard-map-pane';
-    pane.setAttribute('aria-label', 'Support operations map');
-    pane.innerHTML = `
-        <div class="support-dashboard-map-canvas" data-dashboard-map-canvas></div>
-        <div class="support-dashboard-map-empty" data-dashboard-map-empty>Loading support map...</div>
-        <div class="support-dashboard-map-controls" data-dashboard-map-controls></div>
-    `;
-    return pane;
-};
-
-const createSitrepEvidencePane = () => {
-    const pane = document.createElement('div');
-    pane.className = 'support-current-sitrep-host';
-    pane.dataset.currentSitrepHost = '';
-
-    return pane;
-};
-
-const createStrategyPane = () => {
-    const pane = document.createElement('div');
-    pane.className = 'support-strategy-host';
-    pane.dataset.supportStrategyHost = '';
-
-    return pane;
-};
-
-const createDashboardPane = (className, title, body) => {
-    const pane = document.createElement('section');
-    pane.className = `support-dashboard-pane ${className}`;
-    pane.innerHTML = `
-        ${title ? `<header><p class="ui-eyebrow">${escapeHtml(title)}</p></header>` : ''}
-        <div class="support-dashboard-pane-body">
-            ${body}
-        </div>
-    `;
-    return pane;
-};
 
 const mountSitrepViewerCss = (css) => {
     if (!css || currentSitrepStyleMounted) {
@@ -1427,50 +1393,7 @@ const mountDashboardMap = () => {
     }
 };
 
-const renderDashboardSplitter = () => {
-    const host = document.querySelector('[data-dashboard-splitter]');
-    if (!host) return;
-
-    const splitHostWidth = Math.max(1, host.getBoundingClientRect().width || host.clientWidth || 0);
-    dashboardSplitter?.destroy?.();
-    evidenceStrategySplitter?.destroy?.();
-    evidenceStrategySplitter = null;
-    dashboardSplitter = helpers.createSplitter(host, {
-        orientation: 'horizontal',
-        initialRatio: Math.min(0.62, Math.max(0.5, 900 / splitHostWidth)),
-        minRatio: 0.42,
-        maxRatio: 0.68,
-        className: 'support-dashboard-splitter',
-        paneA: createDashboardPane(
-            'is-evidence-strategy',
-            '',
-            `
-                <div class="support-evidence-strategy-splitter-host" data-evidence-strategy-splitter></div>
-            `,
-        ),
-        paneB: createDashboardMapPane(),
-        onResize: () => {
-            dashboardMap?.resize?.();
-            evidenceStrategySplitter?.refresh?.();
-        },
-    });
-    const evidenceStrategyHost = document.querySelector('[data-evidence-strategy-splitter]');
-    if (evidenceStrategyHost) {
-        const nestedWidth = Math.max(1000, evidenceStrategyHost.getBoundingClientRect().width || evidenceStrategyHost.clientWidth || 1000);
-        const minNestedRatio = Math.min(0.5, 500 / nestedWidth);
-        evidenceStrategySplitter = helpers.createSplitter(evidenceStrategyHost, {
-            orientation: 'horizontal',
-            initialRatio: 0.5,
-            minRatio: minNestedRatio,
-            maxRatio: 1 - minNestedRatio,
-            className: 'support-evidence-strategy-splitter',
-            paneA: createSitrepEvidencePane(),
-            paneB: createStrategyPane(),
-            onResize: () => {
-                dashboardMap?.resize?.();
-            },
-        });
-    }
+const renderDashboardColumns = () => {
     mountDashboardMap();
     renderSourcesRail();
     loadCurrentSitrep();
@@ -1481,10 +1404,6 @@ const render = () => {
     destroyNavbarClock();
     navbar?.destroy?.();
     navbar = null;
-    dashboardSplitter?.destroy?.();
-    dashboardSplitter = null;
-    evidenceStrategySplitter?.destroy?.();
-    evidenceStrategySplitter = null;
     destroyDashboardMap();
     root.innerHTML = `
         <div class="app-shell" data-theme="dark">
@@ -1496,7 +1415,7 @@ const render = () => {
     `;
     renderNavbar();
     if (state.account) {
-        renderDashboardSplitter();
+        renderDashboardColumns();
     }
 };
 
