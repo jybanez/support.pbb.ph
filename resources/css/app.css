@@ -290,17 +290,38 @@ input {
     overflow: hidden;
 }
 
-.support-evidence-strategy-grid {
+.support-evidence-strategy-splitter-host,
+.support-evidence-strategy-splitter-host .ui-splitter {
     height: 100%;
+    width: 100%;
     min-height: 0;
-    display: grid;
-    grid-template-columns: minmax(360px, 0.54fr) minmax(340px, 0.46fr);
+    min-width: 0;
+}
+
+.support-evidence-strategy-splitter {
+    border-radius: 0;
+}
+
+.support-evidence-strategy-splitter .ui-splitter-pane {
+    min-width: 500px;
+    padding: 0;
     overflow: hidden;
 }
 
-.support-evidence-strategy-grid .support-current-sitrep-host {
-    min-width: 0;
+.support-evidence-strategy-splitter .ui-splitter-pane.is-a {
     border-right: 1px solid rgba(52, 71, 105, 0.55);
+}
+
+.support-evidence-strategy-splitter .ui-splitter-pane.is-b {
+    min-width: 500px;
+}
+
+.support-evidence-strategy-splitter .ui-splitter-divider {
+    background: rgba(58, 85, 132, 0.92);
+}
+
+.support-evidence-strategy-splitter .support-current-sitrep-host {
+    min-width: 0;
 }
 
 .support-strategy-host {
@@ -1709,16 +1730,6 @@ input {
     .support-dashboard-splitter-host .ui-splitter-pane.is-a {
         border-right: 0;
         border-bottom: 1px solid rgba(52, 71, 105, 0.5);
-    }
-
-    .support-evidence-strategy-grid {
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: minmax(0, 1fr) minmax(320px, 0.8fr);
-    }
-
-    .support-evidence-strategy-grid .support-current-sitrep-host {
-        border-right: 0;
-        border-bottom: 1px solid rgba(52, 71, 105, 0.55);
     }
 
     .support-dashboard-splitter-host .ui-splitter-divider {

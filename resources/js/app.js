@@ -116,6 +116,7 @@ let passwordModal = null;
 let usersModal = null;
 let settingsModal = null;
 let dashboardSplitter = null;
+let evidenceStrategySplitter = null;
 let dashboardMap = null;
 let dashboardMapControls = null;
 let dashboardMapResizeObserver = null;
@@ -599,6 +600,22 @@ const createDashboardMapPane = () => {
         <div class="support-dashboard-map-empty" data-dashboard-map-empty>Loading support map...</div>
         <div class="support-dashboard-map-controls" data-dashboard-map-controls></div>
     `;
+    return pane;
+};
+
+const createSitrepEvidencePane = () => {
+    const pane = document.createElement('div');
+    pane.className = 'support-current-sitrep-host';
+    pane.dataset.currentSitrepHost = '';
+
+    return pane;
+};
+
+const createStrategyPane = () => {
+    const pane = document.createElement('div');
+    pane.className = 'support-strategy-host';
+    pane.dataset.supportStrategyHost = '';
+
     return pane;
 };
 
@@ -1416,6 +1433,8 @@ const renderDashboardSplitter = () => {
 
     const splitHostWidth = Math.max(1, host.getBoundingClientRect().width || host.clientWidth || 0);
     dashboardSplitter?.destroy?.();
+    evidenceStrategySplitter?.destroy?.();
+    evidenceStrategySplitter = null;
     dashboardSplitter = helpers.createSplitter(host, {
         orientation: 'horizontal',
         initialRatio: Math.min(0.62, Math.max(0.5, 900 / splitHostWidth)),
@@ -1426,17 +1445,32 @@ const renderDashboardSplitter = () => {
             'is-evidence-strategy',
             '',
             `
-                <div class="support-evidence-strategy-grid">
-                    <div class="support-current-sitrep-host" data-current-sitrep-host></div>
-                    <div class="support-strategy-host" data-support-strategy-host></div>
-                </div>
+                <div class="support-evidence-strategy-splitter-host" data-evidence-strategy-splitter></div>
             `,
         ),
         paneB: createDashboardMapPane(),
         onResize: () => {
             dashboardMap?.resize?.();
+            evidenceStrategySplitter?.refresh?.();
         },
     });
+    const evidenceStrategyHost = document.querySelector('[data-evidence-strategy-splitter]');
+    if (evidenceStrategyHost) {
+        const nestedWidth = Math.max(1000, evidenceStrategyHost.getBoundingClientRect().width || evidenceStrategyHost.clientWidth || 1000);
+        const minNestedRatio = Math.min(0.5, 500 / nestedWidth);
+        evidenceStrategySplitter = helpers.createSplitter(evidenceStrategyHost, {
+            orientation: 'horizontal',
+            initialRatio: 0.5,
+            minRatio: minNestedRatio,
+            maxRatio: 1 - minNestedRatio,
+            className: 'support-evidence-strategy-splitter',
+            paneA: createSitrepEvidencePane(),
+            paneB: createStrategyPane(),
+            onResize: () => {
+                dashboardMap?.resize?.();
+            },
+        });
+    }
     mountDashboardMap();
     renderSourcesRail();
     loadCurrentSitrep();
@@ -1449,6 +1483,8 @@ const render = () => {
     navbar = null;
     dashboardSplitter?.destroy?.();
     dashboardSplitter = null;
+    evidenceStrategySplitter?.destroy?.();
+    evidenceStrategySplitter = null;
     destroyDashboardMap();
     root.innerHTML = `
         <div class="app-shell" data-theme="dark">
