@@ -679,26 +679,24 @@ input {
 }
 
 .support-strategy-section-head {
-    display: grid;
-    gap: 12px;
+    margin-bottom: 4px;
 }
 
 .support-strategy-section-head .sitrep-eyebrow {
-    margin: 0;
-    color: #8ec7ff;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.14em;
-    line-height: 1.2;
+    margin: 0 0 0.45rem;
+    color: #89bced;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
 }
 
 .support-strategy-section-head h2 {
     margin: 0;
-    color: var(--ui-text);
-    font-size: 24px;
-    font-weight: 500;
-    line-height: 1.18;
+    color: inherit;
+    font-size: 1.55rem;
+    font-weight: inherit;
+    line-height: normal;
 }
 
 .support-strategy-card {
