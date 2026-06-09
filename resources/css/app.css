@@ -793,23 +793,6 @@ input {
     gap: 6px;
 }
 
-.support-strategy-actions button {
-    min-height: 28px;
-    border: 1px solid rgba(83, 118, 169, 0.62);
-    border-radius: 6px;
-    background: rgba(20, 37, 61, 0.92);
-    color: var(--ui-text);
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.support-strategy-actions button:hover,
-.support-strategy-actions button:focus-visible {
-    border-color: rgba(94, 234, 212, 0.62);
-    outline: none;
-}
-
 .support-strategy-empty {
     margin: 10px;
     border: 1px dashed rgba(91, 123, 168, 0.62);

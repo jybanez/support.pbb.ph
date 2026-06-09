@@ -62,19 +62,17 @@ const humanizeEvidenceItem = (item, card = {}) => {
     const text = String(item ?? '').trim();
     if (!text) return '';
 
-    const location = card.source_hub_name || card.target || '';
-    const locationPrefix = location ? `${location} reports ` : 'SITREP reports ';
     const lower = text.toLowerCase();
 
-    if (lower.includes('open report')) return sentence(`${locationPrefix}${text}`);
-    if (lower.includes('active report')) return sentence(`${locationPrefix}${text} still active`);
-    if (lower.includes('current assignment')) return sentence(`${locationPrefix}${text} currently active`);
-    if (lower.includes('requested resource unit')) return sentence(`${locationPrefix}${text} requested across support needs`);
-    if (lower.includes('person at risk') || lower.includes('people at risk')) return sentence(`${locationPrefix}${text}`);
-    if (lower.includes('critical alert level')) return sentence(`${location || 'This area'} is under a critical alert level`);
-    if (lower.includes('elevated alert level')) return sentence(`${location || 'This area'} is under an elevated alert level`);
-    if (lower.includes('gap')) return 'Report includes response or confidence gaps requiring review.';
-    if (lower.includes('concern signal')) return sentence(`${location || 'This area'} has a reported ${text.replace(/ concern signal$/i, '')} concern signal`);
+    if (lower.includes('open report')) return sentence(text);
+    if (lower.includes('active report')) return sentence(`${text} still active`);
+    if (lower.includes('current assignment')) return sentence(`${text} currently active`);
+    if (lower.includes('requested resource unit')) return sentence(`${text} across support needs`);
+    if (lower.includes('person at risk') || lower.includes('people at risk')) return sentence(text);
+    if (lower.includes('critical alert level')) return 'Critical alert level.';
+    if (lower.includes('elevated alert level')) return 'Elevated alert level.';
+    if (lower.includes('gap')) return 'Response or confidence gaps require review.';
+    if (lower.includes('concern signal')) return sentence(`${text.replace(/ concern signal$/i, '')} concern signal reported`);
     if (lower.includes('no resource availability registry')) return 'No connected resource availability registry confirms available supply.';
     if (lower.includes('missing source snapshot timestamp')) return 'Source freshness timestamp is unavailable and should be validated.';
 
@@ -90,14 +88,22 @@ const humanEvidenceItems = (card = {}) => {
 };
 
 const actionItems = (tabId, card = {}) => {
+    const normalize = (item) => String(item ?? '')
+        .replace(/\.$/, '')
+        .replace(/^Review requested demand as unconfirmed supply$/i, 'Confirm unmet resource demand')
+        .replace(/^Prepare leadership review for urgent support$/i, 'Prepare urgent support review')
+        .replace(/^Verify available resources before committing support$/i, 'Verify available resources')
+        .trim();
+    const compact = (items) => items.map(normalize).filter(Boolean).slice(0, 2);
+
     if (Array.isArray(card.recommended_next_steps) && card.recommended_next_steps.length) {
-        return card.recommended_next_steps;
+        return compact(card.recommended_next_steps);
     }
     if (Array.isArray(card.recommended_actions) && card.recommended_actions.length) {
-        return card.recommended_actions;
+        return compact(card.recommended_actions);
     }
     if (card.suggested_action) {
-        return [card.suggested_action];
+        return compact([card.suggested_action]);
     }
     if (tabId === 'matching') {
         return ['Verify available resources before committing support.'];
@@ -112,20 +118,20 @@ const validationItems = (tabId, card = {}) => {
     const items = [];
     const status = String(card.availability_status || card.status || '').toLowerCase();
 
+    if (Array.isArray(card.based_on) && card.based_on.some((item) => String(item).toLowerCase().includes('gap'))) {
+        items.push('Confirm reported response or confidence gaps with the source hub.');
+    }
     if (status.includes('unknown')) {
-        items.push('Confirm available supply before any commitment is issued.');
+        items.push('Confirm available supply for the requested resources.');
     }
     if (status.includes('draft')) {
-        items.push('Requires leadership review before it becomes an official commitment.');
+        items.push('Leadership approval is required before this becomes a commitment.');
     }
     if (tabId === 'matching') {
-        items.push('Requested demand is known; available supply is not confirmed.');
+        items.push('Available supply is not confirmed for this demand category.');
     }
     if (tabId === 'clarifications') {
         items.push(card.reason || 'Field validation is required before action is finalized.');
-    }
-    if (Array.isArray(card.based_on) && card.based_on.some((item) => String(item).toLowerCase().includes('gap'))) {
-        items.push('Validate reported response or confidence gaps with the source hub.');
     }
 
     return [...new Set(items)].slice(0, 1);
@@ -214,9 +220,9 @@ const cardActions = (card) => {
 
     return `
         <div class="support-strategy-actions">
-            <button type="button" data-strategy-action="evidence" data-evidence-ref="${escapeHtml(evidenceRef)}">Review Details</button>
-            ${sourceId ? `<button type="button" data-strategy-action="map" data-source-hub-id="${escapeHtml(sourceId)}">Show on Map</button>` : ''}
-            <button type="button" data-strategy-action="review" data-card-id="${escapeHtml(card.id || '')}">Mark Reviewed</button>
+            <button type="button" class="support-users-secondary-button support-strategy-action-button" data-strategy-action="evidence" data-evidence-ref="${escapeHtml(evidenceRef)}">Review Details</button>
+            ${sourceId ? `<button type="button" class="support-users-secondary-button support-strategy-action-button" data-strategy-action="map" data-source-hub-id="${escapeHtml(sourceId)}">Show on Map</button>` : ''}
+            <button type="button" class="support-users-secondary-button support-strategy-action-button" data-strategy-action="review" data-card-id="${escapeHtml(card.id || '')}">Mark Reviewed</button>
         </div>
     `;
 };
