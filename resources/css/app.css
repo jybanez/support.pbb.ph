@@ -747,6 +747,19 @@ input {
     color: var(--ui-text) !important;
 }
 
+.support-strategy-brief-row {
+    display: grid;
+    gap: 4px;
+    border: 1px solid rgba(76, 104, 145, 0.38);
+    border-radius: 6px;
+    padding: 7px;
+    background: rgba(9, 18, 31, 0.48);
+}
+
+.support-strategy-brief-row p {
+    color: var(--ui-text);
+}
+
 .support-strategy-metrics {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -780,6 +793,28 @@ input {
     color: var(--ui-muted);
     font-size: 12px;
     line-height: 1.42;
+}
+
+.support-strategy-technical {
+    border-top: 1px solid rgba(76, 104, 145, 0.3);
+    padding-top: 7px;
+}
+
+.support-strategy-technical summary {
+    color: var(--ui-muted);
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.support-strategy-technical ul {
+    margin: 7px 0 0;
+    padding-left: 18px;
+    color: var(--ui-muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 11px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
 }
 
 .support-strategy-actions {
