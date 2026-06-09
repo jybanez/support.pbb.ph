@@ -743,43 +743,13 @@ input {
     line-height: 1.45;
 }
 
-.support-strategy-target {
-    color: var(--ui-text) !important;
-}
-
-.support-strategy-brief-row {
+.support-strategy-card-note {
     display: grid;
     gap: 4px;
-    border: 1px solid rgba(76, 104, 145, 0.38);
-    border-radius: 6px;
-    padding: 7px;
-    background: rgba(9, 18, 31, 0.48);
 }
 
-.support-strategy-brief-row p {
+.support-strategy-card-note p {
     color: var(--ui-text);
-}
-
-.support-strategy-metrics {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-}
-
-.support-strategy-metrics span {
-    min-width: 0;
-    border: 1px solid rgba(76, 104, 145, 0.5);
-    border-radius: 6px;
-    padding: 7px;
-    background: rgba(9, 18, 31, 0.65);
-    text-transform: none;
-}
-
-.support-strategy-metrics strong {
-    display: block;
-    color: var(--ui-text);
-    font-size: 16px;
-    line-height: 1;
 }
 
 .support-strategy-card-list {

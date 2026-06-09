@@ -37,7 +37,7 @@ const toneClass = (card = {}) => {
     return 'is-alert-info';
 };
 
-const listMarkup = (title, items) => {
+const listMarkup = (title, items, limit = 5) => {
     if (!Array.isArray(items) || !items.length) {
         return '';
     }
@@ -46,7 +46,7 @@ const listMarkup = (title, items) => {
         <div class="support-strategy-card-list">
             <span>${escapeHtml(title)}</span>
             <ul>
-                ${items.slice(0, 5).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
+                ${items.slice(0, limit).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
             </ul>
         </div>
     `;
@@ -86,19 +86,7 @@ const humanEvidenceItems = (card = {}) => {
     return evidence
         .map((item) => humanizeEvidenceItem(item, card))
         .filter(Boolean)
-        .slice(0, 5);
-};
-
-const locationText = (card = {}) => {
-    if (card.source_hub_name) return card.source_hub_name;
-    if (Array.isArray(card.affected_areas) && card.affected_areas.length) {
-        return card.affected_areas.slice(0, 4).join(', ');
-    }
-    if (card.target) return card.target;
-    if (Array.isArray(card.suggested_downstream_targets) && card.suggested_downstream_targets.length) {
-        return card.suggested_downstream_targets.slice(0, 4).join(', ');
-    }
-    return 'Affected area from the current SITREP';
+        .slice(0, 3);
 };
 
 const actionItems = (tabId, card = {}) => {
@@ -140,34 +128,29 @@ const validationItems = (tabId, card = {}) => {
         items.push('Validate reported response or confidence gaps with the source hub.');
     }
 
-    return [...new Set(items)].slice(0, 3);
+    return [...new Set(items)].slice(0, 1);
 };
 
-const briefIntro = (tabId, card = {}) => {
-    if (tabId === 'priorities') {
-        const location = card.source_hub_name || 'This area';
-        return card.rank
-            ? `${location} is ranked #${card.rank} for urgent support review.`
-            : `${location} needs support review.`;
-    }
-
+const whyText = (tabId, card = {}) => {
     if (tabId === 'packages') {
-        return `${card.title || 'Support package'} should be prepared for leadership review.`;
-    }
-
-    if (tabId === 'decisions') {
-        return card.summary || 'This item needs a leadership decision before support is committed.';
+        const facts = [
+            Number(card.open_reports || 0) > 0 ? `${card.open_reports} open reports` : '',
+            Number(card.requested_resource_units || 0) > 0 ? `${card.requested_resource_units} requested resource units` : '',
+        ].filter(Boolean);
+        return facts.length
+            ? sentence(`${facts.join(' and ')} indicate this package should be prepared for review`)
+            : sentence(card.summary || 'This support package should be prepared for review');
     }
 
     if (tabId === 'matching') {
-        return `${card.demand_category || 'Requested resources'} need availability validation.`;
+        return sentence(`${card.requested || 'Requested'} ${card.demand_category || 'resource units'} are reported, but available supply is not confirmed`);
     }
 
     if (tabId === 'clarifications') {
-        return card.question || 'Clarification is needed before action is finalized.';
+        return sentence(card.reason || 'Clarification is needed before action is finalized');
     }
 
-    return card.summary || 'Draft support item for review.';
+    return sentence(card.summary || 'This item needs review before support is assigned or communicated');
 };
 
 const technicalDetailsMarkup = (card = {}) => {
@@ -184,12 +167,16 @@ const technicalDetailsMarkup = (card = {}) => {
     `;
 };
 
-const metricMarkup = (label, value) => {
-    if (value === null || value === undefined || value === '' || Number(value) === 0) {
-        return '';
-    }
+const sectionTextMarkup = (title, value) => {
+    const text = sentence(value);
+    if (!text) return '';
 
-    return `<span><strong>${escapeHtml(value)}</strong>${escapeHtml(label)}</span>`;
+    return `
+        <div class="support-strategy-card-note">
+            <span>${escapeHtml(title)}</span>
+            <p>${escapeHtml(text)}</p>
+        </div>
+    `;
 };
 
 const cardTitle = (tabId, card) => {
@@ -212,74 +199,11 @@ const cardBody = (tabId, card) => {
     const evidence = humanEvidenceItems(card);
     const validation = validationItems(tabId, card);
 
-    if (tabId === 'matching') {
-        return `
-            <p>${escapeHtml(briefIntro(tabId, card))}</p>
-            <div class="support-strategy-brief-row">
-                <span>Where</span>
-                <p>${escapeHtml(locationText(card))}</p>
-            </div>
-            <div class="support-strategy-metrics">
-                ${metricMarkup('requested', card.requested)}
-                <span><strong>Unknown</strong>availability</span>
-            </div>
-            ${listMarkup('Recommended action', actionItems(tabId, card))}
-            ${listMarkup('Evidence supporting this', evidence)}
-            ${listMarkup('Validation needed', validation)}
-            ${technicalDetailsMarkup(card)}
-        `;
-    }
-
-    if (tabId === 'packages') {
-        return `
-            <p>${escapeHtml(briefIntro(tabId, card))}</p>
-            <div class="support-strategy-brief-row">
-                <span>Where</span>
-                <p>${escapeHtml(locationText(card))}</p>
-            </div>
-            <div class="support-strategy-metrics">
-                ${metricMarkup('open reports', card.open_reports)}
-                ${metricMarkup('requested', card.requested_resource_units)}
-            </div>
-            ${listMarkup('Recommended action', actionItems(tabId, card))}
-            ${listMarkup('Support options', card.suggested_resources)}
-            ${listMarkup('Evidence supporting this', evidence)}
-            ${listMarkup('Validation needed', validation)}
-            ${technicalDetailsMarkup(card)}
-        `;
-    }
-
-    if (tabId === 'clarifications') {
-        return `
-            <p>${escapeHtml(briefIntro(tabId, card))}</p>
-            <div class="support-strategy-brief-row">
-                <span>Where</span>
-                <p>${escapeHtml(locationText(card))}</p>
-            </div>
-            ${listMarkup('Why it matters', evidence.length ? evidence : [card.reason].filter(Boolean))}
-            ${listMarkup('Validation needed', validation)}
-            ${technicalDetailsMarkup(card)}
-        `;
-    }
-
-    if (tabId === 'commitments') {
-        return `
-            <p>${escapeHtml(briefIntro(tabId, card))}</p>
-            ${listMarkup('Recommended action', actionItems(tabId, card))}
-            ${technicalDetailsMarkup(card)}
-        `;
-    }
-
     return `
-        <p>${escapeHtml(briefIntro(tabId, card))}</p>
-        <div class="support-strategy-brief-row">
-            <span>Where</span>
-            <p>${escapeHtml(locationText(card))}</p>
-        </div>
-        ${listMarkup('Why it matters', [card.summary].filter(Boolean))}
-        ${listMarkup('Recommended action', actionItems(tabId, card))}
-        ${listMarkup('Evidence supporting this', evidence)}
-        ${listMarkup('Validation needed', validation)}
+        ${sectionTextMarkup('Why it matters', whyText(tabId, card))}
+        ${listMarkup('Recommended action', actionItems(tabId, card), 2)}
+        ${listMarkup('Evidence supporting this', evidence, 3)}
+        ${sectionTextMarkup('Validation needed', validation[0])}
         ${technicalDetailsMarkup(card)}
     `;
 };
