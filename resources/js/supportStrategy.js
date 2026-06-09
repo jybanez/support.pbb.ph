@@ -156,7 +156,7 @@ export function renderSupportStrategy(container, supportStrategy, callbacks = {}
     if (supportStrategy.loading) {
         container.innerHTML = `
             <div class="support-strategy-panel">
-                <header class="support-strategy-header">
+                <header class="support-current-sitrep-header support-panel-header support-strategy-header">
                     <div data-skeleton data-skeleton-lines="2"></div>
                 </header>
                 <div class="support-strategy-loading-tabs" data-skeleton data-skeleton-variant="grid" data-skeleton-columns="3" data-skeleton-rows="2"></div>
@@ -172,9 +172,11 @@ export function renderSupportStrategy(container, supportStrategy, callbacks = {}
     if (supportStrategy.error) {
         container.innerHTML = `
             <div class="support-strategy-panel">
-                <header class="support-strategy-header">
-                    <p class="ui-eyebrow">Support Strategy</p>
-                    <h2>Strategy unavailable</h2>
+                <header class="support-current-sitrep-header support-panel-header support-strategy-header">
+                    <div>
+                        <h2>SUPPORT STRATEGY</h2>
+                        <p>Strategy unavailable</p>
+                    </div>
                 </header>
                 <div class="support-strategy-empty">
                     <p>${escapeHtml(supportStrategy.error)}</p>
@@ -187,9 +189,11 @@ export function renderSupportStrategy(container, supportStrategy, callbacks = {}
     if (!supportStrategy.available || !supportStrategy.data?.strategy) {
         container.innerHTML = `
             <div class="support-strategy-panel">
-                <header class="support-strategy-header">
-                    <p class="ui-eyebrow">Support Strategy</p>
-                    <h2>No current strategy</h2>
+                <header class="support-current-sitrep-header support-panel-header support-strategy-header">
+                    <div>
+                        <h2>SUPPORT STRATEGY</h2>
+                        <p>No current strategy</p>
+                    </div>
                 </header>
                 <div class="support-strategy-empty">
                     <p>Support strategy will appear after the current consolidated SITREP is available.</p>
@@ -202,23 +206,25 @@ export function renderSupportStrategy(container, supportStrategy, callbacks = {}
     const activeTab = strategyTabs.some((tab) => tab.id === supportStrategy.activeTab)
         ? supportStrategy.activeTab
         : 'priorities';
-    const generated = supportStrategy.data.source_generated_at || supportStrategy.data.generated_at || '';
+    const rawGenerated = supportStrategy.data.source_generated_at || supportStrategy.data.generated_at || '';
+    const generated = callbacks.formatTimestamp?.(rawGenerated) || rawGenerated;
     const strategy = supportStrategy.data.strategy;
     const cards = Array.isArray(strategy[activeTab]) ? strategy[activeTab] : [];
 
     container.innerHTML = `
         <div class="support-strategy-panel">
-            <header class="support-strategy-header">
-                <p class="ui-eyebrow">Support Strategy</p>
-                <h2>${escapeHtml(supportStrategy.data.coverage_area || 'Current SITREP')}</h2>
-                ${generated ? `<p>${escapeHtml(generated)}</p>` : ''}
+            <header class="support-current-sitrep-header support-panel-header support-strategy-header">
+                <div>
+                    <h2>SUPPORT STRATEGY</h2>
+                    ${generated ? `<p>${escapeHtml(generated)}</p>` : ''}
+                </div>
             </header>
-            <nav class="support-strategy-tabs" role="tablist" aria-label="Support strategy sections">
+            <nav class="support-current-sitrep-tabs support-strategy-tabs" role="tablist" aria-label="Support strategy sections">
                 ${strategyTabs.map((tab) => `
                     <button
                         type="button"
                         role="tab"
-                        class="support-strategy-tab${tab.id === activeTab ? ' is-active' : ''}"
+                        class="support-current-sitrep-tab support-strategy-tab${tab.id === activeTab ? ' is-active' : ''}"
                         aria-selected="${tab.id === activeTab ? 'true' : 'false'}"
                         data-strategy-tab="${escapeHtml(tab.id)}"
                     >${escapeHtml(tab.label)}</button>

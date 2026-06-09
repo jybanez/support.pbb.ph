@@ -231,6 +231,10 @@ const formatSitrepHeaderDate = (value) => {
     return `${parts.month} ${parts.day}, ${parts.year} - ${time}`;
 };
 
+const formatPanelLocation = (value) => String(value || '')
+    .toLowerCase()
+    .replace(/\b[a-z]/g, (letter) => letter.toUpperCase());
+
 const alertToneClass = (alertLevel) => {
     const normalized = String(alertLevel ?? '').trim().toLowerCase();
 
@@ -630,6 +634,7 @@ const renderSupportStrategyPane = () => {
 
     renderSupportStrategy(host, state.supportStrategy, {
         onSkeleton: mountLoadingSkeletons,
+        formatTimestamp: formatSitrepHeaderDate,
         onTab(tabId) {
             state.supportStrategy.activeTab = tabId;
             renderSupportStrategyPane();
@@ -1109,7 +1114,8 @@ const renderCurrentSitrepPane = () => {
     const hub = state.currentSitrep.identity || state.hub.data || {};
     const hubName = hub.name || state.hub.data?.name || 'Current SITREP';
     const generatedAt = state.currentSitrep.sitrep?.generated_at || null;
-    const subtitle = formatSitrepHeaderDate(generatedAt);
+    const generatedLabel = formatSitrepHeaderDate(generatedAt);
+    const subtitle = [formatPanelLocation(hubName), generatedLabel].filter(Boolean).join(' - ');
     const tabs = state.currentSitrep.sections;
     const activeSection = tabs.some((section) => section.id === state.currentSitrep.activeSection)
         ? state.currentSitrep.activeSection
@@ -1119,9 +1125,9 @@ const renderCurrentSitrepPane = () => {
     const alertLevel = state.currentSitrep.sitrep?.alert_level || null;
 
     host.innerHTML = `
-        <header class="support-current-sitrep-header">
+        <header class="support-current-sitrep-header support-panel-header">
             <div>
-                <h2>${escapeHtml(hubName)}</h2>
+                <h2>CURRENT SITREP</h2>
                 ${subtitle ? `<p>${escapeHtml(subtitle)}</p>` : ''}
             </div>
             ${alertLevel ? `

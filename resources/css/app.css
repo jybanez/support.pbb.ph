@@ -499,6 +499,10 @@ input {
     cursor: pointer;
 }
 
+.support-panel-header {
+    min-height: 64px;
+}
+
 .support-current-sitrep-header > div:first-child {
     min-width: 0;
 }
@@ -515,7 +519,7 @@ input {
     color: var(--ui-muted);
     font-size: 12px;
     line-height: 1.2;
-    text-transform: uppercase;
+    text-transform: none;
 }
 
 .support-current-sitrep-alert-stack {
@@ -672,56 +676,17 @@ input {
     overflow: hidden;
 }
 
-.support-strategy-header {
-    padding: 14px 14px 10px;
-    border-bottom: 1px solid rgba(52, 71, 105, 0.5);
-}
-
-.support-strategy-header p,
-.support-strategy-header h2 {
-    margin: 0;
-}
-
-.support-strategy-header h2 {
-    margin-top: 4px;
-    color: var(--ui-text);
-    font-size: 15px;
-    line-height: 1.25;
-    overflow-wrap: anywhere;
-}
-
-.support-strategy-header p:last-child {
-    margin-top: 5px;
-    color: var(--ui-muted);
-    font-size: 12px;
-}
-
 .support-strategy-tabs {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-    padding: 10px;
-    border-bottom: 1px solid rgba(52, 71, 105, 0.45);
+    min-height: 42px;
 }
 
 .support-strategy-tab {
     min-width: 0;
-    height: 32px;
-    border: 1px solid rgba(81, 108, 153, 0.55);
-    border-radius: 6px;
-    background: rgba(15, 27, 45, 0.86);
-    color: var(--ui-muted);
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
 }
 
 .support-strategy-tab:hover,
 .support-strategy-tab:focus-visible,
 .support-strategy-tab.is-active {
-    color: var(--ui-text);
-    border-color: rgba(94, 234, 212, 0.58);
-    background: rgba(28, 54, 76, 0.92);
     outline: none;
 }
 
