@@ -29,6 +29,15 @@ const tabEmptyText = {
     commitments: 'No support commitments have been drafted yet.',
 };
 
+const sectionHeadings = {
+    priorities: 'Priority Support Review',
+    packages: 'Support Package Options',
+    decisions: 'Leadership Decisions',
+    matching: 'Resource Matching',
+    clarifications: 'Clarifications Needed',
+    commitments: 'Draft Commitments',
+};
+
 const toneClass = (card = {}) => {
     const value = String(card.priority_level || card.status || card.availability_status || '').toLowerCase();
 
@@ -246,6 +255,19 @@ const cardMarkup = (tabId, card, reviewedIds) => {
     `;
 };
 
+const sectionHeadMarkup = (tabId) => {
+    const tab = strategyTabs.find((item) => item.id === tabId);
+    const label = tab?.label || titleCase(tabId);
+    const heading = sectionHeadings[tabId] || label;
+
+    return `
+        <div class="sitrep-section-head support-strategy-section-head">
+            <p class="sitrep-eyebrow">${escapeHtml(label)}</p>
+            <h2>${escapeHtml(heading)}</h2>
+        </div>
+    `;
+};
+
 export function renderSupportStrategy(container, supportStrategy, callbacks = {}) {
     if (!container) return;
 
@@ -327,6 +349,7 @@ export function renderSupportStrategy(container, supportStrategy, callbacks = {}
                 `).join('')}
             </nav>
             <div class="support-strategy-content" role="tabpanel">
+                ${sectionHeadMarkup(activeTab)}
                 ${cards.length
                     ? cards.map((card) => cardMarkup(activeTab, card, supportStrategy.reviewedIds)).join('')
                     : `<div class="support-strategy-empty"><p>${escapeHtml(tabEmptyText[activeTab] || 'No strategy cards available.')}</p></div>`}

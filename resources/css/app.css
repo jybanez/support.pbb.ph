@@ -678,6 +678,29 @@ input {
     padding: 8px 12px;
 }
 
+.support-strategy-section-head {
+    display: grid;
+    gap: 12px;
+}
+
+.support-strategy-section-head .sitrep-eyebrow {
+    margin: 0;
+    color: #8ec7ff;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.support-strategy-section-head h2 {
+    margin: 0;
+    color: var(--ui-text);
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1.18;
+}
+
 .support-strategy-card {
     border: 1px solid var(--ui-border);
     border-radius: var(--ui-radius-sm);
