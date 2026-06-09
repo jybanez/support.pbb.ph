@@ -220,9 +220,9 @@ const cardActions = (card) => {
 
     return `
         <div class="support-strategy-actions">
-            <button type="button" class="support-users-secondary-button support-strategy-action-button" data-strategy-action="evidence" data-evidence-ref="${escapeHtml(evidenceRef)}">Review Details</button>
-            ${sourceId ? `<button type="button" class="support-users-secondary-button support-strategy-action-button" data-strategy-action="map" data-source-hub-id="${escapeHtml(sourceId)}">Show on Map</button>` : ''}
-            <button type="button" class="support-users-secondary-button support-strategy-action-button" data-strategy-action="review" data-card-id="${escapeHtml(card.id || '')}">Mark Reviewed</button>
+            <button type="button" class="ui-button ui-button-quiet support-strategy-action-button" data-strategy-action="evidence" data-evidence-ref="${escapeHtml(evidenceRef)}">Review Details</button>
+            ${sourceId ? `<button type="button" class="ui-button ui-button-quiet support-strategy-action-button" data-strategy-action="map" data-source-hub-id="${escapeHtml(sourceId)}">Show on Map</button>` : ''}
+            <button type="button" class="ui-button ui-button-quiet support-strategy-action-button" data-strategy-action="review" data-card-id="${escapeHtml(card.id || '')}">Mark Reviewed</button>
         </div>
     `;
 };
