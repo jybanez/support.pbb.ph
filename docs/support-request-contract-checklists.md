@@ -8,6 +8,8 @@ SITREP is situational visibility. It can provide context for access, routing, st
 
 Support Request is the actionable tasking record. Support assistance must be based on an explicit command or barangay request, not inferred from SITREP needs, gaps, or access notes alone.
 
+This document supersedes the earlier inferred Support Strategy direction for active implementation planning. The old Support Strategy proposal and Phase 1 brief should be treated as paused technical exploration only, not as current product guidance. Future agents should not implement deployment, dispatch, commitment, or prioritization workflows from SITREP needs/gaps unless an explicit Support Request contract and request record exist.
+
 Ownership boundaries:
 
 - Hotline owns request creation, approval context, outbound Relay submission, inbound Support updates, and local request history.
@@ -31,6 +33,12 @@ Use this checklist as the joint Hotline, Support, and Relay agreement before imp
 - [ ] Decide whether Hotline outbound amendment types are in v1:
   - [ ] `support.request.cancelled`
   - [ ] `support.request.updated`
+- [ ] Confirm Relay handler disambiguation rules for similarly named message types:
+  - [ ] distinguish by `source_system`
+  - [ ] distinguish by target system in `targets[].systems`
+  - [ ] distinguish by message direction
+  - [ ] prevent Hotline outbound amendments such as `support.request.cancelled` or `support.request.updated` from being routed to Hotline's inbound `support.request.*` update handler
+  - [ ] prevent Support lifecycle updates such as `support.request.accepted` or `support.request.assigned` from being routed back into Support intake
 - [ ] Confirm Relay envelope fields and target pattern:
   - [ ] `message_type`
   - [ ] `source_system`
