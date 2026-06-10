@@ -16,6 +16,20 @@ Ownership boundaries:
 - Relay owns transport, routing, delivery, retry, handler registration, and transport authentication.
 - Support owns request intake, validation, triage, assignment, lifecycle updates, and support-side status history.
 
+## Jonathan Decisions For V1
+
+These decisions are the approved baseline for first implementation planning:
+
+- Hotline request source system: `hotline.command`.
+- Support intake target system: `support.dispatch`.
+- Support lifecycle update source system: `support.dispatch`.
+- `support.request.received` exists in v1, but it is a human action from the Support side, triggered when an authorized Support user opens or views the request for the first time. Relay delivery alone must not mark the request as received.
+- Hotline-side cancellation is supported in v1, including after Support has accepted or assigned the request. Support must receive the cancellation and resolve any local assignment/deployment state through its workflow.
+- Support request approval is owned by PBB Hotline.
+- Dispatching a received support request is owned by PBB Support.
+- SITREP context is included as support request detail/context, but Support Request development must not change the current SITREP JSON structure.
+- Support Request payloads must follow the current SITREP privacy boundary: no citizen/private details are added.
+
 ## Shared Support Request Contract Checklist
 
 Use this checklist as the joint Hotline, Support, and Relay agreement before implementation starts.
@@ -23,7 +37,7 @@ Use this checklist as the joint Hotline, Support, and Relay agreement before imp
 - [ ] Confirm canonical outbound request message type: `support.request`.
 - [ ] Confirm canonical Support update message pattern: `support.request.*`.
 - [ ] Confirm first-pass update message types:
-  - [ ] `support.request.received`
+  - [x] `support.request.received`
   - [ ] `support.request.accepted`
   - [ ] `support.request.rejected`
   - [ ] `support.request.assigned`
@@ -31,7 +45,7 @@ Use this checklist as the joint Hotline, Support, and Relay agreement before imp
   - [ ] `support.request.fulfilled`
   - [ ] `support.request.closed`
 - [ ] Decide whether Hotline outbound amendment types are in v1:
-  - [ ] `support.request.cancelled`
+  - [x] `support.request.cancelled`
   - [ ] `support.request.updated`
 - [ ] Confirm Relay handler disambiguation rules for similarly named message types:
   - [ ] distinguish by `source_system`
@@ -45,9 +59,9 @@ Use this checklist as the joint Hotline, Support, and Relay agreement before imp
   - [ ] `targets`
   - [ ] `priority`
   - [ ] `payload`
-- [ ] Confirm target system string for Support intake.
-- [ ] Confirm source system string for Hotline command requests.
-- [ ] Confirm Support update source system string.
+- [x] Confirm target system string for Support intake: `support.dispatch`.
+- [x] Confirm source system string for Hotline command requests: `hotline.command`.
+- [x] Confirm Support update source system string: `support.dispatch`.
 - [ ] Confirm target hub selection rules from Relay `/hub.json` uplinks.
 - [ ] Finalize support request payload schema version `1`.
 - [ ] Finalize required request fields:
@@ -78,6 +92,8 @@ Use this checklist as the joint Hotline, Support, and Relay agreement before imp
   - [ ] `evidence_row`
   - [ ] `incident_refs`
 - [ ] Confirm full SITREP JSON is not embedded in `support.request` v1.
+- [x] Confirm Support Request development does not change the current SITREP JSON structure.
+- [x] Confirm Support Request payloads follow current SITREP privacy boundaries and add no citizen/private details.
 - [ ] Finalize Support update payload schema version `1`.
 - [ ] Finalize required update fields:
   - [ ] `correlation_id`
@@ -98,7 +114,7 @@ Use this checklist as the joint Hotline, Support, and Relay agreement before imp
   - [ ] Hotline-owned: `draft`
   - [ ] Hotline-owned: `requested`
   - [ ] Hotline-owned: `relay_accepted`
-  - [ ] Support-owned: `received`
+  - [x] Support-owned: `received`
   - [ ] Support-owned: `under_review`
   - [ ] Support-owned: `accepted`
   - [ ] Support-owned: `rejected`
@@ -106,11 +122,11 @@ Use this checklist as the joint Hotline, Support, and Relay agreement before imp
   - [ ] Support-owned: `en_route`
   - [ ] Support-owned: `fulfilled`
   - [ ] Support-owned: `closed`
-  - [ ] Hotline-owned or shared: `cancelled`
+  - [x] Hotline-owned or shared: `cancelled`
   - [ ] Hotline-owned: `failed`
 - [ ] Define valid status transitions.
 - [ ] Define rejection/error semantics.
-- [ ] Define cancellation semantics.
+- [x] Define cancellation semantics for v1: Hotline may cancel even after Support accepts or assigns; Support must receive and resolve local assignment/deployment state through its workflow.
 - [ ] Define whether closed requests can be reopened.
 - [ ] Define stable ID rules:
   - [ ] `local_request_id`
@@ -156,6 +172,7 @@ Owned by the Hotline implementation agent.
 - [ ] Prefill form from selected SITREP gap, evidence row, incident, or operational context.
 - [ ] Allow command user to edit request fields before submission.
 - [ ] Capture approval/requester identity.
+- [ ] Treat the authorized Hotline Request Support submission as the approval action unless Hotline later adds a separate local approval workflow.
 - [ ] Persist `draft` before Relay submission when appropriate.
 - [ ] Build `support.request` payload from persisted request.
 - [ ] Wrap payload in Relay envelope using agreed target pattern.
@@ -206,7 +223,8 @@ Owned by the Support implementation agent.
 - [ ] Add request detail/review drawer.
 - [ ] Show linked SITREP context as visibility, not as inferred deployment instruction.
 - [ ] Add triage actions:
-  - [ ] mark received/under review
+  - [ ] mark received on first authorized human open/view
+  - [ ] mark under review
   - [ ] accept
   - [ ] reject with reason
   - [ ] ask for clarification
@@ -230,23 +248,30 @@ Owned by the Support implementation agent.
 
 ## Open Questions Requiring Jonathan Decision
 
-- [ ] What is the canonical Support target system string?
-  - Proposed options: `support.dispatch`, `support.request.intake`, or another Relay-approved value.
-- [ ] What is the canonical Hotline source system string?
-  - Proposed option: `hotline.command`.
-- [ ] What is the canonical Support update source system string?
-  - Proposed option: `support.dispatch`.
-- [ ] Should `support.request.received` exist, or is Relay accepted delivery enough before Support accepts/rejects?
-- [ ] Does Hotline Command require a separate approval step, or is submitting the Request Support form the approval action?
-- [ ] Should request cancellation be supported in v1?
-- [ ] If cancellation is supported, can Hotline cancel after Support accepts or assigns?
+- [x] What is the canonical Support target system string?
+  - Decision: `support.dispatch`.
+- [x] What is the canonical Hotline source system string?
+  - Decision: `hotline.command`.
+- [x] What is the canonical Support update source system string?
+  - Decision: `support.dispatch`.
+- [x] Should `support.request.received` exist, or is Relay accepted delivery enough before Support accepts/rejects?
+  - Decision: `support.request.received` exists and is triggered by a Support-side human action when the request is first opened/viewed.
+- [x] Does Hotline Command require a separate approval step, or is submitting the Request Support form the approval action?
+  - Decision: Support request approval is owned by PBB Hotline; v1 may treat authorized submission as approval unless Hotline adds a separate local approval workflow.
+- [x] Should request cancellation be supported in v1?
+  - Decision: yes.
+- [x] If cancellation is supported, can Hotline cancel after Support accepts or assigns?
+  - Decision: yes. Support must handle cancellation and resolve local assignment/deployment state.
 - [ ] Should Support be allowed to reopen a closed request?
 - [ ] Should `quantity` and `quantity_unit` be free-form in v1, or constrained to a resource/capability catalog?
-- [ ] Which SITREP gap/evidence types are requestable in v1?
+- [x] Which SITREP gap/evidence types are requestable in v1?
+  - Decision: SITREP context is provided as part of support request details. Requestability is owned by Hotline request creation and must not mutate SITREP JSON.
 - [ ] Should access constraints be requestable by themselves, or only when tied to a movement/deployment need?
 - [ ] What minimum requester identity must be included in cross-app messages?
-- [ ] Should Support receive citizen-facing incident references, or only Hotline public incident codes?
-- [ ] How much command note text may be relayed before privacy review is required?
+- [x] Should Support receive citizen-facing incident references, or only Hotline public incident codes?
+  - Decision: follow current SITREP JSON privacy structure; no citizen/private details.
+- [x] How much command note text may be relayed before privacy review is required?
+  - Decision: follow current SITREP JSON privacy boundaries; Support Request work must not add citizen/private details.
 - [ ] Where should unknown-but-authenticated updates be visible for operators?
 - [ ] What SLA or freshness expectations should be shown for unacknowledged requests?
 - [ ] Should Support request lifecycle labels be shared centrally or duplicated per app?
