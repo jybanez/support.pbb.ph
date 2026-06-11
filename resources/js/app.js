@@ -1667,6 +1667,16 @@ const refreshSupportRequestsList = () => {
     renderSupportRequestsList(filteredSupportRequests());
 };
 
+const isCurrentSupportRequestSelection = (requestId) => String(selectedSupportRequestId || '') === String(requestId || '');
+
+const syncSelectedSupportRequestCard = () => {
+    supportRequestsModal?.body
+        ?.querySelectorAll?.('[data-support-request-id]')
+        ?.forEach((card) => {
+            card.classList.toggle('is-selected', isCurrentSupportRequestSelection(card.dataset.supportRequestId));
+        });
+};
+
 const supportRequestListLoadingMarkup = () => `
     <div class="support-requests-loading" aria-label="Loading support requests" aria-busy="true">
         ${Array.from({ length: 4 }).map(() => `
@@ -2040,7 +2050,7 @@ const openSupportRequestDetail = async (requestId) => {
 
     const detail = supportRequestsModal?.body?.querySelector?.('[data-support-request-detail]');
     selectedSupportRequestId = id;
-    refreshSupportRequestsList();
+    syncSelectedSupportRequestCard();
     if (detail) {
         detail.innerHTML = supportRequestDetailLoadingMarkup();
         mountLoadingSkeletons(detail);
@@ -2051,11 +2061,19 @@ const openSupportRequestDetail = async (requestId) => {
             method: 'POST',
             body: '{}',
         });
+        if (!isCurrentSupportRequestSelection(id)) {
+            return;
+        }
+
         if (data.request) {
             upsertCachedSupportRequest(data.request);
             renderSupportRequestDetail(data.request);
         }
     } catch (error) {
+        if (!isCurrentSupportRequestSelection(id)) {
+            return;
+        }
+
         if (detail) {
             detail.innerHTML = supportRequestEmptyState('Unable to load request details', firstError(error, 'Unable to load request details.'));
         }
