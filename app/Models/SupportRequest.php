@@ -56,4 +56,9 @@ class SupportRequest extends Model
     {
         return $this->hasMany(SupportRequestMessage::class);
     }
+
+    public function updateDeliveries(): HasMany
+    {
+        return $this->hasMany(SupportRequestUpdateDelivery::class);
+    }
 }

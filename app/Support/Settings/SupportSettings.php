@@ -66,6 +66,7 @@ class SupportSettings
             'supportRequestSourceSystem' => 'hotline.command',
             'supportRequestTargetSystem' => 'support.dispatch',
             'supportRequestUpdateSourceSystem' => 'support.dispatch',
+            'supportRequestUpdateTargetSystem' => 'hotline.command',
             'realtimeUrl' => 'https://realtime.pbb.ph',
             'realtimeClientCode' => '',
             'serverProjectCode' => '',
