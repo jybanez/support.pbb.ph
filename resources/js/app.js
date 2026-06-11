@@ -66,7 +66,7 @@ const state = {
         url: 'https://relay.pbb.ph/hub.json',
         data: null,
     },
-    sessionLifetimeMinutes: 15,
+    sessionLifetimeMinutes: 30 * 24 * 60,
     settings: {
         relayTargetSystem: 'sitrep.ingestor',
         consolidationCadenceMinutes: 15,
@@ -107,7 +107,6 @@ let passwordModal = null;
 let usersModal = null;
 let supportRequestsModal = null;
 let settingsModal = null;
-let pendingReauthAction = null;
 let dashboardSplitter = null;
 let dashboardMap = null;
 let dashboardMapControls = null;
@@ -1453,11 +1452,6 @@ const openReauth = () => {
                 applySessionPayload(data);
                 state.reauthOpen = false;
                 render();
-                const action = pendingReauthAction;
-                pendingReauthAction = null;
-                if (typeof action === 'function') {
-                    setTimeout(action, 0);
-                }
                 return true;
             } catch (error) {
                 ctx.setErrors(normalizeErrors(fieldErrors(error)));
@@ -1841,16 +1835,6 @@ const openSupportRequestDetail = async (requestId) => {
 
 const openSupportRequests = async () => {
     if (!state.account || state.reauthOpen) return;
-
-    pendingReauthAction = openSupportRequests;
-    const sessionReady = await requestSessionKeepalive({ force: true });
-    if (!sessionReady) {
-        if (!state.reauthOpen) {
-            pendingReauthAction = null;
-        }
-        return;
-    }
-    pendingReauthAction = null;
 
     closeSupportRequests();
     supportRequestsModal = supportRequestsModalShell();
@@ -2352,7 +2336,6 @@ const openSettings = () => {
 
 const logout = async () => {
     const data = await api('/api/logout', { method: 'POST', body: '{}' });
-    pendingReauthAction = null;
     closeSupportRequests();
     resetSupportRequestsCache();
     closeUsers();
