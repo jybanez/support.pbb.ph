@@ -45,22 +45,42 @@ class SupportRequestsController extends BaseApiController
     {
         $shouldQueueReceivedUpdate = false;
 
-        if ($supportRequest->status === 'requested') {
-            $supportRequest->forceFill([
-                'status' => 'received',
-                'received_at' => now(),
-                'received_by_user_id' => $request->user()?->id,
-            ])->save();
+        if ($supportRequest->status === 'cancelled') {
+            return $this->fail('Cancelled support requests cannot be received or dispatched.', 409);
+        }
 
-            $shouldQueueReceivedUpdate = true;
+        if ($supportRequest->status === 'requested') {
+            $updated = SupportRequest::query()
+                ->whereKey($supportRequest->id)
+                ->where('status', 'requested')
+                ->update([
+                    'status' => 'received',
+                    'received_at' => now(),
+                    'received_by_user_id' => $request->user()?->id,
+                ]);
+
+            if ($updated === 0 && $supportRequest->refresh()->status === 'cancelled') {
+                return $this->fail('Cancelled support requests cannot be received or dispatched.', 409);
+            }
+
+            $shouldQueueReceivedUpdate = $updated === 1;
         } elseif ($supportRequest->received_at === null) {
-            $supportRequest->forceFill([
-                'received_at' => now(),
-                'received_by_user_id' => $request->user()?->id,
-            ])->save();
+            $updated = SupportRequest::query()
+                ->whereKey($supportRequest->id)
+                ->where('status', '!=', 'cancelled')
+                ->whereNull('received_at')
+                ->update([
+                    'received_at' => now(),
+                    'received_by_user_id' => $request->user()?->id,
+                ]);
+
+            if ($updated === 0 && $supportRequest->refresh()->status === 'cancelled') {
+                return $this->fail('Cancelled support requests cannot be received or dispatched.', 409);
+            }
         }
 
         if ($shouldQueueReceivedUpdate) {
+            $supportRequest->refresh();
             $delivery = $lifecycleRelay->queueLifecycleUpdate($supportRequest, 'received', dispatch: false);
             $lifecycleRelay->submit($delivery, connectTimeoutSeconds: 2, timeoutSeconds: 5);
         }
