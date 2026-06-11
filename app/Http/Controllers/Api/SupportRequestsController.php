@@ -37,7 +37,7 @@ class SupportRequestsController extends BaseApiController
     public function show(SupportRequest $supportRequest)
     {
         return $this->ok([
-            'request' => $this->requestPayload($supportRequest, true),
+            'request' => $this->requestPayload($supportRequest->load('messages'), true),
         ]);
     }
 
@@ -94,7 +94,7 @@ class SupportRequestsController extends BaseApiController
         }
 
         return $this->ok([
-            'request' => $this->requestPayload($supportRequest->refresh(), true),
+            'request' => $this->requestPayload($supportRequest->refresh()->load('messages'), true),
         ]);
     }
 
@@ -219,6 +219,25 @@ class SupportRequestsController extends BaseApiController
                     ->oldest('id')
                     ->get()
                     ->map(fn (SupportRequestAction $action): array => $this->actionPayload($action))
+                    ->values()
+                    ->all(),
+                'lifecycle_history' => $supportRequest->messages
+                    ->sortBy([
+                        ['created_at', 'asc'],
+                        ['id', 'asc'],
+                    ])
+                    ->map(fn ($message): array => [
+                        'id' => $message->id,
+                        'relay_message_id' => $message->relay_message_id,
+                        'message_type' => $message->message_type,
+                        'source_system' => $message->source_system,
+                        'target_system' => $message->target_system,
+                        'direction' => $message->direction,
+                        'validation_status' => $message->validation_status,
+                        'processed_at' => $message->processed_at?->toIso8601String(),
+                        'created_at' => $message->created_at?->toIso8601String(),
+                        'validation_errors' => $message->validation_errors,
+                    ])
                     ->values()
                     ->all(),
             ];

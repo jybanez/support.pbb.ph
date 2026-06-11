@@ -128,6 +128,7 @@ const sourceFilters = {
 };
 let usersListData = [];
 let supportRequestsData = [];
+let selectedSupportRequestId = null;
 const userFilters = {
     search: '',
 };
@@ -1559,6 +1560,7 @@ const closeSupportRequests = () => {
     supportRequestsVirtualList = null;
     supportRequestsModal?.destroy?.();
     supportRequestsModal = null;
+    selectedSupportRequestId = null;
 };
 
 const resetSupportRequestsCache = () => {
@@ -1570,6 +1572,41 @@ const resetSupportRequestsCache = () => {
 const supportRequestStatusLabel = (status) => titleCase(status || 'requested');
 
 const supportRequestTime = (value) => formatSitrepHeaderDate(value) || 'Time unavailable';
+
+const supportRequestOptionalTime = (value) => formatSitrepHeaderDate(value) || '';
+
+const supportRequestPlainValue = (value) => {
+    if (value === null || value === undefined) return '';
+    if (Array.isArray(value) || typeof value === 'object') {
+        return JSON.stringify(value, null, 2);
+    }
+
+    return String(value).trim();
+};
+
+const supportRequestJsonSummary = (value, fallback = '') => {
+    if (!value || typeof value !== 'object') {
+        return fallback;
+    }
+
+    const candidates = [
+        value.title,
+        value.label,
+        value.name,
+        value.path,
+        value.gap_id,
+        value.id,
+        value.incident_id,
+    ].map((item) => String(item ?? '').trim()).filter(Boolean);
+
+    return candidates[0] || fallback;
+};
+
+const supportRequestSourceLabel = (request) => [
+    request?.source_hub_name,
+    request?.source_relay_hub_id,
+    request?.source_hub_id,
+].map((item) => String(item ?? '').trim()).filter(Boolean).join(' / ') || 'Unknown source';
 
 const supportRequestQuantityLabel = (request) => {
     if (request?.quantity === null || request?.quantity === undefined || request?.quantity === '') {
@@ -1630,6 +1667,34 @@ const refreshSupportRequestsList = () => {
     renderSupportRequestsList(filteredSupportRequests());
 };
 
+const isCurrentSupportRequestSelection = (requestId) => String(selectedSupportRequestId || '') === String(requestId || '');
+
+const syncSelectedSupportRequestCard = () => {
+    supportRequestsModal?.body
+        ?.querySelectorAll?.('[data-support-request-id]')
+        ?.forEach((card) => {
+            card.classList.toggle('is-selected', isCurrentSupportRequestSelection(card.dataset.supportRequestId));
+        });
+};
+
+const supportRequestListLoadingMarkup = () => `
+    <div class="support-requests-loading" aria-label="Loading support requests" aria-busy="true">
+        ${Array.from({ length: 4 }).map(() => `
+            <article class="support-request-card support-request-card-skeleton">
+                <div data-skeleton data-skeleton-lines="3"></div>
+                <div data-skeleton data-skeleton-lines="1" data-skeleton-class="support-request-card-skeleton-strip"></div>
+            </article>
+        `).join('')}
+    </div>
+`;
+
+const supportRequestEmptyState = (title, message = '') => `
+    <div class="support-requests-empty">
+        <strong>${escapeHtml(title)}</strong>
+        ${message ? `<span>${escapeHtml(message)}</span>` : ''}
+    </div>
+`;
+
 const setSupportRequestsRefreshBusy = (busy) => {
     supportRequestsModal?.setHeaderActionState?.('refresh-requests', { busy });
 };
@@ -1658,6 +1723,7 @@ const supportRequestsModalShell = () => {
             supportRequestsVirtualList?.destroy?.();
             supportRequestsVirtualList = null;
             supportRequestsModal = null;
+            selectedSupportRequestId = null;
         },
     });
 
@@ -1668,12 +1734,13 @@ const supportRequestsModalShell = () => {
             </label>
         </div>
         <div class="support-requests-list" data-support-requests-list>
-            <div class="support-requests-empty">Loading requests...</div>
+            ${supportRequestListLoadingMarkup()}
         </div>
         <section class="support-request-detail" data-support-request-detail aria-live="polite">
-            <div class="support-requests-empty">Select a request to review details.</div>
+            ${supportRequestEmptyState('Select a request', 'Details, context, and lifecycle history will appear here.')}
         </section>
     `;
+    mountLoadingSkeletons(drawer.body);
 
     const searchInput = drawer.body.querySelector('[data-support-requests-search]');
     if (searchInput) {
@@ -1699,21 +1766,36 @@ const supportRequestStatusClass = (status) => {
 
 const supportRequestCard = (request) => {
     const card = document.createElement('article');
-    card.className = `support-request-card ${supportRequestStatusClass(request?.status)}`.trim();
+    card.className = `support-request-card ${supportRequestStatusClass(request?.status)}${String(request?.id) === String(selectedSupportRequestId) ? ' is-selected' : ''}`.trim();
     card.dataset.supportRequestId = String(request?.id || '');
+    card.tabIndex = 0;
 
     const quantity = supportRequestQuantityLabel(request);
+    const source = supportRequestSourceLabel(request);
+    const capability = request?.requested_capability ? titleCase(request.requested_capability) : '';
+    const assistance = request?.requested_assistance || capability || 'Support request';
+    const requestedAt = supportRequestOptionalTime(request?.requested_at);
     card.innerHTML = `
         <div class="support-request-card-main">
             <div class="support-request-card-topline">
-                <strong>${escapeHtml(request?.source_hub_name || request?.source_relay_hub_id || 'Unknown source')}</strong>
+                <strong>${escapeHtml(source)}</strong>
                 <span class="support-request-status ${supportRequestStatusClass(request?.status)}">${escapeHtml(supportRequestStatusLabel(request?.status))}</span>
             </div>
-            <span>${escapeHtml(request?.requested_assistance || 'Support request')}</span>
-            <span class="support-request-meta">${escapeHtml([request?.urgency ? titleCase(request.urgency) : '', quantity, supportRequestTime(request?.requested_at)].filter(Boolean).join(' - '))}</span>
+            <span class="support-request-card-assistance">${escapeHtml(assistance)}</span>
+            <span class="support-request-meta">${escapeHtml([
+                request?.urgency ? titleCase(request.urgency) : '',
+                quantity,
+                requestedAt,
+            ].filter(Boolean).join(' - '))}</span>
         </div>
     `;
     card.addEventListener('click', () => openSupportRequestDetail(request?.id));
+    card.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openSupportRequestDetail(request?.id);
+        }
+    });
 
     return card;
 };
@@ -1733,9 +1815,9 @@ const renderSupportRequestsList = (requests = []) => {
     supportRequestsVirtualList = helpers.createVirtualList(list, requests, {
         ariaLabel: 'Support requests',
         chrome: false,
-        emptyText: supportRequestFilters.search.trim() ? 'No requests match this search.' : 'No support requests found.',
+        emptyText: supportRequestFilters.search.trim() ? 'No requests match this search.' : 'No approved support requests have arrived yet.',
         height: Math.max(220, list.clientHeight || 360),
-        rowHeight: 112,
+        rowHeight: 118,
         overscan: 4,
         renderItem: (request) => supportRequestCard(request),
     });
@@ -1751,7 +1833,8 @@ const loadSupportRequests = async ({ force = false } = {}) => {
     if (list) {
         supportRequestsVirtualList?.destroy?.();
         supportRequestsVirtualList = null;
-        list.innerHTML = '<div class="support-requests-empty">Loading requests...</div>';
+        list.innerHTML = supportRequestListLoadingMarkup();
+        mountLoadingSkeletons(list);
     }
 
     supportRequestsLoading = true;
@@ -1764,7 +1847,7 @@ const loadSupportRequests = async ({ force = false } = {}) => {
         renderSupportRequestsList(filteredSupportRequests());
     } catch (error) {
         if (list) {
-            list.innerHTML = `<div class="support-requests-empty">${escapeHtml(firstError(error, 'Unable to load support requests.'))}</div>`;
+            list.innerHTML = supportRequestEmptyState('Unable to load requests', firstError(error, 'Unable to load support requests.'));
         }
     } finally {
         supportRequestsLoading = false;
@@ -1773,9 +1856,7 @@ const loadSupportRequests = async ({ force = false } = {}) => {
 };
 
 const supportRequestDetailRow = (label, value) => {
-    const text = Array.isArray(value) || (value && typeof value === 'object')
-        ? JSON.stringify(value, null, 2)
-        : String(value ?? '').trim();
+    const text = supportRequestPlainValue(value);
 
     if (!text) return '';
 
@@ -1800,36 +1881,166 @@ const supportRequestDeliveryLabel = (request) => {
     return [state, type, attempts, submitted, error].filter(Boolean).join(' - ');
 };
 
+const supportRequestDetailSection = (title, content, className = '') => {
+    if (!content) return '';
+
+    return `
+        <section class="support-request-detail-section ${escapeHtml(className)}">
+            <h4>${escapeHtml(title)}</h4>
+            ${content}
+        </section>
+    `;
+};
+
+const supportRequestContextBlock = (label, value) => {
+    const text = supportRequestPlainValue(value);
+    if (!text) return '';
+
+    const summary = supportRequestJsonSummary(value);
+
+    return `
+        <div class="support-request-context-block">
+            <div>
+                <span>${escapeHtml(label)}</span>
+                ${summary ? `<strong>${escapeHtml(summary)}</strong>` : ''}
+            </div>
+            <pre>${escapeHtml(text)}</pre>
+        </div>
+    `;
+};
+
+const supportRequestMessageLabel = (messageType) => titleCase(String(messageType || 'Relay message').replace(/\./g, ' '));
+
+const supportRequestLifecycleItems = (request) => {
+    const events = [];
+
+    if (request?.requested_at) {
+        events.push({
+            label: 'Requested',
+            at: request.requested_at,
+            detail: [request.source_system, request.local_request_id].filter(Boolean).join(' - '),
+        });
+    }
+
+    if (request?.intake_received_at) {
+        events.push({
+            label: 'Intake accepted',
+            at: request.intake_received_at,
+            detail: request.relay_message_id || 'Relay intake recorded',
+        });
+    }
+
+    if (request?.received_at) {
+        events.push({
+            label: 'Human review acknowledged',
+            at: request.received_at,
+            detail: request.received_by_user_id ? `User #${request.received_by_user_id}` : 'Support operator',
+        });
+    }
+
+    const messages = Array.isArray(request?.lifecycle_history) ? request.lifecycle_history : [];
+    messages.forEach((message) => {
+        events.push({
+            label: supportRequestMessageLabel(message.message_type),
+            at: message.processed_at || message.created_at,
+            detail: [
+                message.direction,
+                message.validation_status ? titleCase(message.validation_status) : '',
+                message.relay_message_id,
+            ].filter(Boolean).join(' - '),
+            errors: message.validation_errors,
+        });
+    });
+
+    return events
+        .filter((event) => event.label || event.at || event.detail)
+        .sort((a, b) => (Date.parse(a.at || '') || 0) - (Date.parse(b.at || '') || 0));
+};
+
+const supportRequestLifecycleMarkup = (request) => {
+    const events = supportRequestLifecycleItems(request);
+    if (!events.length) {
+        return supportRequestEmptyState('No lifecycle history yet', 'Relay and operator events will appear here when available.');
+    }
+
+    return `
+        <ol class="support-request-timeline">
+            ${events.map((event) => `
+                <li>
+                    <div>
+                        <strong>${escapeHtml(event.label)}</strong>
+                        <span>${escapeHtml(supportRequestOptionalTime(event.at) || 'Time unavailable')}</span>
+                    </div>
+                    ${event.detail ? `<p>${escapeHtml(event.detail)}</p>` : ''}
+                    ${event.errors ? `<pre>${escapeHtml(supportRequestPlainValue(event.errors))}</pre>` : ''}
+                </li>
+            `).join('')}
+        </ol>
+    `;
+};
+
+const supportRequestDetailLoadingMarkup = () => `
+    <div class="support-request-detail-loading" aria-label="Loading support request detail" aria-busy="true">
+        <div data-skeleton data-skeleton-lines="3"></div>
+        <div data-skeleton data-skeleton-variant="grid" data-skeleton-columns="2" data-skeleton-rows="3"></div>
+        <div data-skeleton data-skeleton-lines="5"></div>
+        <div data-skeleton data-skeleton-lines="4"></div>
+    </div>
+`;
+
 const renderSupportRequestDetail = (request) => {
     const detail = supportRequestsModal?.body?.querySelector?.('[data-support-request-detail]');
     if (!detail) return;
 
     if (!request) {
-        detail.innerHTML = '<div class="support-requests-empty">Select a request to review details.</div>';
+        detail.innerHTML = supportRequestEmptyState('Select a request', 'Details, context, and lifecycle history will appear here.');
         return;
     }
 
     const quantity = supportRequestQuantityLabel(request);
+    const source = supportRequestSourceLabel(request);
+    const capability = request.requested_capability ? titleCase(request.requested_capability) : '';
+    const requester = [
+        request.requester?.display_name,
+        request.requester?.role ? titleCase(request.requester.role) : '',
+        request.requester?.user_id,
+    ].filter(Boolean).join(' - ');
+    const operatorNotes = [
+        supportRequestDetailRow('Staging notes', request.staging_notes),
+        supportRequestDetailRow('Command notes', request.command_notes),
+    ].join('');
+    const contextMarkup = [
+        supportRequestContextBlock('SITREP context', request.sitrep_context),
+        supportRequestContextBlock('Gap context', request.gap_context),
+        supportRequestContextBlock('Evidence context', request.evidence_row),
+        supportRequestContextBlock('Incident refs', request.incident_refs),
+    ].join('');
     detail.innerHTML = `
         <header class="support-request-detail-header">
-            <span class="support-request-status ${supportRequestStatusClass(request.status)}">${escapeHtml(supportRequestStatusLabel(request.status))}</span>
-            <h3>${escapeHtml(request.source_hub_name || request.source_relay_hub_id || 'Support request')}</h3>
-            <p>${escapeHtml(request.requested_assistance || 'No assistance summary provided.')}</p>
+            <div class="support-request-detail-kicker">
+                <span class="support-request-status ${supportRequestStatusClass(request.status)}">${escapeHtml(supportRequestStatusLabel(request.status))}</span>
+                ${request.urgency ? `<span class="support-request-urgency">${escapeHtml(titleCase(request.urgency))}</span>` : ''}
+            </div>
+            <h3>${escapeHtml(request.requested_assistance || capability || 'Support request')}</h3>
+            <p>${escapeHtml(source)}</p>
         </header>
-        <div class="support-request-detail-grid">
-            ${supportRequestDetailRow('Capability', request.requested_capability ? titleCase(request.requested_capability) : '')}
-            ${supportRequestDetailRow('Urgency', request.urgency ? titleCase(request.urgency) : '')}
-            ${supportRequestDetailRow('Quantity', quantity)}
-            ${supportRequestDetailRow('Requested at', supportRequestTime(request.requested_at))}
-            ${supportRequestDetailRow('Requester', [request.requester?.display_name, request.requester?.role ? titleCase(request.requester.role) : ''].filter(Boolean).join(' - '))}
-            ${supportRequestDetailRow('Hotline update', supportRequestDeliveryLabel(request))}
-            ${supportRequestDetailRow('Staging notes', request.staging_notes)}
-            ${supportRequestDetailRow('Command notes', request.command_notes)}
-            ${supportRequestDetailRow('SITREP context', request.sitrep_context)}
-            ${supportRequestDetailRow('Gap context', request.gap_context)}
-            ${supportRequestDetailRow('Evidence row', request.evidence_row)}
-            ${supportRequestDetailRow('Incident refs', request.incident_refs)}
-        </div>
+        ${supportRequestDetailSection('Request', `
+            <div class="support-request-detail-grid">
+                ${supportRequestDetailRow('Status', supportRequestStatusLabel(request.status))}
+                ${supportRequestDetailRow('Source barangay / hub', source)}
+                ${supportRequestDetailRow('Urgency', request.urgency ? titleCase(request.urgency) : '')}
+                ${supportRequestDetailRow('Requested assistance', request.requested_assistance)}
+                ${supportRequestDetailRow('Capability', capability)}
+                ${supportRequestDetailRow('Quantity', quantity)}
+                ${supportRequestDetailRow('Requester', requester)}
+                ${supportRequestDetailRow('Requested at', supportRequestTime(request.requested_at))}
+                ${supportRequestDetailRow('Received at', supportRequestOptionalTime(request.received_at) || 'Not yet acknowledged')}
+                ${supportRequestDetailRow('Hotline update', supportRequestDeliveryLabel(request))}
+            </div>
+        `)}
+        ${supportRequestDetailSection('Operator Notes', operatorNotes ? `<div class="support-request-detail-grid">${operatorNotes}</div>` : supportRequestEmptyState('No operator notes attached'))}
+        ${supportRequestDetailSection('SITREP And Gap Context', contextMarkup || supportRequestEmptyState('No context attached'))}
+        ${supportRequestDetailSection('Lifecycle History', supportRequestLifecycleMarkup(request), 'is-history')}
     `;
 };
 
@@ -1838,8 +2049,11 @@ const openSupportRequestDetail = async (requestId) => {
     if (!id) return;
 
     const detail = supportRequestsModal?.body?.querySelector?.('[data-support-request-detail]');
+    selectedSupportRequestId = id;
+    syncSelectedSupportRequestCard();
     if (detail) {
-        detail.innerHTML = '<div class="support-requests-empty">Loading request details...</div>';
+        detail.innerHTML = supportRequestDetailLoadingMarkup();
+        mountLoadingSkeletons(detail);
     }
 
     try {
@@ -1847,13 +2061,21 @@ const openSupportRequestDetail = async (requestId) => {
             method: 'POST',
             body: '{}',
         });
+        if (!isCurrentSupportRequestSelection(id)) {
+            return;
+        }
+
         if (data.request) {
             upsertCachedSupportRequest(data.request);
             renderSupportRequestDetail(data.request);
         }
     } catch (error) {
+        if (!isCurrentSupportRequestSelection(id)) {
+            return;
+        }
+
         if (detail) {
-            detail.innerHTML = `<div class="support-requests-empty">${escapeHtml(firstError(error, 'Unable to load request details.'))}</div>`;
+            detail.innerHTML = supportRequestEmptyState('Unable to load request details', firstError(error, 'Unable to load request details.'));
         }
     }
 };
@@ -1862,6 +2084,7 @@ const openSupportRequests = async () => {
     if (!state.account || state.reauthOpen) return;
 
     closeSupportRequests();
+    selectedSupportRequestId = null;
     supportRequestsModal = supportRequestsModalShell();
     supportRequestsModal.open(document.body);
     await loadSupportRequests();

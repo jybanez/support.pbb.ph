@@ -39,13 +39,27 @@ class SupportRequestApiTest extends TestCase
             'sitrep_context' => ['title' => 'Apas SITREP'],
             'evidence_row' => ['path' => 'needs.rollup.category_demand[0]'],
         ]);
+        $request->messages()->create([
+            'relay_message_id' => 'relay-msg-history-1',
+            'message_type' => 'support.request',
+            'source_system' => 'hotline.command',
+            'target_system' => 'support.dispatch',
+            'direction' => 'inbound',
+            'validation_status' => 'accepted',
+            'raw_envelope' => ['message' => ['id' => 'relay-msg-history-1']],
+            'payload' => ['request' => ['status' => 'requested']],
+            'processed_at' => '2026-06-11T09:16:00+08:00',
+        ]);
 
         $this->actingAs($user)
             ->getJson('/api/support-requests/'.$request->id)
             ->assertOk()
             ->assertJsonPath('data.request.id', $request->id)
             ->assertJsonPath('data.request.sitrep_context.title', 'Apas SITREP')
-            ->assertJsonPath('data.request.evidence_row.path', 'needs.rollup.category_demand[0]');
+            ->assertJsonPath('data.request.evidence_row.path', 'needs.rollup.category_demand[0]')
+            ->assertJsonPath('data.request.lifecycle_history.0.relay_message_id', 'relay-msg-history-1')
+            ->assertJsonPath('data.request.lifecycle_history.0.message_type', 'support.request')
+            ->assertJsonPath('data.request.lifecycle_history.0.validation_status', 'accepted');
     }
 
     public function test_opening_request_marks_requested_item_received_once(): void
