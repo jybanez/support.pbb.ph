@@ -19,12 +19,8 @@ class ExpireDomainScopedSupportCookies
             return $response;
         }
 
-        foreach (['pbb_maestro_session', 'pbb-support-system-session', 'XSRF-TOKEN'] as $name) {
+        foreach (['pbb_maestro_session'] as $name) {
             foreach ([null, 'support.pbb.ph', '.support.pbb.ph'] as $domain) {
-                if ($domain === null && $name !== 'pbb_maestro_session') {
-                    continue;
-                }
-
                 $response->headers->clearCookie($name, '/', $domain, true, $name !== 'XSRF-TOKEN', 'lax');
             }
         }

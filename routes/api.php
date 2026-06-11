@@ -1,15 +1,7 @@
 <?php
 
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\AdminUsersController;
-use App\Http\Controllers\Api\BootstrapController;
-use App\Http\Controllers\Api\CurrentSitrepController;
 use App\Http\Controllers\Api\RelaySitrepHandlerController;
 use App\Http\Controllers\Api\RelaySupportRequestHandlerController;
-use App\Http\Controllers\Api\SettingsController;
-use App\Http\Controllers\Api\SourceHeartbeatController;
-use App\Http\Controllers\Api\SupportRequestsController;
-use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/relay/sitreps', [RelaySitrepHandlerController::class, 'store'])
@@ -17,28 +9,3 @@ Route::post('/relay/sitreps', [RelaySitrepHandlerController::class, 'store'])
 
 Route::post('/relay/support-requests', [RelaySupportRequestHandlerController::class, 'store'])
     ->middleware('throttle:120,1');
-
-Route::middleware('web')->group(function (): void {
-    Route::get('/bootstrap', [BootstrapController::class, 'show']);
-    Route::get('/csrf-token', [AuthController::class, 'csrfToken']);
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
-
-    Route::middleware('auth')->group(function (): void {
-        Route::get('/user', [AuthController::class, 'user']);
-        Route::post('/user', [UserController::class, 'update']);
-        Route::post('/user/password', [UserController::class, 'updatePassword']);
-        Route::get('/admin/users', [AdminUsersController::class, 'index']);
-        Route::post('/admin/users', [AdminUsersController::class, 'store']);
-        Route::post('/admin/users/{user}', [AdminUsersController::class, 'update']);
-        Route::delete('/admin/users/{user}', [AdminUsersController::class, 'destroy']);
-        Route::get('/settings', [SettingsController::class, 'show']);
-        Route::post('/settings', [SettingsController::class, 'update']);
-        Route::get('/support-requests', [SupportRequestsController::class, 'index']);
-        Route::get('/support-requests/{supportRequest}', [SupportRequestsController::class, 'show']);
-        Route::post('/support-requests/{supportRequest}/receive', [SupportRequestsController::class, 'receive']);
-        Route::get('/sitreps/current', [CurrentSitrepController::class, 'show']);
-        Route::get('/source-heartbeats', [SourceHeartbeatController::class, 'index']);
-        Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/session/ping', [AuthController::class, 'ping']);
-    });
-});
