@@ -150,6 +150,31 @@ class SupportRequestLifecycleIntakeTest extends TestCase
         $this->assertNull($request->received_by_user_id);
     }
 
+    public function test_cancellation_for_already_cancelled_request_is_idempotent(): void
+    {
+        app(SupportSettings::class)->update([
+            'relayHandlerToken' => 'handler-secret',
+        ]);
+        $request = $this->supportRequest(['status' => 'cancelled']);
+
+        $this->postJson('/api/relay/support-request-lifecycle', $this->cancellationEnvelope([
+            'message' => [
+                'id' => 'relay-msg-cancel-already-cancelled',
+            ],
+        ]), [
+            'Authorization' => 'Bearer handler-secret',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'cancelled')
+            ->assertJsonPath('data.validation_status', SupportRequestMessage::STATUS_DUPLICATE);
+
+        $this->assertSame('cancelled', $request->refresh()->status);
+
+        $message = SupportRequestMessage::query()->firstOrFail();
+        $this->assertSame($request->id, $message->support_request_id);
+        $this->assertSame(SupportRequestMessage::STATUS_DUPLICATE, $message->validation_status);
+    }
+
     public function test_lifecycle_handler_rejects_invalid_source_target_and_direction(): void
     {
         app(SupportSettings::class)->update([

@@ -2,9 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\Api\SupportRequestsController;
 use App\Models\SupportRequest;
 use App\Models\User;
+use App\Support\SupportRequests\SupportRequestLifecycleRelayService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Tests\TestCase;
 
 class SupportRequestApiTest extends TestCase
@@ -67,6 +70,58 @@ class SupportRequestApiTest extends TestCase
         $request->refresh();
         $this->assertSame($receivedAt, $request->received_at?->toIso8601String());
         $this->assertSame($viewer->id, $request->received_by_user_id);
+    }
+
+    public function test_stale_requested_receive_does_not_overwrite_cancelled_request(): void
+    {
+        $viewer = User::factory()->create(['role' => 'operator']);
+        $request = $this->supportRequest(['status' => 'requested']);
+        $httpRequest = Request::create('/api/support-requests/'.$request->id.'/receive', 'POST');
+        $httpRequest->setUserResolver(fn () => $viewer);
+
+        SupportRequest::query()
+            ->whereKey($request->id)
+            ->update(['status' => 'cancelled']);
+
+        $response = app(SupportRequestsController::class)->receive(
+            $httpRequest,
+            $request,
+            app(SupportRequestLifecycleRelayService::class),
+        );
+
+        $this->assertSame(409, $response->getStatusCode());
+
+        $request->refresh();
+        $this->assertSame('cancelled', $request->status);
+        $this->assertNull($request->received_at);
+        $this->assertNull($request->received_by_user_id);
+        $this->assertDatabaseCount('support_request_update_deliveries', 0);
+    }
+
+    public function test_stale_non_requested_receive_does_not_touch_cancelled_request(): void
+    {
+        $viewer = User::factory()->create(['role' => 'operator']);
+        $request = $this->supportRequest(['status' => 'accepted']);
+        $httpRequest = Request::create('/api/support-requests/'.$request->id.'/receive', 'POST');
+        $httpRequest->setUserResolver(fn () => $viewer);
+
+        SupportRequest::query()
+            ->whereKey($request->id)
+            ->update(['status' => 'cancelled']);
+
+        $response = app(SupportRequestsController::class)->receive(
+            $httpRequest,
+            $request,
+            app(SupportRequestLifecycleRelayService::class),
+        );
+
+        $this->assertSame(409, $response->getStatusCode());
+
+        $request->refresh();
+        $this->assertSame('cancelled', $request->status);
+        $this->assertNull($request->received_at);
+        $this->assertNull($request->received_by_user_id);
+        $this->assertDatabaseCount('support_request_update_deliveries', 0);
     }
 
     public function test_guest_cannot_access_support_requests(): void

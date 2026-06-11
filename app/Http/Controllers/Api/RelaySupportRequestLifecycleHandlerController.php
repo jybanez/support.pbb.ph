@@ -99,16 +99,48 @@ class RelaySupportRequestLifecycleHandlerController extends BaseApiController
             ]]);
         }
 
-        if (! in_array($supportRequest->status, self::CANCELLABLE_STATUSES, true)) {
+        if ($supportRequest->status === 'cancelled') {
+            $inbound->forceFill([
+                'validation_status' => SupportRequestMessage::STATUS_DUPLICATE,
+                'processed_at' => now(),
+            ])->save();
+
+            return $this->duplicateResponse($supportRequest);
+        }
+
+        if (in_array($supportRequest->status, ['completed', 'rejected'], true)) {
             return $this->markInvalid($inbound, [[
                 'field' => 'request.status',
                 'message' => 'Support request cancellation is not allowed after the request is '.$supportRequest->status.'.',
             ]]);
         }
 
-        $supportRequest->forceFill([
-            'status' => 'cancelled',
-        ])->save();
+        $updated = SupportRequest::query()
+            ->whereKey($supportRequest->id)
+            ->whereIn('status', self::CANCELLABLE_STATUSES)
+            ->update([
+                'status' => 'cancelled',
+            ]);
+
+        if ($updated === 0) {
+            $supportRequest->refresh();
+
+            if ($supportRequest->status === 'cancelled') {
+                $inbound->forceFill([
+                    'validation_status' => SupportRequestMessage::STATUS_DUPLICATE,
+                    'processed_at' => now(),
+                ])->save();
+
+                return $this->duplicateResponse($supportRequest);
+            }
+
+            return $this->markInvalid($inbound, [[
+                'field' => 'request.status',
+                'message' => 'Support request cancellation is not allowed after the request is '.$supportRequest->status.'.',
+            ]]);
+        }
+
+        $supportRequest->refresh();
 
         $inbound->forceFill([
             'validation_status' => SupportRequestMessage::STATUS_ACCEPTED,
