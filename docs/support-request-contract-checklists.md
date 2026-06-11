@@ -219,11 +219,11 @@ Owned by the Support implementation agent.
 - [x] Generate Support-owned `support_request_id`.
 - [x] Store linked SITREP references without requiring full SITREP JSON.
 - [x] Store selected evidence row, gap, and incident references when provided.
-- [ ] Add Support request list/intake UI.
-- [ ] Add request detail/review drawer.
-- [ ] Show linked SITREP context as visibility, not as inferred deployment instruction.
+- [x] Add Support request list/intake UI.
+- [x] Add request detail/review drawer.
+- [x] Show linked SITREP context as visibility, not as inferred deployment instruction.
 - [ ] Add triage actions:
-  - [ ] mark received on first authorized human open/view
+  - [x] mark received on first authorized human open/view
   - [ ] mark under review
   - [ ] accept
   - [ ] reject with reason

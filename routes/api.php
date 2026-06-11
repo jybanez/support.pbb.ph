@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\RelaySitrepHandlerController;
 use App\Http\Controllers\Api\RelaySupportRequestHandlerController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\SourceHeartbeatController;
+use App\Http\Controllers\Api\SupportRequestsController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,6 +33,9 @@ Route::middleware('web')->group(function (): void {
         Route::delete('/admin/users/{user}', [AdminUsersController::class, 'destroy']);
         Route::get('/settings', [SettingsController::class, 'show']);
         Route::post('/settings', [SettingsController::class, 'update']);
+        Route::get('/support-requests', [SupportRequestsController::class, 'index']);
+        Route::get('/support-requests/{supportRequest}', [SupportRequestsController::class, 'show']);
+        Route::post('/support-requests/{supportRequest}/receive', [SupportRequestsController::class, 'receive']);
         Route::get('/sitreps/current', [CurrentSitrepController::class, 'show']);
         Route::get('/source-heartbeats', [SourceHeartbeatController::class, 'index']);
         Route::post('/logout', [AuthController::class, 'logout']);

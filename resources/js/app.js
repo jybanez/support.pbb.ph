@@ -105,6 +105,7 @@ let reauthModal = null;
 let accountModal = null;
 let passwordModal = null;
 let usersModal = null;
+let supportRequestsModal = null;
 let settingsModal = null;
 let dashboardSplitter = null;
 let dashboardMap = null;
@@ -114,16 +115,23 @@ let navbarClock = null;
 let currentSitrepStyleMounted = false;
 let sourceVirtualList = null;
 let usersVirtualList = null;
+let supportRequestsVirtualList = null;
 let sourceAlertSelect = null;
 let usersListLoaded = false;
 let usersListLoading = false;
+let supportRequestsLoaded = false;
+let supportRequestsLoading = false;
 const sourceDataVisibleIds = new Set();
 const sourceFilters = {
     search: '',
     alertLevels: [],
 };
 let usersListData = [];
+let supportRequestsData = [];
 const userFilters = {
+    search: '',
+};
+const supportRequestFilters = {
     search: '',
 };
 
@@ -381,6 +389,12 @@ const navActions = () => {
     const initial = (state.account.name || state.account.email || '?').charAt(0).toUpperCase();
     const actions = [];
 
+    actions.push({
+        id: 'support-requests',
+        label: 'Requests',
+        icon: icons.support,
+    });
+
     if (state.account.role === 'admin') {
         actions.push({
             id: 'users',
@@ -440,6 +454,9 @@ const renderNavbar = () => {
             }
             if (action?.id === 'users') {
                 openUsers();
+            }
+            if (action?.id === 'support-requests') {
+                openSupportRequests();
             }
             if (action?.id === 'settings') {
                 openSettings();
@@ -1526,6 +1543,305 @@ const openPassword = () => {
     passwordModal.open();
 };
 
+const closeSupportRequests = () => {
+    supportRequestsVirtualList?.destroy?.();
+    supportRequestsVirtualList = null;
+    supportRequestsModal?.destroy?.();
+    supportRequestsModal = null;
+};
+
+const resetSupportRequestsCache = () => {
+    supportRequestsData = [];
+    supportRequestsLoaded = false;
+    supportRequestsLoading = false;
+};
+
+const supportRequestStatusLabel = (status) => titleCase(status || 'requested');
+
+const supportRequestTime = (value) => formatSitrepHeaderDate(value) || 'Time unavailable';
+
+const supportRequestQuantityLabel = (request) => {
+    if (request?.quantity === null || request?.quantity === undefined || request?.quantity === '') {
+        return '';
+    }
+
+    return `${request.quantity} ${request.quantity_unit || ''}`.trim();
+};
+
+const sortSupportRequestsForDisplay = () => {
+    supportRequestsData.sort((a, b) => {
+        const aTime = Date.parse(a?.requested_at || a?.created_at || '') || 0;
+        const bTime = Date.parse(b?.requested_at || b?.created_at || '') || 0;
+        if (aTime !== bTime) return bTime - aTime;
+
+        return String(a?.source_hub_name || '').localeCompare(String(b?.source_hub_name || ''), undefined, {
+            sensitivity: 'base',
+        });
+    });
+};
+
+const upsertCachedSupportRequest = (request) => {
+    if (!request?.id) return false;
+
+    const id = String(request.id);
+    const index = supportRequestsData.findIndex((item) => String(item?.id) === id);
+    if (index >= 0) {
+        supportRequestsData[index] = { ...supportRequestsData[index], ...request };
+    } else {
+        supportRequestsData.push(request);
+    }
+
+    sortSupportRequestsForDisplay();
+    supportRequestsLoaded = true;
+    refreshSupportRequestsList();
+    return true;
+};
+
+const filteredSupportRequests = () => {
+    const search = supportRequestFilters.search.trim().toLowerCase();
+    if (!search) {
+        return supportRequestsData;
+    }
+
+    return supportRequestsData.filter((request) => [
+        request?.support_request_id,
+        request?.local_request_id,
+        request?.source_hub_name,
+        request?.requested_assistance,
+        request?.requested_capability,
+        request?.urgency,
+        request?.status,
+        request?.requester?.display_name,
+    ].some((value) => String(value || '').toLowerCase().includes(search)));
+};
+
+const refreshSupportRequestsList = () => {
+    renderSupportRequestsList(filteredSupportRequests());
+};
+
+const setSupportRequestsRefreshBusy = (busy) => {
+    supportRequestsModal?.setHeaderActionState?.('refresh-requests', { busy });
+};
+
+const supportRequestsModalShell = () => {
+    const drawer = helpers.createDrawer({
+        title: supportRequestsLoaded
+            ? `${supportRequestsData.length} ${supportRequestsData.length === 1 ? 'request' : 'requests'}`
+            : 'Loading requests...',
+        position: 'right',
+        panelClass: 'support-requests-drawer',
+        bodyClass: 'support-requests-drawer-body',
+        closeLabel: 'Close requests',
+        headerActions: [{
+            id: 'refresh-requests',
+            label: 'Refresh requests',
+            icon: 'actions.refresh',
+            tone: 'quiet',
+            busy: supportRequestsLoading,
+            onClick(_action, _event, drawerApi) {
+                drawerApi?.setHeaderActionState?.('refresh-requests', { busy: true });
+                loadSupportRequests({ force: true });
+            },
+        }],
+        onClose() {
+            supportRequestsVirtualList?.destroy?.();
+            supportRequestsVirtualList = null;
+            supportRequestsModal = null;
+        },
+    });
+
+    drawer.body.innerHTML = `
+        <div class="support-requests-modal-toolbar">
+            <label class="support-requests-search">
+                <input type="search" class="ui-input" placeholder="Search requests" data-support-requests-search>
+            </label>
+        </div>
+        <div class="support-requests-list" data-support-requests-list>
+            <div class="support-requests-empty">Loading requests...</div>
+        </div>
+        <section class="support-request-detail" data-support-request-detail aria-live="polite">
+            <div class="support-requests-empty">Select a request to review details.</div>
+        </section>
+    `;
+
+    const searchInput = drawer.body.querySelector('[data-support-requests-search]');
+    if (searchInput) {
+        searchInput.value = supportRequestFilters.search;
+        searchInput.addEventListener('input', () => {
+            supportRequestFilters.search = searchInput.value || '';
+            refreshSupportRequestsList();
+        });
+    }
+
+    return drawer;
+};
+
+const supportRequestStatusClass = (status) => {
+    const normalized = String(status || '').toLowerCase();
+    if (normalized === 'requested') return 'is-requested';
+    if (normalized === 'received' || normalized === 'under_review') return 'is-received';
+    if (normalized === 'accepted' || normalized === 'assigned' || normalized === 'en_route') return 'is-active';
+    if (normalized === 'rejected' || normalized === 'cancelled') return 'is-closed';
+    if (normalized === 'fulfilled' || normalized === 'closed') return 'is-complete';
+    return '';
+};
+
+const supportRequestCard = (request) => {
+    const card = document.createElement('article');
+    card.className = `support-request-card ${supportRequestStatusClass(request?.status)}`.trim();
+    card.dataset.supportRequestId = String(request?.id || '');
+
+    const quantity = supportRequestQuantityLabel(request);
+    card.innerHTML = `
+        <div class="support-request-card-main">
+            <div class="support-request-card-topline">
+                <strong>${escapeHtml(request?.source_hub_name || request?.source_relay_hub_id || 'Unknown source')}</strong>
+                <span class="support-request-status ${supportRequestStatusClass(request?.status)}">${escapeHtml(supportRequestStatusLabel(request?.status))}</span>
+            </div>
+            <span>${escapeHtml(request?.requested_assistance || 'Support request')}</span>
+            <span class="support-request-meta">${escapeHtml([request?.urgency ? titleCase(request.urgency) : '', quantity, supportRequestTime(request?.requested_at)].filter(Boolean).join(' - '))}</span>
+        </div>
+    `;
+    card.addEventListener('click', () => openSupportRequestDetail(request?.id));
+
+    return card;
+};
+
+const renderSupportRequestsList = (requests = []) => {
+    const list = supportRequestsModal?.body?.querySelector?.('[data-support-requests-list]');
+    if (!list) return;
+
+    if (supportRequestsModal?.title) {
+        const total = supportRequestsData.length;
+        supportRequestsModal.title.textContent = supportRequestFilters.search.trim()
+            ? `${requests.length} of ${total} ${total === 1 ? 'request' : 'requests'}`
+            : `${total} ${total === 1 ? 'request' : 'requests'}`;
+    }
+
+    supportRequestsVirtualList?.destroy?.();
+    supportRequestsVirtualList = helpers.createVirtualList(list, requests, {
+        ariaLabel: 'Support requests',
+        chrome: false,
+        emptyText: supportRequestFilters.search.trim() ? 'No requests match this search.' : 'No support requests found.',
+        height: Math.max(220, list.clientHeight || 360),
+        rowHeight: 112,
+        overscan: 4,
+        renderItem: (request) => supportRequestCard(request),
+    });
+};
+
+const loadSupportRequests = async ({ force = false } = {}) => {
+    const list = supportRequestsModal?.body?.querySelector?.('[data-support-requests-list]');
+    if (supportRequestsLoaded && !force) {
+        renderSupportRequestsList(filteredSupportRequests());
+        return;
+    }
+
+    if (list) {
+        supportRequestsVirtualList?.destroy?.();
+        supportRequestsVirtualList = null;
+        list.innerHTML = '<div class="support-requests-empty">Loading requests...</div>';
+    }
+
+    supportRequestsLoading = true;
+    setSupportRequestsRefreshBusy(true);
+    try {
+        const data = await api('/api/support-requests');
+        supportRequestsData = Array.isArray(data.requests) ? data.requests : [];
+        sortSupportRequestsForDisplay();
+        supportRequestsLoaded = true;
+        renderSupportRequestsList(filteredSupportRequests());
+    } catch (error) {
+        if (list) {
+            list.innerHTML = `<div class="support-requests-empty">${escapeHtml(firstError(error, 'Unable to load support requests.'))}</div>`;
+        }
+    } finally {
+        supportRequestsLoading = false;
+        setSupportRequestsRefreshBusy(false);
+    }
+};
+
+const supportRequestDetailRow = (label, value) => {
+    const text = Array.isArray(value) || (value && typeof value === 'object')
+        ? JSON.stringify(value, null, 2)
+        : String(value ?? '').trim();
+
+    if (!text) return '';
+
+    return `
+        <div class="support-request-detail-row">
+            <span>${escapeHtml(label)}</span>
+            <strong>${escapeHtml(text)}</strong>
+        </div>
+    `;
+};
+
+const renderSupportRequestDetail = (request) => {
+    const detail = supportRequestsModal?.body?.querySelector?.('[data-support-request-detail]');
+    if (!detail) return;
+
+    if (!request) {
+        detail.innerHTML = '<div class="support-requests-empty">Select a request to review details.</div>';
+        return;
+    }
+
+    const quantity = supportRequestQuantityLabel(request);
+    detail.innerHTML = `
+        <header class="support-request-detail-header">
+            <span class="support-request-status ${supportRequestStatusClass(request.status)}">${escapeHtml(supportRequestStatusLabel(request.status))}</span>
+            <h3>${escapeHtml(request.source_hub_name || request.source_relay_hub_id || 'Support request')}</h3>
+            <p>${escapeHtml(request.requested_assistance || 'No assistance summary provided.')}</p>
+        </header>
+        <div class="support-request-detail-grid">
+            ${supportRequestDetailRow('Capability', request.requested_capability ? titleCase(request.requested_capability) : '')}
+            ${supportRequestDetailRow('Urgency', request.urgency ? titleCase(request.urgency) : '')}
+            ${supportRequestDetailRow('Quantity', quantity)}
+            ${supportRequestDetailRow('Requested at', supportRequestTime(request.requested_at))}
+            ${supportRequestDetailRow('Requester', [request.requester?.display_name, request.requester?.role ? titleCase(request.requester.role) : ''].filter(Boolean).join(' - '))}
+            ${supportRequestDetailRow('Staging notes', request.staging_notes)}
+            ${supportRequestDetailRow('Command notes', request.command_notes)}
+            ${supportRequestDetailRow('SITREP context', request.sitrep_context)}
+            ${supportRequestDetailRow('Gap context', request.gap_context)}
+            ${supportRequestDetailRow('Evidence row', request.evidence_row)}
+            ${supportRequestDetailRow('Incident refs', request.incident_refs)}
+        </div>
+    `;
+};
+
+const openSupportRequestDetail = async (requestId) => {
+    const id = String(requestId || '');
+    if (!id) return;
+
+    const detail = supportRequestsModal?.body?.querySelector?.('[data-support-request-detail]');
+    if (detail) {
+        detail.innerHTML = '<div class="support-requests-empty">Loading request details...</div>';
+    }
+
+    try {
+        const data = await api(`/api/support-requests/${encodeURIComponent(id)}/receive`, {
+            method: 'POST',
+            body: '{}',
+        });
+        if (data.request) {
+            upsertCachedSupportRequest(data.request);
+            renderSupportRequestDetail(data.request);
+        }
+    } catch (error) {
+        if (detail) {
+            detail.innerHTML = `<div class="support-requests-empty">${escapeHtml(firstError(error, 'Unable to load request details.'))}</div>`;
+        }
+    }
+};
+
+const openSupportRequests = async () => {
+    if (!state.account) return;
+
+    closeSupportRequests();
+    supportRequestsModal = supportRequestsModalShell();
+    supportRequestsModal.open(document.body);
+    await loadSupportRequests();
+};
+
 const closeUsers = () => {
     usersVirtualList?.destroy?.();
     usersVirtualList = null;
@@ -2020,6 +2336,8 @@ const openSettings = () => {
 
 const logout = async () => {
     const data = await api('/api/logout', { method: 'POST', body: '{}' });
+    closeSupportRequests();
+    resetSupportRequestsCache();
     closeUsers();
     resetUsersCache();
     setSessionRemembered(false);

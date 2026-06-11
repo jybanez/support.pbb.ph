@@ -35,6 +35,8 @@ class SupportRequest extends Model
         'request_payload',
         'raw_envelope',
         'intake_received_at',
+        'received_at',
+        'received_by_user_id',
     ];
 
     protected $casts = [
@@ -47,6 +49,7 @@ class SupportRequest extends Model
         'request_payload' => 'array',
         'raw_envelope' => 'array',
         'intake_received_at' => 'datetime',
+        'received_at' => 'datetime',
     ];
 
     public function messages(): HasMany
