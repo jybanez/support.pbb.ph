@@ -142,16 +142,21 @@ class SupportRequestLifecycleRelayTest extends TestCase
     public function test_duplicate_receive_retries_do_not_create_duplicate_lifecycle_effects(): void
     {
         Queue::fake();
+        $httpOptions = [];
         $this->settings([
             'relayUrl' => 'https://relay.pbb.ph',
             'relayToken' => 'relay-secret',
         ]);
         Http::fake([
-            'relay.pbb.ph/api/v1/messages' => Http::response([
-                'relay_id' => '01JRELAY000000000000000001',
-                'message_id' => 'relay-msg-update-1001',
-                'deliveries_count' => 1,
-            ], 201),
+            'relay.pbb.ph/api/v1/messages' => function (Request $request, array $options) use (&$httpOptions) {
+                $httpOptions = $options;
+
+                return Http::response([
+                    'relay_id' => '01JRELAY000000000000000001',
+                    'message_id' => 'relay-msg-update-1001',
+                    'deliveries_count' => 1,
+                ], 201);
+            },
         ]);
         $viewer = User::factory()->create(['role' => 'operator']);
         $other = User::factory()->create(['role' => 'admin']);
@@ -178,6 +183,8 @@ class SupportRequestLifecycleRelayTest extends TestCase
         $this->assertSame(1, SupportRequestUpdateDelivery::query()->where('support_request_id', $request->id)->count());
         Queue::assertNothingPushed();
         Http::assertSentCount(1);
+        $this->assertSame(2, $httpOptions['connect_timeout'] ?? null);
+        $this->assertSame(5, $httpOptions['timeout'] ?? null);
     }
 
     /**

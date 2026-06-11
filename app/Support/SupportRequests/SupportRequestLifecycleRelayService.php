@@ -47,7 +47,11 @@ class SupportRequestLifecycleRelayService
         return $delivery;
     }
 
-    public function submit(SupportRequestUpdateDelivery $delivery): SupportRequestUpdateDelivery
+    public function submit(
+        SupportRequestUpdateDelivery $delivery,
+        int $connectTimeoutSeconds = 5,
+        int $timeoutSeconds = 30,
+    ): SupportRequestUpdateDelivery
     {
         if ($delivery->delivery_status === SupportRequestUpdateDelivery::STATUS_SENT) {
             return $delivery;
@@ -73,8 +77,8 @@ class SupportRequestLifecycleRelayService
                     'Connection' => 'close',
                     'X-Relay-Key' => $relayToken,
                 ])
-                ->connectTimeout(5)
-                ->timeout(30)
+                ->connectTimeout($connectTimeoutSeconds)
+                ->timeout($timeoutSeconds)
                 ->post($relayUrl.'/api/v1/messages', $delivery->envelope);
         } catch (\Throwable $exception) {
             return $this->markFailed($delivery, $exception->getMessage());

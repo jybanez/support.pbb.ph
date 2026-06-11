@@ -62,7 +62,7 @@ class SupportRequestsController extends BaseApiController
 
         if ($shouldQueueReceivedUpdate) {
             $delivery = $lifecycleRelay->queueLifecycleUpdate($supportRequest, 'received', dispatch: false);
-            $lifecycleRelay->submit($delivery);
+            $lifecycleRelay->submit($delivery, connectTimeoutSeconds: 2, timeoutSeconds: 5);
         }
 
         return $this->ok([
