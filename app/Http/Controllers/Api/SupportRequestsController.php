@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\SupportRequest;
+use App\Models\SupportRequestUpdateDelivery;
+use App\Support\SupportRequests\SupportRequestLifecycleRelayService;
 use Illuminate\Http\Request;
 
 class SupportRequestsController extends BaseApiController
@@ -35,19 +37,31 @@ class SupportRequestsController extends BaseApiController
         ]);
     }
 
-    public function receive(Request $request, SupportRequest $supportRequest)
+    public function receive(
+        Request $request,
+        SupportRequest $supportRequest,
+        SupportRequestLifecycleRelayService $lifecycleRelay,
+    )
     {
+        $shouldQueueReceivedUpdate = false;
+
         if ($supportRequest->status === 'requested') {
             $supportRequest->forceFill([
                 'status' => 'received',
                 'received_at' => now(),
                 'received_by_user_id' => $request->user()?->id,
             ])->save();
+
+            $shouldQueueReceivedUpdate = true;
         } elseif ($supportRequest->received_at === null) {
             $supportRequest->forceFill([
                 'received_at' => now(),
                 'received_by_user_id' => $request->user()?->id,
             ])->save();
+        }
+
+        if ($shouldQueueReceivedUpdate) {
+            $lifecycleRelay->queueLifecycleUpdate($supportRequest, 'received');
         }
 
         return $this->ok([
@@ -77,6 +91,7 @@ class SupportRequestsController extends BaseApiController
             'intake_received_at' => $supportRequest->intake_received_at?->toIso8601String(),
             'received_at' => $supportRequest->received_at?->toIso8601String(),
             'received_by_user_id' => $supportRequest->received_by_user_id,
+            'latest_update_delivery' => $this->latestUpdateDeliveryPayload($supportRequest),
             'requester' => [
                 'user_id' => $supportRequest->requester_user_id,
                 'display_name' => $supportRequest->requester_display_name,
@@ -95,9 +110,50 @@ class SupportRequestsController extends BaseApiController
                 'evidence_row' => $supportRequest->evidence_row,
                 'incident_refs' => $supportRequest->incident_refs,
                 'request_payload' => $supportRequest->request_payload,
+                'update_deliveries' => $supportRequest->updateDeliveries()
+                    ->latest('created_at')
+                    ->latest('id')
+                    ->get()
+                    ->map(fn (SupportRequestUpdateDelivery $delivery): array => $this->updateDeliveryPayload($delivery))
+                    ->values()
+                    ->all(),
             ];
         }
 
         return $payload;
+    }
+
+    private function latestUpdateDeliveryPayload(SupportRequest $supportRequest): ?array
+    {
+        $delivery = $supportRequest->updateDeliveries()
+            ->latest('created_at')
+            ->latest('id')
+            ->first();
+
+        return $delivery instanceof SupportRequestUpdateDelivery
+            ? $this->updateDeliveryPayload($delivery)
+            : null;
+    }
+
+    private function updateDeliveryPayload(SupportRequestUpdateDelivery $delivery): array
+    {
+        return [
+            'id' => $delivery->id,
+            'update_id' => $delivery->update_id,
+            'message_type' => $delivery->message_type,
+            'source_system' => $delivery->source_system,
+            'target_system' => $delivery->target_system,
+            'status' => $delivery->status,
+            'delivery_status' => $delivery->delivery_status,
+            'relay_id' => $delivery->relay_id,
+            'relay_message_id' => $delivery->relay_message_id,
+            'deliveries_count' => $delivery->deliveries_count,
+            'attempt_count' => $delivery->attempt_count,
+            'last_attempted_at' => $delivery->last_attempted_at?->toIso8601String(),
+            'submitted_at' => $delivery->submitted_at?->toIso8601String(),
+            'last_error' => $delivery->last_error,
+            'created_at' => $delivery->created_at?->toIso8601String(),
+            'updated_at' => $delivery->updated_at?->toIso8601String(),
+        ];
     }
 }

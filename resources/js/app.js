@@ -1787,6 +1787,19 @@ const supportRequestDetailRow = (label, value) => {
     `;
 };
 
+const supportRequestDeliveryLabel = (request) => {
+    const delivery = request?.latest_update_delivery || (Array.isArray(request?.update_deliveries) ? request.update_deliveries[0] : null);
+    if (!delivery) return '';
+
+    const state = delivery.delivery_status ? titleCase(delivery.delivery_status) : 'Pending';
+    const type = delivery.message_type || 'support.request update';
+    const attempts = Number.isFinite(Number(delivery.attempt_count)) ? `attempts ${Number(delivery.attempt_count)}` : '';
+    const submitted = delivery.submitted_at ? `sent ${supportRequestTime(delivery.submitted_at)}` : '';
+    const error = delivery.last_error ? `error: ${delivery.last_error}` : '';
+
+    return [state, type, attempts, submitted, error].filter(Boolean).join(' - ');
+};
+
 const renderSupportRequestDetail = (request) => {
     const detail = supportRequestsModal?.body?.querySelector?.('[data-support-request-detail]');
     if (!detail) return;
@@ -1809,6 +1822,7 @@ const renderSupportRequestDetail = (request) => {
             ${supportRequestDetailRow('Quantity', quantity)}
             ${supportRequestDetailRow('Requested at', supportRequestTime(request.requested_at))}
             ${supportRequestDetailRow('Requester', [request.requester?.display_name, request.requester?.role ? titleCase(request.requester.role) : ''].filter(Boolean).join(' - '))}
+            ${supportRequestDetailRow('Hotline update', supportRequestDeliveryLabel(request))}
             ${supportRequestDetailRow('Staging notes', request.staging_notes)}
             ${supportRequestDetailRow('Command notes', request.command_notes)}
             ${supportRequestDetailRow('SITREP context', request.sitrep_context)}
