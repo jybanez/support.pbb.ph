@@ -16,7 +16,7 @@ class SupportRequestLifecycleRelayService
     ) {
     }
 
-    public function queueLifecycleUpdate(SupportRequest $supportRequest, string $status): SupportRequestUpdateDelivery
+    public function queueLifecycleUpdate(SupportRequest $supportRequest, string $status, bool $dispatch = true): SupportRequestUpdateDelivery
     {
         $supportRequest->refresh();
         $settings = $this->settings->all();
@@ -40,7 +40,7 @@ class SupportRequestLifecycleRelayService
             ],
         );
 
-        if ($delivery->wasRecentlyCreated) {
+        if ($dispatch && $delivery->wasRecentlyCreated) {
             SubmitSupportRequestUpdateDelivery::dispatch($delivery->id);
         }
 
@@ -136,11 +136,19 @@ class SupportRequestLifecycleRelayService
             'occurred_at' => $updatedAt,
             'payload' => [
                 'schema_version' => 1,
-                'update' => [
-                    'update_id' => $updateId,
-                    'status' => $status,
-                    'updated_at' => $updatedAt,
+                'update_id' => $updateId,
+                'local_request_id' => $supportRequest->local_request_id,
+                'hotline_request_id' => $supportRequest->local_request_id,
+                'support_request_id' => $supportRequest->support_request_id,
+                'correlation_id' => $supportRequest->correlation_id,
+                'status' => $status,
+                'status_label' => Str::headline($status),
+                'updated_at' => $updatedAt,
+                'updated_by' => [
+                    'system' => $sourceSystem,
+                    'display_name' => 'PBB Support',
                 ],
+                'message' => 'Support request '.str_replace('_', ' ', $status).' by PBB Support.',
                 'request' => [
                     'id' => $supportRequest->id,
                     'local_request_id' => $supportRequest->local_request_id,

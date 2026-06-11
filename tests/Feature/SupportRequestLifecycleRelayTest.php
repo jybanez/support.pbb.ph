@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Jobs\SubmitSupportRequestUpdateDelivery;
 use App\Models\SupportRequest;
 use App\Models\SupportRequestUpdateDelivery;
 use App\Models\User;
@@ -18,7 +17,7 @@ class SupportRequestLifecycleRelayTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_received_update_envelope_contains_stable_contract_identifiers(): void
+    public function test_received_update_envelope_contains_hotline_root_contract_fields(): void
     {
         Queue::fake();
         $this->settings([
@@ -44,9 +43,18 @@ class SupportRequestLifecycleRelayTest extends TestCase
         $this->assertSame(['hotline.command'], $envelope['targets'][0]['systems']);
         $this->assertSame($request->correlation_id, $envelope['correlation_id']);
         $this->assertSame($updateId, $envelope['reference_id']);
-        $this->assertSame($updateId, $envelope['payload']['update']['update_id']);
-        $this->assertSame('received', $envelope['payload']['update']['status']);
-        $this->assertSame($updatedAt, $envelope['payload']['update']['updated_at']);
+        $this->assertSame($updateId, $envelope['payload']['update_id']);
+        $this->assertSame('hotline-req-1001', $envelope['payload']['local_request_id']);
+        $this->assertSame('hotline-req-1001', $envelope['payload']['hotline_request_id']);
+        $this->assertSame('sup_01K00000000000000000000000', $envelope['payload']['support_request_id']);
+        $this->assertSame('support-corr-1001', $envelope['payload']['correlation_id']);
+        $this->assertSame('received', $envelope['payload']['status']);
+        $this->assertSame('Received', $envelope['payload']['status_label']);
+        $this->assertSame($updatedAt, $envelope['payload']['updated_at']);
+        $this->assertSame('support.dispatch', $envelope['payload']['updated_by']['system']);
+        $this->assertSame('PBB Support', $envelope['payload']['updated_by']['display_name']);
+        $this->assertSame('Support request received by PBB Support.', $envelope['payload']['message']);
+        $this->assertArrayNotHasKey('update', $envelope['payload']);
         $this->assertSame($request->id, $envelope['payload']['request']['id']);
         $this->assertSame('hotline-req-1001', $envelope['payload']['request']['local_request_id']);
         $this->assertSame('sup_01K00000000000000000000000', $envelope['payload']['request']['support_request_id']);
@@ -92,7 +100,9 @@ class SupportRequestLifecycleRelayTest extends TestCase
         Http::assertSent(fn (Request $request): bool => $request->url() === 'https://relay.pbb.ph/api/v1/messages'
             && $request->hasHeader('X-Relay-Key', 'relay-secret')
             && $request['message_type'] === 'support.request.received'
-            && $request['payload']['request']['support_request_id'] === 'sup_01K00000000000000000000000');
+            && $request['payload']['support_request_id'] === 'sup_01K00000000000000000000000'
+            && $request['payload']['status'] === 'received'
+            && $request['payload']['updated_by']['system'] === 'support.dispatch');
     }
 
     public function test_relay_failure_is_persisted_for_operator_visibility(): void
@@ -132,6 +142,17 @@ class SupportRequestLifecycleRelayTest extends TestCase
     public function test_duplicate_receive_retries_do_not_create_duplicate_lifecycle_effects(): void
     {
         Queue::fake();
+        $this->settings([
+            'relayUrl' => 'https://relay.pbb.ph',
+            'relayToken' => 'relay-secret',
+        ]);
+        Http::fake([
+            'relay.pbb.ph/api/v1/messages' => Http::response([
+                'relay_id' => '01JRELAY000000000000000001',
+                'message_id' => 'relay-msg-update-1001',
+                'deliveries_count' => 1,
+            ], 201),
+        ]);
         $viewer = User::factory()->create(['role' => 'operator']);
         $other = User::factory()->create(['role' => 'admin']);
         $request = $this->supportRequest(['status' => 'requested']);
@@ -140,7 +161,7 @@ class SupportRequestLifecycleRelayTest extends TestCase
             ->postJson('/api/support-requests/'.$request->id.'/receive')
             ->assertOk()
             ->assertJsonPath('data.request.status', 'received')
-            ->assertJsonPath('data.request.latest_update_delivery.delivery_status', SupportRequestUpdateDelivery::STATUS_PENDING);
+            ->assertJsonPath('data.request.latest_update_delivery.delivery_status', SupportRequestUpdateDelivery::STATUS_SENT);
 
         $receivedAt = $request->refresh()->received_at?->toIso8601String();
         $updatedAt = $request->updated_at?->toIso8601String();
@@ -155,7 +176,8 @@ class SupportRequestLifecycleRelayTest extends TestCase
         $this->assertSame($updatedAt, $request->updated_at?->toIso8601String());
         $this->assertSame($viewer->id, $request->received_by_user_id);
         $this->assertSame(1, SupportRequestUpdateDelivery::query()->where('support_request_id', $request->id)->count());
-        Queue::assertPushed(SubmitSupportRequestUpdateDelivery::class, 1);
+        Queue::assertNothingPushed();
+        Http::assertSentCount(1);
     }
 
     /**
