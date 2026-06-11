@@ -121,6 +121,67 @@ class SupportRequestIntakeTest extends TestCase
         $this->assertNotEmpty($message->validation_errors);
     }
 
+    public function test_support_request_handler_rejects_payload_source_that_contradicts_envelope_source(): void
+    {
+        app(SupportSettings::class)->update([
+            'relayHandlerToken' => 'handler-secret',
+        ]);
+
+        $this->postJson('/api/relay/support-requests', $this->supportRequestEnvelope([
+            'message' => [
+                'id' => 'relay-msg-source-mismatch',
+                'payload' => [
+                    'source' => [
+                        'system' => 'other.command',
+                    ],
+                ],
+            ],
+        ]), [
+            'Authorization' => 'Bearer handler-secret',
+        ])
+            ->assertAccepted()
+            ->assertJsonPath('data.validation_status', SupportRequestMessage::STATUS_INVALID);
+
+        $this->assertDatabaseCount('support_requests', 0);
+
+        $message = SupportRequestMessage::query()->firstOrFail();
+
+        $this->assertSame(SupportRequestMessage::STATUS_INVALID, $message->validation_status);
+        $this->assertSame('hotline.command', $message->source_system);
+        $this->assertSame('other.command', $message->payload['source']['system']);
+        $this->assertContains('source.system', collect($message->validation_errors)->pluck('field')->all());
+    }
+
+    public function test_support_request_handler_rejects_initial_support_owned_status(): void
+    {
+        app(SupportSettings::class)->update([
+            'relayHandlerToken' => 'handler-secret',
+        ]);
+
+        $this->postJson('/api/relay/support-requests', $this->supportRequestEnvelope([
+            'message' => [
+                'id' => 'relay-msg-support-owned-status',
+                'payload' => [
+                    'request' => [
+                        'status' => 'assigned',
+                    ],
+                ],
+            ],
+        ]), [
+            'Authorization' => 'Bearer handler-secret',
+        ])
+            ->assertAccepted()
+            ->assertJsonPath('data.validation_status', SupportRequestMessage::STATUS_INVALID);
+
+        $this->assertDatabaseCount('support_requests', 0);
+
+        $message = SupportRequestMessage::query()->firstOrFail();
+
+        $this->assertSame(SupportRequestMessage::STATUS_INVALID, $message->validation_status);
+        $this->assertSame('assigned', $message->payload['request']['status']);
+        $this->assertContains('request.status', collect($message->validation_errors)->pluck('field')->all());
+    }
+
     public function test_support_request_handler_is_idempotent_by_relay_message_id(): void
     {
         app(SupportSettings::class)->update([
@@ -141,7 +202,14 @@ class SupportRequestIntakeTest extends TestCase
             ->assertJsonPath('data.correlation_id', 'support-corr-1001');
 
         $this->assertDatabaseCount('support_requests', 1);
-        $this->assertDatabaseCount('support_request_messages', 1);
+        $this->assertDatabaseCount('support_request_messages', 2);
+
+        $duplicate = SupportRequestMessage::query()
+            ->where('relay_message_id', 'relay-msg-1001')
+            ->where('validation_status', SupportRequestMessage::STATUS_DUPLICATE)
+            ->firstOrFail();
+
+        $this->assertNotNull($duplicate->support_request_id);
     }
 
     public function test_support_request_handler_is_idempotent_by_correlation_id(): void

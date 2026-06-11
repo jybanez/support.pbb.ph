@@ -36,17 +36,6 @@ class RelaySupportRequestHandlerController extends BaseApiController
         $messageType = $this->stringOrNull($message['message_type'] ?? null);
         $targetSystem = $this->firstTargetSystem($targets);
 
-        if ($relayMessageId !== null) {
-            $existingMessage = SupportRequestMessage::query()
-                ->where('relay_message_id', $relayMessageId)
-                ->whereIn('validation_status', [SupportRequestMessage::STATUS_ACCEPTED, SupportRequestMessage::STATUS_DUPLICATE])
-                ->first();
-
-            if ($existingMessage) {
-                return $this->duplicateResponse($existingMessage->supportRequest);
-            }
-        }
-
         $inbound = SupportRequestMessage::query()->create([
             'relay_id' => $this->stringOrNull($message['relay_id'] ?? $envelope['relay_id'] ?? null),
             'relay_message_id' => $relayMessageId,
@@ -58,6 +47,24 @@ class RelaySupportRequestHandlerController extends BaseApiController
             'raw_envelope' => $envelope,
             'payload' => $payload,
         ]);
+
+        if ($relayMessageId !== null) {
+            $existingMessage = SupportRequestMessage::query()
+                ->where('relay_message_id', $relayMessageId)
+                ->where('id', '!=', $inbound->id)
+                ->whereIn('validation_status', [SupportRequestMessage::STATUS_ACCEPTED, SupportRequestMessage::STATUS_DUPLICATE])
+                ->first();
+
+            if ($existingMessage) {
+                $inbound->forceFill([
+                    'support_request_id' => $existingMessage->support_request_id,
+                    'validation_status' => SupportRequestMessage::STATUS_DUPLICATE,
+                    'processed_at' => now(),
+                ])->save();
+
+                return $this->duplicateResponse($existingMessage->supportRequest);
+            }
+        }
 
         $errors = $this->validateMessage($messageType, $sourceSystem, $targets, $payload);
         if ($errors !== []) {
@@ -171,7 +178,7 @@ class RelaySupportRequestHandlerController extends BaseApiController
             'request' => ['required', 'array'],
             'request.local_request_id' => ['required', 'string', 'max:120'],
             'request.correlation_id' => ['required', 'string', 'max:120'],
-            'request.status' => ['required', 'string', 'max:80'],
+            'request.status' => ['required', 'string', 'in:requested'],
             'request.urgency' => ['required', 'string', 'max:80'],
             'request.requested_assistance' => ['required', 'string', 'max:255'],
             'request.requested_capability' => ['required', 'string', 'max:120'],
@@ -202,6 +209,14 @@ class RelaySupportRequestHandlerController extends BaseApiController
                     'message' => $message,
                 ];
             }
+        }
+
+        $payloadSourceSystem = $this->stringOrNull(data_get($payload, 'source.system'));
+        if ($payloadSourceSystem !== $expectedSourceSystem) {
+            $errors[] = [
+                'field' => 'source.system',
+                'message' => 'Support request payload source system must match the expected Hotline source system.',
+            ];
         }
 
         return $errors;
