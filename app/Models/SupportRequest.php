@@ -61,4 +61,9 @@ class SupportRequest extends Model
     {
         return $this->hasMany(SupportRequestUpdateDelivery::class);
     }
+
+    public function actions(): HasMany
+    {
+        return $this->hasMany(SupportRequestAction::class);
+    }
 }
