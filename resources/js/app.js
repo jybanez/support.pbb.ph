@@ -313,6 +313,25 @@ const refreshCsrfToken = async () => {
     return state.csrfToken;
 };
 
+const loginWithCredentials = async (values) => {
+    const submit = () => api('/api/login', {
+        method: 'POST',
+        body: JSON.stringify(values),
+        reauthOnUnauthorized: false,
+    });
+
+    try {
+        return await submit();
+    } catch (error) {
+        if (error.status !== 419) {
+            throw error;
+        }
+
+        await refreshCsrfToken();
+        return submit();
+    }
+};
+
 const syncAuthFromBootstrap = async () => {
     const data = await api(`/api/bootstrap?page=${encodeURIComponent(state.app.page)}`, {
         reauthOnUnauthorized: false,
@@ -1403,11 +1422,7 @@ const openLogin = () => {
         },
         async onSubmit(values) {
             try {
-                await refreshCsrfToken();
-                const data = await api('/api/login', {
-                    method: 'POST',
-                    body: JSON.stringify(values),
-                });
+                const data = await loginWithCredentials(values);
                 applySessionPayload(data);
                 state.reauthOpen = false;
                 render();
@@ -1444,11 +1459,7 @@ const openReauth = () => {
         },
         async onSubmit(values, ctx) {
             try {
-                await refreshCsrfToken();
-                const data = await api('/api/login', {
-                    method: 'POST',
-                    body: JSON.stringify(values),
-                });
+                const data = await loginWithCredentials(values);
                 applySessionPayload(data);
                 state.reauthOpen = false;
                 render();
