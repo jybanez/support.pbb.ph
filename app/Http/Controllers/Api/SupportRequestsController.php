@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\SupportRequest;
+use App\Models\SupportRequestAction;
 use App\Models\SupportRequestUpdateDelivery;
 use App\Support\SupportRequests\SupportRequestLifecycleRelayService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SupportRequestsController extends BaseApiController
 {
+    private const TERMINAL_STATUSES = ['cancelled', 'completed', 'rejected'];
+
     public function index(Request $request)
     {
         $query = SupportRequest::query()
@@ -64,6 +68,10 @@ class SupportRequestsController extends BaseApiController
             }
 
             $shouldQueueReceivedUpdate = $updated === 1;
+            if ($shouldQueueReceivedUpdate) {
+                $supportRequest->refresh();
+                $this->recordAction($supportRequest, $request, 'received', 'requested', 'received');
+            }
         } elseif ($supportRequest->received_at === null) {
             $updated = SupportRequest::query()
                 ->whereKey($supportRequest->id)
@@ -87,6 +95,74 @@ class SupportRequestsController extends BaseApiController
 
         return $this->ok([
             'request' => $this->requestPayload($supportRequest->refresh(), true),
+        ]);
+    }
+
+    public function accept(Request $request, SupportRequest $supportRequest)
+    {
+        $validated = $request->validate([
+            'notes' => ['nullable', 'string', 'max:4000'],
+        ]);
+
+        return $this->transition($request, $supportRequest, 'accepted', 'accepted', ['received'], [
+            'notes' => $validated['notes'] ?? null,
+        ]);
+    }
+
+    public function reject(Request $request, SupportRequest $supportRequest)
+    {
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'max:4000'],
+        ]);
+
+        return $this->transition($request, $supportRequest, 'rejected', 'rejected', ['received'], [
+            'notes' => $validated['reason'],
+            'metadata' => [
+                'reason' => $validated['reason'],
+            ],
+        ]);
+    }
+
+    public function assign(Request $request, SupportRequest $supportRequest)
+    {
+        $validated = $request->validate([
+            'team_name' => ['required', 'string', 'max:255'],
+            'eta' => ['nullable', 'string', 'max:120'],
+            'notes' => ['nullable', 'string', 'max:4000'],
+        ]);
+
+        return $this->transition($request, $supportRequest, 'assigned', 'assigned', ['accepted'], [
+            'notes' => $validated['notes'] ?? null,
+            'metadata' => [
+                'team_name' => $validated['team_name'],
+                'eta' => $validated['eta'] ?? null,
+            ],
+        ]);
+    }
+
+    public function markEnRoute(Request $request, SupportRequest $supportRequest)
+    {
+        $validated = $request->validate([
+            'notes' => ['nullable', 'string', 'max:4000'],
+        ]);
+
+        return $this->transition($request, $supportRequest, 'en_route', 'en_route', ['assigned'], [
+            'notes' => $validated['notes'] ?? null,
+        ]);
+    }
+
+    public function complete(Request $request, SupportRequest $supportRequest)
+    {
+        $validated = $request->validate([
+            'notes' => ['nullable', 'string', 'max:4000'],
+            'outcome' => ['nullable', 'string', 'max:4000'],
+        ]);
+
+        return $this->transition($request, $supportRequest, 'completed', 'completed', ['en_route'], [
+            'notes' => $validated['notes'] ?? ($validated['outcome'] ?? null),
+            'metadata' => [
+                'outcome' => $validated['outcome'] ?? null,
+            ],
         ]);
     }
 
@@ -138,6 +214,13 @@ class SupportRequestsController extends BaseApiController
                     ->map(fn (SupportRequestUpdateDelivery $delivery): array => $this->updateDeliveryPayload($delivery))
                     ->values()
                     ->all(),
+                'actions' => $supportRequest->actions()
+                    ->oldest('acted_at')
+                    ->oldest('id')
+                    ->get()
+                    ->map(fn (SupportRequestAction $action): array => $this->actionPayload($action))
+                    ->values()
+                    ->all(),
             ];
         }
 
@@ -175,6 +258,112 @@ class SupportRequestsController extends BaseApiController
             'last_error' => $delivery->last_error,
             'created_at' => $delivery->created_at?->toIso8601String(),
             'updated_at' => $delivery->updated_at?->toIso8601String(),
+        ];
+    }
+
+    /**
+     * @param array<int, string> $allowedFrom
+     * @param array{notes?: ?string, metadata?: ?array<string, mixed>} $options
+     */
+    private function transition(
+        Request $request,
+        SupportRequest $supportRequest,
+        string $action,
+        string $toStatus,
+        array $allowedFrom,
+        array $options = [],
+    ) {
+        $result = DB::transaction(function () use ($request, $supportRequest, $action, $toStatus, $allowedFrom, $options): array {
+            $lockedRequest = SupportRequest::query()
+                ->whereKey($supportRequest->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (in_array($lockedRequest->status, self::TERMINAL_STATUSES, true)) {
+                return [
+                    'error' => 'Support request is already terminal and cannot be changed.',
+                    'status_code' => 409,
+                ];
+            }
+
+            if (! in_array($lockedRequest->status, $allowedFrom, true)) {
+                return [
+                    'error' => 'Support request status transition is not allowed.',
+                    'status_code' => 409,
+                    'data' => [
+                        'current_status' => $lockedRequest->status,
+                        'allowed_from' => $allowedFrom,
+                        'target_status' => $toStatus,
+                    ],
+                ];
+            }
+
+            $fromStatus = $lockedRequest->status;
+
+            $lockedRequest->forceFill([
+                'status' => $toStatus,
+            ])->save();
+
+            $this->recordAction(
+                $lockedRequest,
+                $request,
+                $action,
+                $fromStatus,
+                $toStatus,
+                $options['notes'] ?? null,
+                $options['metadata'] ?? null,
+            );
+
+            return [
+                'request' => $lockedRequest->refresh(),
+            ];
+        });
+
+        if (isset($result['error'])) {
+            return $this->fail($result['error'], $result['status_code'], $result['data'] ?? null);
+        }
+
+        return $this->ok([
+            'request' => $this->requestPayload($result['request'], true),
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed>|null $metadata
+     */
+    private function recordAction(
+        SupportRequest $supportRequest,
+        Request $request,
+        string $action,
+        ?string $fromStatus,
+        string $toStatus,
+        ?string $notes = null,
+        ?array $metadata = null,
+    ): SupportRequestAction {
+        return $supportRequest->actions()->create([
+            'action' => $action,
+            'from_status' => $fromStatus,
+            'to_status' => $toStatus,
+            'actor_user_id' => $request->user()?->id,
+            'actor_name' => $request->user()?->name,
+            'notes' => $notes,
+            'metadata' => $metadata,
+            'acted_at' => now(),
+        ]);
+    }
+
+    private function actionPayload(SupportRequestAction $action): array
+    {
+        return [
+            'id' => $action->id,
+            'action' => $action->action,
+            'from_status' => $action->from_status,
+            'to_status' => $action->to_status,
+            'actor_user_id' => $action->actor_user_id,
+            'actor_name' => $action->actor_name,
+            'notes' => $action->notes,
+            'metadata' => $action->metadata,
+            'acted_at' => $action->acted_at?->toIso8601String(),
         ];
     }
 }

@@ -41,6 +41,11 @@ Route::prefix('api')->group(function (): void {
         Route::get('/support-requests', [SupportRequestsController::class, 'index']);
         Route::get('/support-requests/{supportRequest}', [SupportRequestsController::class, 'show']);
         Route::post('/support-requests/{supportRequest}/receive', [SupportRequestsController::class, 'receive']);
+        Route::post('/support-requests/{supportRequest}/accept', [SupportRequestsController::class, 'accept']);
+        Route::post('/support-requests/{supportRequest}/reject', [SupportRequestsController::class, 'reject']);
+        Route::post('/support-requests/{supportRequest}/assign', [SupportRequestsController::class, 'assign']);
+        Route::post('/support-requests/{supportRequest}/en-route', [SupportRequestsController::class, 'markEnRoute']);
+        Route::post('/support-requests/{supportRequest}/complete', [SupportRequestsController::class, 'complete']);
         Route::get('/sitreps/current', [CurrentSitrepController::class, 'show']);
         Route::get('/source-heartbeats', [SourceHeartbeatController::class, 'index']);
         Route::post('/logout', [AuthController::class, 'logout']);

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\Api\SupportRequestsController;
 use App\Models\SupportRequest;
+use App\Models\SupportRequestAction;
 use App\Models\User;
 use App\Support\SupportRequests\SupportRequestLifecycleRelayService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -70,6 +71,162 @@ class SupportRequestApiTest extends TestCase
         $request->refresh();
         $this->assertSame($receivedAt, $request->received_at?->toIso8601String());
         $this->assertSame($viewer->id, $request->received_by_user_id);
+        $this->assertDatabaseCount('support_request_actions', 1);
+        $this->assertDatabaseHas('support_request_actions', [
+            'support_request_id' => $request->id,
+            'action' => 'received',
+            'from_status' => 'requested',
+            'to_status' => 'received',
+            'actor_user_id' => $viewer->id,
+        ]);
+    }
+
+    public function test_operator_can_accept_received_request(): void
+    {
+        $user = User::factory()->create(['role' => 'operator', 'name' => 'Support Lead']);
+        $request = $this->supportRequest(['status' => 'received']);
+
+        $this->actingAs($user)
+            ->postJson('/api/support-requests/'.$request->id.'/accept', [
+                'notes' => 'Support can provide transport.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.request.status', 'accepted')
+            ->assertJsonPath('data.request.actions.0.action', 'accepted')
+            ->assertJsonPath('data.request.actions.0.actor_name', 'Support Lead');
+
+        $this->assertSame('accepted', $request->refresh()->status);
+        $this->assertActionWritten($request, 'accepted', 'received', 'accepted', $user->id);
+    }
+
+    public function test_operator_can_reject_received_request_as_cannot_support(): void
+    {
+        $user = User::factory()->create(['role' => 'operator']);
+        $request = $this->supportRequest(['status' => 'received']);
+
+        $this->actingAs($user)
+            ->postJson('/api/support-requests/'.$request->id.'/reject', [
+                'reason' => 'No available transport team for the requested window.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.request.status', 'rejected')
+            ->assertJsonPath('data.request.actions.0.action', 'rejected')
+            ->assertJsonPath('data.request.actions.0.metadata.reason', 'No available transport team for the requested window.');
+
+        $this->assertSame('rejected', $request->refresh()->status);
+        $this->assertActionWritten($request, 'rejected', 'received', 'rejected', $user->id);
+    }
+
+    public function test_operator_can_assign_accepted_request(): void
+    {
+        $user = User::factory()->create(['role' => 'operator']);
+        $request = $this->supportRequest(['status' => 'accepted']);
+
+        $this->actingAs($user)
+            ->postJson('/api/support-requests/'.$request->id.'/assign', [
+                'team_name' => 'Rescue Team 1',
+                'eta' => '20 minutes',
+                'notes' => 'Dispatch via barangay hall.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.request.status', 'assigned')
+            ->assertJsonPath('data.request.actions.0.action', 'assigned')
+            ->assertJsonPath('data.request.actions.0.metadata.team_name', 'Rescue Team 1')
+            ->assertJsonPath('data.request.actions.0.metadata.eta', '20 minutes');
+
+        $this->assertSame('assigned', $request->refresh()->status);
+        $this->assertActionWritten($request, 'assigned', 'accepted', 'assigned', $user->id);
+    }
+
+    public function test_operator_can_mark_assigned_request_en_route(): void
+    {
+        $user = User::factory()->create(['role' => 'operator']);
+        $request = $this->supportRequest(['status' => 'assigned']);
+
+        $this->actingAs($user)
+            ->postJson('/api/support-requests/'.$request->id.'/en-route', [
+                'notes' => 'Team departed staging area.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.request.status', 'en_route')
+            ->assertJsonPath('data.request.actions.0.action', 'en_route');
+
+        $this->assertSame('en_route', $request->refresh()->status);
+        $this->assertActionWritten($request, 'en_route', 'assigned', 'en_route', $user->id);
+    }
+
+    public function test_operator_can_complete_en_route_request(): void
+    {
+        $user = User::factory()->create(['role' => 'operator']);
+        $request = $this->supportRequest(['status' => 'en_route']);
+
+        $this->actingAs($user)
+            ->postJson('/api/support-requests/'.$request->id.'/complete', [
+                'outcome' => 'Evacuation transport completed.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.request.status', 'completed')
+            ->assertJsonPath('data.request.actions.0.action', 'completed')
+            ->assertJsonPath('data.request.actions.0.metadata.outcome', 'Evacuation transport completed.');
+
+        $this->assertSame('completed', $request->refresh()->status);
+        $this->assertActionWritten($request, 'completed', 'en_route', 'completed', $user->id);
+    }
+
+    public function test_invalid_lifecycle_transition_is_rejected_without_history(): void
+    {
+        $user = User::factory()->create(['role' => 'operator']);
+        $request = $this->supportRequest(['status' => 'received']);
+
+        $this->actingAs($user)
+            ->postJson('/api/support-requests/'.$request->id.'/en-route')
+            ->assertStatus(409)
+            ->assertJsonPath('data.current_status', 'received')
+            ->assertJsonPath('data.target_status', 'en_route');
+
+        $this->assertSame('received', $request->refresh()->status);
+        $this->assertDatabaseCount('support_request_actions', 0);
+    }
+
+    public function test_repeated_lifecycle_transition_is_rejected_without_duplicate_history(): void
+    {
+        $user = User::factory()->create(['role' => 'operator']);
+        $request = $this->supportRequest(['status' => 'received']);
+
+        $this->actingAs($user)
+            ->postJson('/api/support-requests/'.$request->id.'/accept')
+            ->assertOk()
+            ->assertJsonPath('data.request.status', 'accepted');
+
+        $this->actingAs($user)
+            ->postJson('/api/support-requests/'.$request->id.'/accept')
+            ->assertStatus(409)
+            ->assertJsonPath('data.current_status', 'accepted');
+
+        $this->assertSame('accepted', $request->refresh()->status);
+        $this->assertDatabaseCount('support_request_actions', 1);
+    }
+
+    public function test_terminal_support_requests_cannot_be_changed(): void
+    {
+        $user = User::factory()->create(['role' => 'operator']);
+
+        foreach (['cancelled', 'completed', 'rejected'] as $status) {
+            $request = $this->supportRequest([
+                'support_request_id' => 'sup_'.$status,
+                'local_request_id' => 'hotline-'.$status,
+                'correlation_id' => 'corr-'.$status,
+                'status' => $status,
+            ]);
+
+            $this->actingAs($user)
+                ->postJson('/api/support-requests/'.$request->id.'/accept')
+                ->assertStatus(409);
+
+            $this->assertSame($status, $request->refresh()->status);
+        }
+
+        $this->assertDatabaseCount('support_request_actions', 0);
     }
 
     public function test_stale_requested_receive_does_not_overwrite_cancelled_request(): void
@@ -131,6 +288,32 @@ class SupportRequestApiTest extends TestCase
         $this->getJson('/api/support-requests')->assertUnauthorized();
         $this->getJson('/api/support-requests/'.$request->id)->assertUnauthorized();
         $this->postJson('/api/support-requests/'.$request->id.'/receive')->assertUnauthorized();
+        $this->postJson('/api/support-requests/'.$request->id.'/accept')->assertUnauthorized();
+        $this->postJson('/api/support-requests/'.$request->id.'/reject')->assertUnauthorized();
+        $this->postJson('/api/support-requests/'.$request->id.'/assign')->assertUnauthorized();
+        $this->postJson('/api/support-requests/'.$request->id.'/en-route')->assertUnauthorized();
+        $this->postJson('/api/support-requests/'.$request->id.'/complete')->assertUnauthorized();
+    }
+
+    private function assertActionWritten(
+        SupportRequest $request,
+        string $action,
+        string $fromStatus,
+        string $toStatus,
+        int $actorUserId,
+    ): void {
+        $this->assertDatabaseHas('support_request_actions', [
+            'support_request_id' => $request->id,
+            'action' => $action,
+            'from_status' => $fromStatus,
+            'to_status' => $toStatus,
+            'actor_user_id' => $actorUserId,
+        ]);
+
+        $this->assertSame(1, SupportRequestAction::query()
+            ->where('support_request_id', $request->id)
+            ->where('action', $action)
+            ->count());
     }
 
     /**
