@@ -201,24 +201,24 @@ Owned by the Hotline implementation agent.
 
 Owned by the Support implementation agent.
 
-- [ ] Add Support settings for request intake:
-  - [ ] expected source system
-  - [ ] Support source system for updates
-  - [ ] Relay handler token
+- [x] Add Support settings for request intake:
+  - [x] expected source system
+  - [x] Support source system for updates
+  - [x] Relay handler token
   - [ ] outbound Relay credentials for updates
-- [ ] Add internal Relay intake endpoint for `support.request`.
-- [ ] Validate Relay handler auth token.
-- [ ] Validate Relay envelope and payload schema.
-- [ ] Store raw inbound request for audit/debug.
-- [ ] Implement idempotent intake by Relay message ID and correlation ID.
-- [ ] Create support request staging/intake table/model.
-- [ ] Preserve source Hotline request IDs:
-  - [ ] `local_request_id`
-  - [ ] `correlation_id`
-  - [ ] `relay_message_id`
-- [ ] Generate Support-owned `support_request_id`.
-- [ ] Store linked SITREP references without requiring full SITREP JSON.
-- [ ] Store selected evidence row, gap, and incident references when provided.
+- [x] Add internal Relay intake endpoint for `support.request`.
+- [x] Validate Relay handler auth token.
+- [x] Validate Relay envelope and payload schema.
+- [x] Store raw inbound request for audit/debug.
+- [x] Implement idempotent intake by Relay message ID and correlation ID.
+- [x] Create support request staging/intake table/model.
+- [x] Preserve source Hotline request IDs:
+  - [x] `local_request_id`
+  - [x] `correlation_id`
+  - [x] `relay_message_id`
+- [x] Generate Support-owned `support_request_id`.
+- [x] Store linked SITREP references without requiring full SITREP JSON.
+- [x] Store selected evidence row, gap, and incident references when provided.
 - [ ] Add Support request list/intake UI.
 - [ ] Add request detail/review drawer.
 - [ ] Show linked SITREP context as visibility, not as inferred deployment instruction.
@@ -238,9 +238,9 @@ Owned by the Support implementation agent.
 - [ ] Store outbound update attempts and delivery results.
 - [ ] Add retry/failure visibility for outbound updates.
 - [ ] Add map/source/SITREP context links for routing and staging support.
-- [ ] Ensure Support never creates deployment tasks solely from SITREP gaps.
-- [ ] Add tests for intake auth and schema validation.
-- [ ] Add tests for idempotent request intake.
+- [x] Ensure Support never creates deployment tasks solely from SITREP gaps.
+- [x] Add tests for intake auth and schema validation.
+- [x] Add tests for idempotent request intake.
 - [ ] Add tests for lifecycle transition rules.
 - [ ] Add tests for outbound update payloads.
 - [ ] Add tests for rejection/clarification paths.

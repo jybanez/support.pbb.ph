@@ -5,12 +5,16 @@ use App\Http\Controllers\Api\AdminUsersController;
 use App\Http\Controllers\Api\BootstrapController;
 use App\Http\Controllers\Api\CurrentSitrepController;
 use App\Http\Controllers\Api\RelaySitrepHandlerController;
+use App\Http\Controllers\Api\RelaySupportRequestHandlerController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\SourceHeartbeatController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/relay/sitreps', [RelaySitrepHandlerController::class, 'store'])
+    ->middleware('throttle:120,1');
+
+Route::post('/relay/support-requests', [RelaySupportRequestHandlerController::class, 'store'])
     ->middleware('throttle:120,1');
 
 Route::middleware('web')->group(function (): void {
