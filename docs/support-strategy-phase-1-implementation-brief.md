@@ -1,5 +1,27 @@
 # Support Strategy Phase 1 Implementation Brief
 
+## Status: Paused / Superseded
+
+Date: 2026-06-10
+
+Do not use this brief for new implementation work unless the user explicitly reactivates the inferred Support Strategy direction.
+
+This brief captured an earlier approach: deriving a Support Strategy column directly from the current consolidated SITREP. That approach is now paused because a SITREP is situational visibility, not necessarily an explicit request for outside support.
+
+Current product direction is documented in `docs/support-request-workflow-direction.md`.
+
+Key decision:
+
+- Support should not infer deployment priorities from SITREP needs/gaps alone.
+- Barangays may already be working on the reported needs.
+- Outside assistance should be triggered by an explicit command/barangay support request.
+- Hotline is the likely owner of a `Request Support` action.
+- Support should use SITREP evidence as routing, staging, validation, and provenance context after a request exists.
+
+The branch `sitrep/support-strategy-phase-1` should remain available as a technical experiment only. Do not merge it as the target product workflow without a new product decision.
+
+---
+
 ## Purpose
 
 Implement the first version of the Support Strategy column for the PBB Support System.

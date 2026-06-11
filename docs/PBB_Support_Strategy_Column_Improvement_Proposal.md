@@ -1,5 +1,35 @@
 # PBB Support System Improvement Proposal
 
+## Status: Paused / Superseded By Explicit Support Request Workflow
+
+Date: 2026-06-10
+
+This proposal is retained for historical context and reusable UI/technical ideas, but it is no longer the current implementation direction.
+
+The proposal assumes the Support System can derive actionable support strategy directly from consolidated SITREP needs, gaps, and operational signals. Product review found that this is too aggressive:
+
+- A SITREP is situational visibility, not automatically a request for outside assistance.
+- Barangays may already be addressing the reported needs and gaps.
+- Acting on inferred needs can duplicate deployed local resources.
+- Support should become operational only when barangay or command leadership explicitly requests assistance.
+- SITREP access and logistics data should support routing/staging after a request exists, not automatically trigger deployment recommendations.
+
+Current direction is documented in:
+
+```text
+docs/support-request-workflow-direction.md
+```
+
+Preferred flow:
+
+```text
+Barangay SITREP -> Hotline command review -> explicit Request Support action -> Relay -> Support
+```
+
+Do not continue implementing or polishing an inferred Support Strategy column unless the user explicitly reopens this direction.
+
+---
+
 ## Proposal Title
 
 **Add a Support Strategy Column to the PBB Support System**

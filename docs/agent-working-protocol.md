@@ -167,24 +167,43 @@ Before refreshing vendored dependencies:
 
 Do not consume uncommitted cross-team work unless the user explicitly approves temporary local testing.
 
-## Support Strategy Work
+## Support Requests And Paused Support Strategy Work
 
-For Support Strategy tasks, use:
+The earlier inferred Support Strategy direction is paused. Do not start new implementation from the Support Strategy proposal or Phase 1 brief unless the user explicitly reactivates that direction.
+
+Current direction:
+
+```text
+docs/support-request-workflow-direction.md
+```
+
+Product rule:
+
+- SITREP equals situational visibility.
+- SITREP needs/gaps do not automatically mean outside assistance is requested.
+- Support deployment should require an explicit command/barangay support request.
+- Hotline is the likely owner of the `Request Support` action.
+- Relay should transport support requests and status updates.
+- Support should use SITREP evidence for routing, staging, validation, and provenance after a request exists.
+
+Historical docs retained for reference:
 
 ```text
 docs/PBB_Support_Strategy_Column_Improvement_Proposal.md
 docs/support-strategy-phase-1-implementation-brief.md
 ```
 
-Phase 1 boundaries:
+The branch `sitrep/support-strategy-phase-1` should be treated as paused technical exploration unless explicitly reactivated.
+
+If the Support Strategy branch is reviewed or mined for reuse, keep these boundaries:
 
 - `GET /api/sitreps/current` remains independent.
-- Strategy generation belongs in `GET /api/sitreps/current/support`.
-- Strategy is backend-derived from structured SITREP payload, not rendered HTML.
+- Do not merge inferred deployment recommendations as the target workflow.
+- Do not derive dispatch/deployment decisions from SITREP gaps alone.
 - No Relay sends.
 - No real resource dispatch.
 - No invented resource availability.
-- Every recommendation needs evidence references or a visible `Based on` section.
+- Reusable ideas include independent loading, evidence navigation, map/source sync, and compact review cards.
 
 ## Verification
 

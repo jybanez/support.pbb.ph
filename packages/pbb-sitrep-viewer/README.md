@@ -53,6 +53,60 @@ The visualization data is plain PHP arrays that can be rendered by app-owned UI
 or future Helper components such as `ui.stat.cards`, `ui.charts`,
 `ui.map.legend`, and `ui.map.markers`.
 
+## JavaScript Interactive Viewer
+
+The package also includes a framework-agnostic browser viewer for interactive
+app surfaces. The PHP renderer remains the authoritative server/export
+renderer; the JavaScript viewer is intended for tabs, side panels, comparison
+views, and other client-side interactions.
+
+```html
+<link rel="stylesheet" href="/packages/pbb-sitrep-viewer/assets/sitrep-viewer.css">
+<script type="module">
+import { createSitrepViewer } from '/packages/pbb-sitrep-viewer/js/sitrep-viewer.js';
+
+const viewer = createSitrepViewer(document.querySelector('#sitrep-panel'), {
+    sitrep,
+    layout: 'compact',
+    sections: ['summary', 'population', 'needs', 'gaps'],
+    rowActions: [{
+        id: 'request-support',
+        label: 'Request Support',
+        title: 'Request outside support for this item',
+        appliesTo: ({ section, gap, row }) => section === 'gaps' && gap?.type === 'open_needs',
+        onClick: ({ sitrep, section, gap, row, rowIndex, evidenceRef, sourceHubId, sourceRelayHubId, locationName, event }) => {
+            // Host app owns the action. The viewer only supplies row context.
+        },
+    }],
+});
+
+viewer.setSection('gaps');
+viewer.scrollToEvidence('summary.gap_cards.people_at_risk.guadalupe');
+viewer.highlightEvidence('summary.gap_cards.people_at_risk.guadalupe');
+viewer.filterBySource('12');
+viewer.update({ layout: 'section' });
+viewer.destroy();
+</script>
+```
+
+Each `createSitrepViewer(...)` call creates an isolated instance. Multiple
+instances can render different SITREPs, different sections of the same SITREP,
+or different layouts on one page without shared state.
+
+Rendered nodes include stable browser-side anchors for app integration:
+`data-sitrep-section`, `data-sitrep-evidence-ref`, `data-source-hub-id`,
+`data-source-relay-hub-id`, `data-location-name`, and `data-concern-group`.
+Host apps can use `onInteraction`, `onEvidenceClick`, `onSourceClick`, and
+`onConcernClick` callbacks to connect map markers, source lists, and strategy
+panels to official SITREP content.
+
+`rowActions` is optional. When omitted, or when no action `appliesTo` a row, the
+rendered output is unchanged. When actions apply to supported evidence rows, the
+viewer adds an `Actions` column with keyboard-usable buttons and passes
+structured context (`sitrep`, `section`, `gap`, `row`, `rowIndex`,
+`evidenceRef`, source identifiers, location name, and the click `event`) to the
+host callback.
+
 See `docs/developer-manual.md` for integration notes and `demo/render.php` for a plain PHP example.
 For a Helper-backed browser visualization demo, run PHP's built-in server from
 the Hotline repo root and open:
@@ -63,4 +117,16 @@ php -S 127.0.0.1:8097 -t C:\wamp64\www\pbb\hotline
 
 ```text
 http://127.0.0.1:8097/packages/pbb-sitrep-viewer/demo/visualization.php
+```
+
+For the JavaScript interactive viewer demo, open:
+
+```text
+http://127.0.0.1:8097/packages/pbb-sitrep-viewer/demo/js-viewer.html
+```
+
+For a host-owned row actions demo, open:
+
+```text
+http://127.0.0.1:8097/packages/pbb-sitrep-viewer/demo/js-viewer-command.html
 ```
