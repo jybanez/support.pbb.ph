@@ -38,6 +38,8 @@ class SupportRequestApiTest extends TestCase
         $request = $this->supportRequest([
             'sitrep_context' => ['title' => 'Apas SITREP'],
             'evidence_row' => ['path' => 'needs.rollup.category_demand[0]'],
+            'justification_codes' => ['life_safety'],
+            'justification_labels' => ['Life safety'],
         ]);
         $request->messages()->create([
             'relay_message_id' => 'relay-msg-history-1',
@@ -57,6 +59,8 @@ class SupportRequestApiTest extends TestCase
             ->assertJsonPath('data.request.id', $request->id)
             ->assertJsonPath('data.request.sitrep_context.title', 'Apas SITREP')
             ->assertJsonPath('data.request.evidence_row.path', 'needs.rollup.category_demand[0]')
+            ->assertJsonPath('data.request.justification_codes.0', 'life_safety')
+            ->assertJsonPath('data.request.justification_labels.0', 'Life safety')
             ->assertJsonPath('data.request.lifecycle_history.0.relay_message_id', 'relay-msg-history-1')
             ->assertJsonPath('data.request.lifecycle_history.0.message_type', 'support.request')
             ->assertJsonPath('data.request.lifecycle_history.0.validation_status', 'accepted');
@@ -350,6 +354,8 @@ class SupportRequestApiTest extends TestCase
             'requested_capability' => $overrides['requested_capability'] ?? 'evacuation_transport',
             'quantity' => $overrides['quantity'] ?? 3,
             'quantity_unit' => $overrides['quantity_unit'] ?? 'vehicles',
+            'justification_codes' => $overrides['justification_codes'] ?? ['life_safety', 'access_constraint'],
+            'justification_labels' => $overrides['justification_labels'] ?? ['Life safety', 'Access constraint'],
             'staging_notes' => $overrides['staging_notes'] ?? 'Stage at barangay hall.',
             'command_notes' => $overrides['command_notes'] ?? 'Coordinate before dispatch.',
             'requested_at' => $overrides['requested_at'] ?? '2026-06-11T09:15:00+08:00',

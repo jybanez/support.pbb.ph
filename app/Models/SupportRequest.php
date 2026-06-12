@@ -22,6 +22,8 @@ class SupportRequest extends Model
         'requested_capability',
         'quantity',
         'quantity_unit',
+        'justification_codes',
+        'justification_labels',
         'staging_notes',
         'command_notes',
         'requested_at',
@@ -41,6 +43,8 @@ class SupportRequest extends Model
 
     protected $casts = [
         'quantity' => 'decimal:2',
+        'justification_codes' => 'array',
+        'justification_labels' => 'array',
         'requested_at' => 'datetime',
         'sitrep_context' => 'array',
         'gap_context' => 'array',

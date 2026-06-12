@@ -65,6 +65,32 @@ class SupportRequestLifecycleRelayTest extends TestCase
         $this->assertSame('hotline.command', $envelope['payload']['target']['system']);
     }
 
+    public function test_completed_update_maps_to_hotline_fulfilled_contract(): void
+    {
+        Queue::fake();
+        $this->settings([
+            'supportRequestUpdateSourceSystem' => 'support.dispatch',
+            'supportRequestUpdateTargetSystem' => 'hotline.command',
+        ]);
+        $request = $this->supportRequest([
+            'status' => 'completed',
+            'updated_at' => '2026-06-11T11:30:00+08:00',
+        ]);
+
+        $delivery = app(SupportRequestLifecycleRelayService::class)
+            ->queueLifecycleUpdate($request, 'completed');
+
+        $envelope = $delivery->envelope;
+
+        $this->assertSame('fulfilled', $delivery->status);
+        $this->assertSame('support.request.fulfilled', $delivery->message_type);
+        $this->assertSame('support.request.fulfilled', $envelope['message_type']);
+        $this->assertSame('fulfilled', $envelope['payload']['status']);
+        $this->assertSame('Fulfilled', $envelope['payload']['status_label']);
+        $this->assertSame('fulfilled', $envelope['payload']['request']['status']);
+        $this->assertSame('Support request fulfilled by PBB Support.', $envelope['payload']['message']);
+    }
+
     public function test_successful_relay_delivery_marks_support_request_update_sent(): void
     {
         Queue::fake();
@@ -215,6 +241,8 @@ class SupportRequestLifecycleRelayTest extends TestCase
             'requested_capability' => $overrides['requested_capability'] ?? 'evacuation_transport',
             'quantity' => $overrides['quantity'] ?? 3,
             'quantity_unit' => $overrides['quantity_unit'] ?? 'vehicles',
+            'justification_codes' => $overrides['justification_codes'] ?? ['life_safety'],
+            'justification_labels' => $overrides['justification_labels'] ?? ['Life safety'],
             'staging_notes' => $overrides['staging_notes'] ?? 'Stage at barangay hall.',
             'command_notes' => $overrides['command_notes'] ?? 'Coordinate before dispatch.',
             'requested_at' => $overrides['requested_at'] ?? '2026-06-11T09:15:00+08:00',
