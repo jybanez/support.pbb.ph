@@ -1597,6 +1597,285 @@ input {
     line-height: 1.45;
 }
 
+.support-requests-drawer {
+    width: min(980px, calc(100vw - 44px)) !important;
+}
+
+.support-requests-drawer-body {
+    grid-template-columns: minmax(300px, 0.38fr) minmax(0, 0.62fr);
+}
+
+.support-request-card {
+    min-height: 118px;
+    padding: 11px 12px;
+}
+
+.support-request-card.is-selected {
+    border-color: rgba(45, 212, 191, 0.96);
+    box-shadow:
+        inset 4px 0 0 rgba(45, 212, 191, 0.92),
+        0 0 0 1px rgba(45, 212, 191, 0.16);
+}
+
+.support-request-card-main {
+    gap: 6px;
+}
+
+.support-request-card-topline {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+}
+
+.support-request-card strong,
+.support-request-card-assistance,
+.support-request-card-next,
+.support-request-meta span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.support-request-card > span,
+.support-request-card-main > span {
+    min-width: 0;
+}
+
+.support-request-status,
+.support-request-urgency {
+    flex: 0 0 auto;
+}
+
+.support-request-card-next {
+    flex: 1 1 auto;
+    color: #9fb5d8;
+    font-size: 11px;
+    font-weight: 800;
+    text-align: right;
+}
+
+.support-request-meta {
+    min-width: 0;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+}
+
+.support-request-meta span + span::before {
+    content: "/";
+    margin-right: 6px;
+    color: rgba(147, 197, 253, 0.5);
+}
+
+.support-request-rationale-chips {
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.support-request-rationale-chips span {
+    max-width: 170px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: 1px solid rgba(104, 134, 190, 0.4);
+    border-radius: 999px;
+    background: rgba(30, 64, 175, 0.24);
+    color: #bfdbfe;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    padding: 4px 7px;
+}
+
+.support-request-flow {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.support-request-flow span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: 1px solid rgba(52, 71, 105, 0.72);
+    border-radius: 6px;
+    background: rgba(9, 24, 42, 0.72);
+    color: #8aa4ca;
+    font-size: 10px;
+    font-weight: 900;
+    line-height: 1;
+    padding: 6px 7px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.support-request-flow span.is-done {
+    border-color: rgba(45, 212, 191, 0.42);
+    color: #a7f3d0;
+    background: rgba(13, 88, 82, 0.34);
+}
+
+.support-request-flow span.is-current {
+    border-color: rgba(143, 230, 255, 0.85);
+    color: #e0f2fe;
+    background: rgba(14, 116, 144, 0.42);
+}
+
+.support-request-flow span.is-terminal {
+    grid-column: 1 / -1;
+    border-color: rgba(248, 113, 113, 0.58);
+    color: #fecaca;
+    background: rgba(127, 29, 29, 0.42);
+}
+
+.support-request-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.support-request-action-button {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border: 1px solid rgba(104, 134, 190, 0.56);
+    border-radius: 7px;
+    background: rgba(20, 35, 59, 0.9);
+    color: #d9e7ff;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1;
+    padding: 8px 11px;
+}
+
+.support-request-action-button svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.support-request-action-button.is-primary {
+    border-color: rgba(45, 212, 191, 0.68);
+    background: rgba(13, 88, 82, 0.62);
+    color: #d1fae5;
+}
+
+.support-request-action-button.is-danger {
+    border-color: rgba(248, 113, 113, 0.68);
+    background: rgba(127, 29, 29, 0.58);
+    color: #fee2e2;
+}
+
+.support-request-action-button:hover,
+.support-request-action-button:focus-visible {
+    border-color: rgba(143, 230, 255, 0.9);
+    outline: none;
+}
+
+.support-request-action-button:disabled {
+    cursor: wait;
+    opacity: 0.58;
+}
+
+.support-request-action-note {
+    border: 1px solid rgba(52, 71, 105, 0.62);
+    border-radius: 7px;
+    background: rgba(9, 24, 42, 0.68);
+    color: #9fb5d8;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 9px 10px;
+}
+
+.support-request-detail-section.is-rationale,
+.support-request-detail-section.is-delivery {
+    gap: 8px;
+}
+
+.support-request-delivery-list {
+    display: grid;
+    gap: 8px;
+}
+
+.support-request-delivery-item {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 4px 8px;
+    border: 1px solid rgba(62, 102, 160, 0.42);
+    border-radius: 8px;
+    background: rgba(9, 24, 42, 0.62);
+    padding: 9px;
+}
+
+.support-request-delivery-item strong,
+.support-request-delivery-item span,
+.support-request-delivery-item p {
+    min-width: 0;
+}
+
+.support-request-delivery-item strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ui-text);
+    font-size: 13px;
+}
+
+.support-request-delivery-item > span:not(.support-request-delivery-state),
+.support-request-delivery-item p {
+    grid-column: 2;
+    margin: 0;
+    color: #9fb5d8;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.support-request-delivery-item p {
+    color: #fecaca;
+}
+
+.support-request-delivery-state {
+    display: inline-flex;
+    justify-content: center;
+    min-width: 58px;
+    border: 1px solid rgba(104, 134, 190, 0.46);
+    border-radius: 999px;
+    color: #cfe1ff;
+    background: rgba(20, 35, 59, 0.86);
+    font-size: 10px;
+    font-weight: 900;
+    line-height: 1;
+    padding: 4px 7px;
+    text-transform: uppercase;
+}
+
+.support-request-delivery-state.is-sent {
+    border-color: rgba(45, 212, 191, 0.58);
+    color: #a7f3d0;
+    background: rgba(13, 88, 82, 0.45);
+}
+
+.support-request-delivery-state.is-failed {
+    border-color: rgba(248, 113, 113, 0.62);
+    color: #fecaca;
+    background: rgba(127, 29, 29, 0.45);
+}
+
 @media (max-width: 720px) {
     .support-requests-drawer-body {
         grid-template-columns: 1fr;

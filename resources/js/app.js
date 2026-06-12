@@ -129,11 +129,117 @@ const sourceFilters = {
 let usersListData = [];
 let supportRequestsData = [];
 let selectedSupportRequestId = null;
+let supportRequestActionBusy = false;
 const userFilters = {
     search: '',
 };
 const supportRequestFilters = {
     search: '',
+};
+
+const supportRequestFlow = [
+    { status: 'requested', label: 'Requested' },
+    { status: 'received', label: 'Received' },
+    { status: 'accepted', label: 'Accepted' },
+    { status: 'assigned', label: 'Assigned' },
+    { status: 'en_route', label: 'En Route' },
+    { status: 'completed', label: 'Completed' },
+];
+const supportRequestTerminalStatuses = new Set(['cancelled', 'completed', 'rejected']);
+const supportRequestActionConfigs = {
+    accepted: {
+        endpoint: 'accept',
+        label: 'Accept',
+        icon: 'check',
+        tone: 'primary',
+        title: 'Accept Request',
+        submitLabel: 'Accept',
+        busyMessage: 'Accepting request...',
+        rows: [[{
+            type: 'textarea',
+            name: 'notes',
+            label: 'Review notes',
+            placeholder: 'Optional notes for the support log',
+        }]],
+    },
+    rejected: {
+        endpoint: 'reject',
+        label: 'Reject',
+        icon: 'x',
+        tone: 'danger',
+        title: 'Reject Request',
+        submitLabel: 'Reject',
+        busyMessage: 'Rejecting request...',
+        rows: [[{
+            type: 'textarea',
+            name: 'reason',
+            label: 'Reason',
+            required: true,
+            placeholder: 'Why Support cannot fulfill this request',
+        }]],
+    },
+    assigned: {
+        endpoint: 'assign',
+        label: 'Assign',
+        icon: 'user',
+        tone: 'primary',
+        title: 'Assign Resource',
+        submitLabel: 'Assign',
+        busyMessage: 'Assigning resource...',
+        rows: [
+            [
+                {
+                    type: 'input',
+                    name: 'team_name',
+                    label: 'Team or resource',
+                    required: true,
+                    placeholder: 'Rescue Team 1',
+                },
+                {
+                    type: 'input',
+                    name: 'eta',
+                    label: 'ETA',
+                    placeholder: '20 minutes',
+                },
+            ],
+            [{
+                type: 'textarea',
+                name: 'notes',
+                label: 'Dispatch notes',
+                placeholder: 'Optional assignment notes',
+            }],
+        ],
+    },
+    en_route: {
+        endpoint: 'en-route',
+        label: 'En Route',
+        icon: 'arrow',
+        tone: 'primary',
+        title: 'Mark En Route',
+        submitLabel: 'Mark En Route',
+        busyMessage: 'Updating request...',
+        rows: [[{
+            type: 'textarea',
+            name: 'notes',
+            label: 'Movement notes',
+            placeholder: 'Optional departure or route notes',
+        }]],
+    },
+    completed: {
+        endpoint: 'complete',
+        label: 'Complete',
+        icon: 'check',
+        tone: 'primary',
+        title: 'Complete Request',
+        submitLabel: 'Complete',
+        busyMessage: 'Completing request...',
+        rows: [[{
+            type: 'textarea',
+            name: 'outcome',
+            label: 'Outcome',
+            placeholder: 'What was delivered or resolved',
+        }]],
+    },
 };
 
 const icons = {
@@ -149,6 +255,9 @@ const icons = {
     close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     edit: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 00-3-3L5 17v3z"/><path d="M13.5 7.5l3 3"/></svg>',
     trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/></svg>',
+    check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>',
+    x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    arrow: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
     eye: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.25 12s3.5-6.25 9.75-6.25S21.75 12 21.75 12s-3.5 6.25-9.75 6.25S2.25 12 2.25 12z"/><circle cx="12" cy="12" r="3.25"/></svg>',
     eyeOff: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.7 5.9A10.5 10.5 0 0112 5.75c6.25 0 9.75 6.25 9.75 6.25a16.8 16.8 0 01-3.04 3.78"/><path d="M14.12 14.12A3.25 3.25 0 019.88 9.88"/><path d="M6.64 6.64A16.9 16.9 0 002.25 12s3.5 6.25 9.75 6.25a10.6 10.6 0 004.22-.87"/></svg>',
 };
@@ -1571,6 +1680,8 @@ const resetSupportRequestsCache = () => {
 
 const supportRequestStatusLabel = (status) => titleCase(status || 'requested');
 
+const supportRequestUrgencyLabel = (urgency) => titleCase(urgency || 'normal');
+
 const supportRequestTime = (value) => formatSitrepHeaderDate(value) || 'Time unavailable';
 
 const supportRequestOptionalTime = (value) => formatSitrepHeaderDate(value) || '';
@@ -1614,6 +1725,57 @@ const supportRequestQuantityLabel = (request) => {
     }
 
     return `${request.quantity} ${request.quantity_unit || ''}`.trim();
+};
+
+const supportRequestJustificationValues = (request) => {
+    const labels = Array.isArray(request?.justification_labels) ? request.justification_labels : [];
+    const codes = Array.isArray(request?.justification_codes) ? request.justification_codes : [];
+    const values = labels.length ? labels : codes;
+
+    return values
+        .map((value) => String(value || '').trim())
+        .filter(Boolean);
+};
+
+const supportRequestJustificationChips = (request, limit = 4) => {
+    const values = supportRequestJustificationValues(request);
+    if (!values.length) return '';
+
+    const visible = values.slice(0, limit);
+    const overflow = values.length - visible.length;
+
+    return `
+        <div class="support-request-rationale-chips" aria-label="Support rationale">
+            ${visible.map((value) => `<span>${escapeHtml(value)}</span>`).join('')}
+            ${overflow > 0 ? `<span>+${overflow}</span>` : ''}
+        </div>
+    `;
+};
+
+const supportRequestNextStepLabel = (status) => {
+    const normalized = String(status || 'requested').toLowerCase();
+    if (normalized === 'cancelled') return 'Cancelled by Hotline';
+    if (normalized === 'rejected') return 'Closed as rejected';
+    if (normalized === 'completed') return 'Completed';
+    if (normalized === 'requested') return 'Open to acknowledge review';
+    if (normalized === 'received') return 'Accept or reject';
+    if (normalized === 'accepted') return 'Assign resource';
+    if (normalized === 'assigned') return 'Mark en route';
+    if (normalized === 'en_route') return 'Complete request';
+
+    return 'Review status';
+};
+
+const supportRequestAvailableActions = (request) => {
+    const status = String(request?.status || '').toLowerCase();
+    if (supportRequestTerminalStatuses.has(status)) return [];
+
+    if (status === 'received') return ['accepted', 'rejected'];
+    if (status === 'accepted') return ['assigned'];
+    if (status === 'assigned') return ['en_route'];
+    if (status === 'en_route') return ['completed'];
+
+    return [];
 };
 
 const sortSupportRequestsForDisplay = () => {
@@ -1760,7 +1922,7 @@ const supportRequestStatusClass = (status) => {
     if (normalized === 'received' || normalized === 'under_review') return 'is-received';
     if (normalized === 'accepted' || normalized === 'assigned' || normalized === 'en_route') return 'is-active';
     if (normalized === 'rejected' || normalized === 'cancelled') return 'is-closed';
-    if (normalized === 'fulfilled' || normalized === 'closed') return 'is-complete';
+    if (normalized === 'completed' || normalized === 'fulfilled' || normalized === 'closed') return 'is-complete';
     return '';
 };
 
@@ -1775,18 +1937,22 @@ const supportRequestCard = (request) => {
     const capability = request?.requested_capability ? titleCase(request.requested_capability) : '';
     const assistance = request?.requested_assistance || capability || 'Support request';
     const requestedAt = supportRequestOptionalTime(request?.requested_at);
+    const urgency = request?.urgency ? supportRequestUrgencyLabel(request.urgency) : '';
     card.innerHTML = `
         <div class="support-request-card-main">
             <div class="support-request-card-topline">
-                <strong>${escapeHtml(source)}</strong>
                 <span class="support-request-status ${supportRequestStatusClass(request?.status)}">${escapeHtml(supportRequestStatusLabel(request?.status))}</span>
+                ${urgency ? `<span class="support-request-urgency">${escapeHtml(urgency)}</span>` : ''}
+                <span class="support-request-card-next">${escapeHtml(supportRequestNextStepLabel(request?.status))}</span>
             </div>
+            <strong>${escapeHtml(source)}</strong>
             <span class="support-request-card-assistance">${escapeHtml(assistance)}</span>
-            <span class="support-request-meta">${escapeHtml([
-                request?.urgency ? titleCase(request.urgency) : '',
-                quantity,
-                requestedAt,
-            ].filter(Boolean).join(' - '))}</span>
+            <div class="support-request-meta">
+                ${capability ? `<span>${escapeHtml(capability)}</span>` : ''}
+                ${quantity ? `<span>${escapeHtml(quantity)}</span>` : ''}
+                ${requestedAt ? `<span>${escapeHtml(requestedAt)}</span>` : ''}
+            </div>
+            ${supportRequestJustificationChips(request, 2)}
         </div>
     `;
     card.addEventListener('click', () => openSupportRequestDetail(request?.id));
@@ -1817,7 +1983,7 @@ const renderSupportRequestsList = (requests = []) => {
         chrome: false,
         emptyText: supportRequestFilters.search.trim() ? 'No requests match this search.' : 'No approved support requests have arrived yet.',
         height: Math.max(220, list.clientHeight || 360),
-        rowHeight: 118,
+        rowHeight: 138,
         overscan: 4,
         renderItem: (request) => supportRequestCard(request),
     });
@@ -1868,17 +2034,6 @@ const supportRequestDetailRow = (label, value) => {
     `;
 };
 
-const supportRequestJustificationLabel = (request) => {
-    const labels = Array.isArray(request?.justification_labels) ? request.justification_labels : [];
-    const codes = Array.isArray(request?.justification_codes) ? request.justification_codes : [];
-    const values = labels.length ? labels : codes;
-
-    return values
-        .map((value) => String(value || '').trim())
-        .filter(Boolean)
-        .join(', ');
-};
-
 const supportRequestDeliveryLabel = (request) => {
     const delivery = request?.latest_update_delivery || (Array.isArray(request?.update_deliveries) ? request.update_deliveries[0] : null);
     if (!delivery) return '';
@@ -1890,6 +2045,80 @@ const supportRequestDeliveryLabel = (request) => {
     const error = delivery.last_error ? `error: ${delivery.last_error}` : '';
 
     return [state, type, attempts, submitted, error].filter(Boolean).join(' - ');
+};
+
+const supportRequestDeliveryMarkup = (request) => {
+    const deliveries = Array.isArray(request?.update_deliveries)
+        ? request.update_deliveries
+        : (request?.latest_update_delivery ? [request.latest_update_delivery] : []);
+
+    if (!deliveries.length) {
+        return supportRequestEmptyState('No outbound updates yet', 'Lifecycle delivery state will appear after Support sends an update.');
+    }
+
+    return `
+        <div class="support-request-delivery-list">
+            ${deliveries.slice(0, 4).map((delivery) => `
+                <div class="support-request-delivery-item">
+                    <span class="support-request-delivery-state is-${escapeHtml(String(delivery.delivery_status || 'pending').toLowerCase())}">
+                        ${escapeHtml(titleCase(delivery.delivery_status || 'pending'))}
+                    </span>
+                    <strong>${escapeHtml(supportRequestMessageLabel(delivery.message_type || delivery.status || 'Support update'))}</strong>
+                    <span>${escapeHtml([
+                        delivery.submitted_at ? `Sent ${supportRequestOptionalTime(delivery.submitted_at)}` : '',
+                        Number.isFinite(Number(delivery.attempt_count)) ? `${Number(delivery.attempt_count)} attempt${Number(delivery.attempt_count) === 1 ? '' : 's'}` : '',
+                    ].filter(Boolean).join(' - ') || 'Waiting for Relay')}</span>
+                    ${delivery.last_error ? `<p>${escapeHtml(delivery.last_error)}</p>` : ''}
+                </div>
+            `).join('')}
+        </div>
+    `;
+};
+
+const supportRequestFlowMarkup = (request) => {
+    const status = String(request?.status || 'requested').toLowerCase();
+    const currentIndex = supportRequestFlow.findIndex((step) => step.status === status);
+    const terminal = status === 'cancelled' || status === 'rejected';
+
+    return `
+        <div class="support-request-flow" aria-label="Support request status flow">
+            ${supportRequestFlow.map((step, index) => {
+                const isCurrent = step.status === status;
+                const isComplete = status === 'completed' || (currentIndex >= 0 && index < currentIndex);
+                const stateClass = isCurrent ? 'is-current' : (isComplete ? 'is-done' : '');
+
+                return `<span class="${stateClass}">${escapeHtml(step.label)}</span>`;
+            }).join('')}
+            ${terminal ? `<span class="is-terminal">${escapeHtml(supportRequestStatusLabel(status))}</span>` : ''}
+        </div>
+    `;
+};
+
+const supportRequestActionButtonsMarkup = (request) => {
+    const actions = supportRequestAvailableActions(request);
+    if (!actions.length) {
+        return `
+            <div class="support-request-action-note">
+                ${escapeHtml(supportRequestTerminalStatuses.has(String(request?.status || '').toLowerCase())
+                    ? `${supportRequestStatusLabel(request?.status)} is terminal.`
+                    : supportRequestNextStepLabel(request?.status))}
+            </div>
+        `;
+    }
+
+    return `
+        <div class="support-request-actions" aria-label="Support request actions">
+            ${actions.map((action) => {
+                const config = supportRequestActionConfigs[action];
+                return `
+                    <button type="button" class="support-request-action-button is-${escapeHtml(config.tone || 'secondary')}" data-support-request-action="${escapeHtml(action)}" ${supportRequestActionBusy ? 'disabled' : ''}>
+                        ${icons[config.icon] || ''}
+                        <span>${escapeHtml(config.label)}</span>
+                    </button>
+                `;
+            }).join('')}
+        </div>
+    `;
 };
 
 const supportRequestDetailSection = (title, content, className = '') => {
@@ -1949,6 +2178,41 @@ const supportRequestLifecycleItems = (request) => {
         });
     }
 
+    const actions = Array.isArray(request?.actions) ? request.actions : [];
+    actions.forEach((action) => {
+        const metadata = action.metadata && typeof action.metadata === 'object'
+            ? Object.entries(action.metadata)
+                .filter(([, value]) => value !== null && value !== undefined && String(value).trim() !== '')
+                .map(([key, value]) => `${titleCase(key)}: ${value}`)
+                .join(' - ')
+            : '';
+
+        events.push({
+            label: supportRequestStatusLabel(action.to_status || action.action),
+            at: action.acted_at,
+            detail: [
+                action.actor_name || (action.actor_user_id ? `User #${action.actor_user_id}` : 'Support operator'),
+                action.from_status && action.to_status ? `${supportRequestStatusLabel(action.from_status)} -> ${supportRequestStatusLabel(action.to_status)}` : '',
+                metadata,
+            ].filter(Boolean).join(' - '),
+            errors: action.notes ? null : undefined,
+            notes: action.notes,
+        });
+    });
+
+    const deliveries = Array.isArray(request?.update_deliveries) ? request.update_deliveries : [];
+    deliveries.forEach((delivery) => {
+        events.push({
+            label: `Hotline update ${titleCase(delivery.delivery_status || 'pending')}`,
+            at: delivery.submitted_at || delivery.last_attempted_at || delivery.created_at,
+            detail: [
+                supportRequestMessageLabel(delivery.message_type || delivery.status || 'support.request update'),
+                Number.isFinite(Number(delivery.attempt_count)) ? `${Number(delivery.attempt_count)} attempt${Number(delivery.attempt_count) === 1 ? '' : 's'}` : '',
+            ].filter(Boolean).join(' - '),
+            errors: delivery.last_error,
+        });
+    });
+
     const messages = Array.isArray(request?.lifecycle_history) ? request.lifecycle_history : [];
     messages.forEach((message) => {
         events.push({
@@ -1983,6 +2247,7 @@ const supportRequestLifecycleMarkup = (request) => {
                         <span>${escapeHtml(supportRequestOptionalTime(event.at) || 'Time unavailable')}</span>
                     </div>
                     ${event.detail ? `<p>${escapeHtml(event.detail)}</p>` : ''}
+                    ${event.notes ? `<p>${escapeHtml(event.notes)}</p>` : ''}
                     ${event.errors ? `<pre>${escapeHtml(supportRequestPlainValue(event.errors))}</pre>` : ''}
                 </li>
             `).join('')}
@@ -2020,6 +2285,7 @@ const renderSupportRequestDetail = (request) => {
         supportRequestDetailRow('Staging notes', request.staging_notes),
         supportRequestDetailRow('Command notes', request.command_notes),
     ].join('');
+    const rationaleMarkup = supportRequestJustificationChips(request, 8) || supportRequestEmptyState('No support rationale labels');
     const contextMarkup = [
         supportRequestContextBlock('SITREP context', request.sitrep_context),
         supportRequestContextBlock('Gap context', request.gap_context),
@@ -2034,6 +2300,8 @@ const renderSupportRequestDetail = (request) => {
             </div>
             <h3>${escapeHtml(request.requested_assistance || capability || 'Support request')}</h3>
             <p>${escapeHtml(source)}</p>
+            ${supportRequestFlowMarkup(request)}
+            ${supportRequestActionButtonsMarkup(request)}
         </header>
         ${supportRequestDetailSection('Request', `
             <div class="support-request-detail-grid">
@@ -2043,17 +2311,76 @@ const renderSupportRequestDetail = (request) => {
                 ${supportRequestDetailRow('Requested assistance', request.requested_assistance)}
                 ${supportRequestDetailRow('Capability', capability)}
                 ${supportRequestDetailRow('Quantity', quantity)}
-                ${supportRequestDetailRow('Justification', supportRequestJustificationLabel(request))}
                 ${supportRequestDetailRow('Requester', requester)}
                 ${supportRequestDetailRow('Requested at', supportRequestTime(request.requested_at))}
                 ${supportRequestDetailRow('Received at', supportRequestOptionalTime(request.received_at) || 'Not yet acknowledged')}
                 ${supportRequestDetailRow('Hotline update', supportRequestDeliveryLabel(request))}
             </div>
         `)}
+        ${supportRequestDetailSection('Support Rationale', rationaleMarkup, 'is-rationale')}
         ${supportRequestDetailSection('Operator Notes', operatorNotes ? `<div class="support-request-detail-grid">${operatorNotes}</div>` : supportRequestEmptyState('No operator notes attached'))}
+        ${supportRequestDetailSection('Hotline Delivery', supportRequestDeliveryMarkup(request), 'is-delivery')}
         ${supportRequestDetailSection('SITREP And Gap Context', contextMarkup || supportRequestEmptyState('No context attached'))}
         ${supportRequestDetailSection('Lifecycle History', supportRequestLifecycleMarkup(request), 'is-history')}
     `;
+    detail.querySelectorAll('[data-support-request-action]').forEach((button) => {
+        button.addEventListener('click', () => openSupportRequestAction(request, button.dataset.supportRequestAction));
+    });
+};
+
+const openSupportRequestAction = (request, action) => {
+    const config = supportRequestActionConfigs[action];
+    if (!config || !request?.id || supportRequestActionBusy) return;
+
+    const modal = helpers.createFormModal({
+        title: config.title,
+        submitLabel: config.submitLabel || config.label,
+        busyMessage: config.busyMessage || 'Updating request...',
+        size: 'sm',
+        className: 'support-request-action-modal',
+        initialValues: {},
+        rows: config.rows || [],
+        async onSubmit(values, ctx) {
+            supportRequestActionBusy = true;
+            renderSupportRequestDetail({ ...request });
+
+            try {
+                const payload = Object.fromEntries(
+                    Object.entries(values || {}).map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value]),
+                );
+                const data = await api(`/api/support-requests/${encodeURIComponent(request.id)}/${config.endpoint}`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                });
+
+                if (data.request) {
+                    upsertCachedSupportRequest(data.request);
+                    if (isCurrentSupportRequestSelection(data.request.id)) {
+                        renderSupportRequestDetail(data.request);
+                    }
+                }
+
+                return true;
+            } catch (error) {
+                ctx.setErrors(normalizeErrors(fieldErrors(error)));
+                if (!Object.keys(fieldErrors(error)).length) {
+                    await helpers.uiAlert(firstError(error, 'Unable to update support request.'), {
+                        title: 'Action failed',
+                        variant: 'error',
+                    });
+                }
+                return false;
+            } finally {
+                supportRequestActionBusy = false;
+                const selected = supportRequestsData.find((item) => isCurrentSupportRequestSelection(item?.id));
+                if (selected) {
+                    renderSupportRequestDetail(selected);
+                }
+            }
+        },
+    });
+
+    modal.open();
 };
 
 const openSupportRequestDetail = async (requestId) => {
@@ -2061,6 +2388,8 @@ const openSupportRequestDetail = async (requestId) => {
     if (!id) return;
 
     const detail = supportRequestsModal?.body?.querySelector?.('[data-support-request-detail]');
+    const cachedRequest = supportRequestsData.find((item) => String(item?.id) === id);
+    const shouldAcknowledgeReview = String(cachedRequest?.status || '').toLowerCase() === 'requested';
     selectedSupportRequestId = id;
     syncSelectedSupportRequestCard();
     if (detail) {
@@ -2069,10 +2398,12 @@ const openSupportRequestDetail = async (requestId) => {
     }
 
     try {
-        const data = await api(`/api/support-requests/${encodeURIComponent(id)}/receive`, {
-            method: 'POST',
-            body: '{}',
-        });
+        const data = shouldAcknowledgeReview
+            ? await api(`/api/support-requests/${encodeURIComponent(id)}/receive`, {
+                method: 'POST',
+                body: '{}',
+            })
+            : await api(`/api/support-requests/${encodeURIComponent(id)}`);
         if (!isCurrentSupportRequestSelection(id)) {
             return;
         }
