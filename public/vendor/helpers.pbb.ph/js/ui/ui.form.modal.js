@@ -1,5 +1,6 @@
 import { createElement, clearNode } from "./ui.dom.js";
 import { createActionModal } from "./ui.modal.js?v=0.21.61";
+import { createNumberStepper } from "./ui.number.stepper.js";
 import { createPasswordField } from "./ui.password.js?v=0.21.64";
 import { createSelect } from "./ui.select.js";
 import { createTreeSelect } from "./ui.tree.select.js";
@@ -9,6 +10,7 @@ const FORM_MODAL_STYLE_PATHS = [
   "../../css/ui/ui.components.css",
   "../../css/ui/ui.modal.css",
   "../../css/ui/ui.form.modal.css",
+  "../../css/ui/ui.number.stepper.css",
   "../../css/ui/ui.select.css",
   "../../css/ui/ui.tree.select.css",
   "../../css/ui/ui.password.css",
@@ -85,6 +87,8 @@ export function createFormModal(options = {}) {
         field.control?.__uiSelectInstance?.destroy?.();
       } else if (field?.type === "ui.treeselect") {
         field.control?.__uiTreeSelectInstance?.destroy?.();
+      } else if (field?.type === "number-stepper") {
+        field.control?.__uiNumberStepperInstance?.destroy?.();
       } else if (field?.type === "avatar") {
         field.control?.__uiAvatarFieldInstance?.destroy?.();
       } else if (field?.type === "input") {
@@ -205,7 +209,7 @@ export function createFormModal(options = {}) {
     if (type === "display") {
       return renderDisplayItem(item);
     }
-    if (type === "hidden" || type === "input" || type === "textarea" || type === "select" || type === "checkbox" || type === "ui.select" || type === "ui.treeselect" || type === "avatar") {
+    if (type === "hidden" || type === "input" || type === "textarea" || type === "select" || type === "checkbox" || type === "ui.select" || type === "ui.treeselect" || type === "number-stepper" || type === "avatar") {
       return renderField(item, type, rowIndex, itemIndex);
     }
     console.warn(`[createFormModal] Unsupported item type "${type}".`);
@@ -310,7 +314,7 @@ export function createFormModal(options = {}) {
         errorEl: null,
       });
       return control;
-    } else if (type === "ui.select" || type === "ui.treeselect") {
+    } else if (type === "ui.select" || type === "ui.treeselect" || type === "number-stepper") {
       if (labelText) {
         label.textContent = labelText;
         wrapper.appendChild(label);
@@ -342,7 +346,7 @@ export function createFormModal(options = {}) {
       appendDescribedBy(getFieldAriaTarget({ type, control }), helpEl.id);
     }
 
-    if ((type === "ui.select" || type === "ui.treeselect") && errorEl) {
+    if ((type === "ui.select" || type === "ui.treeselect" || type === "number-stepper") && errorEl) {
       appendDescribedBy(getFieldAriaTarget({ type, control }), errorEl.id);
     }
 
@@ -434,6 +438,39 @@ export function createFormModal(options = {}) {
         },
       });
       host.__uiTreeSelectInstance = treeSelectInstance;
+      control = host;
+      return control;
+    }
+
+    if (type === "number-stepper") {
+      const host = createElement("div", {
+        className: "ui-form-modal-number-stepper-host",
+        attrs: { id: `${id}-host` },
+      });
+      const stepperInstance = createNumberStepper(host, {
+        id,
+        name,
+        value,
+        min: item.min,
+        max: item.max,
+        step: item.step,
+        decimals: item.decimals,
+        placeholder: item.placeholder ? String(item.placeholder) : "",
+        required: Boolean(item.required),
+        disabled: Boolean(item.disabled),
+        readonly: Boolean(item.readonly),
+        allowEmpty: Boolean(item.allowEmpty),
+        prefixText: item.prefixText == null ? "" : String(item.prefixText),
+        suffixText: item.suffixText == null ? "" : String(item.suffixText),
+        decrementLabel: item.decrementLabel == null ? "Decrease value" : String(item.decrementLabel),
+        incrementLabel: item.incrementLabel == null ? "Increase value" : String(item.incrementLabel),
+        ariaLabel: item.ariaLabel || item.label || name,
+        describedBy,
+        onChange() {
+          handleFieldChange(name);
+        },
+      });
+      host.__uiNumberStepperInstance = stepperInstance;
       control = host;
       return control;
     }
@@ -749,7 +786,7 @@ export function createFormModal(options = {}) {
         if (field.config.required && !control.checked) {
           message = "This field is required.";
         }
-      } else if (field.type === "ui.select" || field.type === "ui.treeselect") {
+      } else if (field.type === "ui.select" || field.type === "ui.treeselect" || field.type === "number-stepper") {
         const value = getFieldValue(field);
         const isEmpty = Array.isArray(value) ? value.length === 0 : value == null || value === "";
         if (field.config.required && isEmpty) {
@@ -805,7 +842,11 @@ export function createFormModal(options = {}) {
     if (field?.type === "hidden") {
       return;
     }
-    const focusTarget = field?.type === "ui.select" || field?.type === "ui.treeselect" || field?.type === "avatar"
+    if (field?.type === "number-stepper" && typeof field.control?.__uiNumberStepperInstance?.focus === "function") {
+      field.control.__uiNumberStepperInstance.focus();
+      return;
+    }
+    const focusTarget = field?.type === "ui.select" || field?.type === "ui.treeselect" || field?.type === "number-stepper" || field?.type === "avatar"
       ? getFieldAriaTarget(field)
       : getFieldAriaTarget(field) || field?.control;
     if (focusTarget && typeof focusTarget.focus === "function") {
@@ -1318,6 +1359,9 @@ function getItemClassName(baseClassName, item) {
   if (item?.rowClassName) {
     classes.push(String(item.rowClassName).trim());
   }
+  if (item?.className) {
+    classes.push(String(item.className).trim());
+  }
   return classes.filter(Boolean).join(" ");
 }
 
@@ -1350,6 +1394,9 @@ function normalizeItemType(type) {
   if (value === "ui.treeselect" || value === "ui.tree.select") {
     return "ui.treeselect";
   }
+  if (value === "number_stepper" || value === "ui.number.stepper" || value === "ui.number-stepper") {
+    return "number-stepper";
+  }
   return value;
 }
 
@@ -1373,6 +1420,9 @@ function getFieldValue(field) {
   }
   if (field.type === "ui.treeselect") {
     return field.control?.__uiTreeSelectInstance?.getValue?.() ?? null;
+  }
+  if (field.type === "number-stepper") {
+    return field.control?.__uiNumberStepperInstance?.getValue?.() ?? null;
   }
   if (field.type === "avatar") {
     return field.control?.__uiAvatarFieldInstance?.getValue?.() ?? null;
@@ -1403,6 +1453,14 @@ function setFieldValue(field, value) {
     field.control?.__uiTreeSelectInstance?.setValue?.(value);
     return;
   }
+  if (field.type === "number-stepper") {
+    const currentValue = field.control?.__uiNumberStepperInstance?.getValue?.();
+    if (isSameValue(currentValue, value)) {
+      return;
+    }
+    field.control?.__uiNumberStepperInstance?.setValue?.(value);
+    return;
+  }
   if (field.type === "avatar") {
     field.control?.__uiAvatarFieldInstance?.setValue?.(value);
     return;
@@ -1427,6 +1485,9 @@ function getFieldAriaTarget(field) {
   }
   if (field.type === "ui.treeselect") {
     return field.control?.querySelector?.(".ui-tree-select-trigger") || null;
+  }
+  if (field.type === "number-stepper") {
+    return field.control?.__uiNumberStepperInstance?.input || field.control?.querySelector?.(".ui-number-stepper-input") || null;
   }
   if (field.type === "avatar") {
     return field.control?.querySelector?.(".ui-form-modal-avatar-picker") || null;
