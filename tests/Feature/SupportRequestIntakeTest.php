@@ -42,6 +42,8 @@ class SupportRequestIntakeTest extends TestCase
         $this->assertSame('relay-cebu-apas', $request->source_relay_hub_id);
         $this->assertSame('Apas Command Desk', $request->source_hub_name);
         $this->assertSame('evacuation_transport', $request->requested_capability);
+        $this->assertSame(['life_safety', 'access_constraint'], $request->justification_codes);
+        $this->assertSame(['Life safety', 'Access constraint'], $request->justification_labels);
         $this->assertSame('Apas SITREP 2026-06-11 09:00', $request->sitrep_context['title']);
         $this->assertSame('gap-7', $request->gap_context['gap_id']);
         $this->assertSame('needs.rollup.category_demand[0]', $request->evidence_row['path']);
@@ -182,6 +184,54 @@ class SupportRequestIntakeTest extends TestCase
         $this->assertContains('request.status', collect($message->validation_errors)->pluck('field')->all());
     }
 
+    public function test_support_request_handler_rejects_missing_or_empty_justification_codes(): void
+    {
+        app(SupportSettings::class)->update([
+            'relayHandlerToken' => 'handler-secret',
+        ]);
+
+        $missingEnvelope = $this->supportRequestEnvelope([
+            'message' => [
+                'id' => 'relay-msg-missing-justification-codes',
+            ],
+        ]);
+        unset($missingEnvelope['message']['payload']['request']['justification_codes']);
+
+        $this->postJson('/api/relay/support-requests', $missingEnvelope, [
+            'Authorization' => 'Bearer handler-secret',
+        ])
+            ->assertAccepted()
+            ->assertJsonPath('data.validation_status', SupportRequestMessage::STATUS_INVALID);
+
+        $missingMessage = SupportRequestMessage::query()
+            ->where('relay_message_id', 'relay-msg-missing-justification-codes')
+            ->firstOrFail();
+
+        $this->assertSame(SupportRequestMessage::STATUS_INVALID, $missingMessage->validation_status);
+        $this->assertContains('request.justification_codes', collect($missingMessage->validation_errors)->pluck('field')->all());
+
+        $emptyEnvelope = $this->supportRequestEnvelope([
+            'message' => [
+                'id' => 'relay-msg-empty-justification-codes',
+            ],
+        ]);
+        $emptyEnvelope['message']['payload']['request']['justification_codes'] = [];
+
+        $this->postJson('/api/relay/support-requests', $emptyEnvelope, [
+            'Authorization' => 'Bearer handler-secret',
+        ])
+            ->assertAccepted()
+            ->assertJsonPath('data.validation_status', SupportRequestMessage::STATUS_INVALID);
+
+        $emptyMessage = SupportRequestMessage::query()
+            ->where('relay_message_id', 'relay-msg-empty-justification-codes')
+            ->firstOrFail();
+
+        $this->assertSame(SupportRequestMessage::STATUS_INVALID, $emptyMessage->validation_status);
+        $this->assertContains('request.justification_codes', collect($emptyMessage->validation_errors)->pluck('field')->all());
+        $this->assertDatabaseCount('support_requests', 0);
+    }
+
     public function test_support_request_handler_is_idempotent_by_relay_message_id(): void
     {
         app(SupportSettings::class)->update([
@@ -306,6 +356,8 @@ class SupportRequestIntakeTest extends TestCase
                         'requested_capability' => 'evacuation_transport',
                         'quantity' => 3,
                         'quantity_unit' => 'vehicles',
+                        'justification_codes' => ['life_safety', 'access_constraint'],
+                        'justification_labels' => ['Life safety', 'Access constraint'],
                         'staging_notes' => 'Stage at barangay hall.',
                         'command_notes' => 'Coordinate with barangay captain before dispatch.',
                         'requested_at' => '2026-06-11T09:15:00+08:00',

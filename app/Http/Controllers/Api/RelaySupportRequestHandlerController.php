@@ -103,6 +103,8 @@ class RelaySupportRequestHandlerController extends BaseApiController
             'requested_capability' => $this->stringOrNull($requestPayload['requested_capability'] ?? null),
             'quantity' => is_numeric($requestPayload['quantity'] ?? null) ? $requestPayload['quantity'] : null,
             'quantity_unit' => $this->stringOrNull($requestPayload['quantity_unit'] ?? null),
+            'justification_codes' => $this->stringList($requestPayload['justification_codes'] ?? null),
+            'justification_labels' => $this->stringList($requestPayload['justification_labels'] ?? null),
             'staging_notes' => $this->stringOrNull($requestPayload['staging_notes'] ?? null),
             'command_notes' => $this->stringOrNull($requestPayload['command_notes'] ?? null),
             'requested_at' => $this->nullableDate($requestPayload['requested_at'] ?? null),
@@ -184,6 +186,10 @@ class RelaySupportRequestHandlerController extends BaseApiController
             'request.requested_capability' => ['required', 'string', 'max:120'],
             'request.quantity' => ['nullable', 'numeric'],
             'request.quantity_unit' => ['nullable', 'string', 'max:80'],
+            'request.justification_codes' => ['required', 'array', 'min:1'],
+            'request.justification_codes.*' => ['string', 'max:120'],
+            'request.justification_labels' => ['nullable', 'array'],
+            'request.justification_labels.*' => ['string', 'max:255'],
             'request.staging_notes' => ['nullable', 'string'],
             'request.command_notes' => ['nullable', 'string'],
             'request.requested_at' => ['required', 'date'],
@@ -332,5 +338,21 @@ class RelaySupportRequestHandlerController extends BaseApiController
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function stringList(mixed $value): ?array
+    {
+        if (! is_array($value)) {
+            return null;
+        }
+
+        return collect($value)
+            ->map(fn (mixed $item): ?string => $this->stringOrNull($item))
+            ->filter()
+            ->values()
+            ->all();
     }
 }

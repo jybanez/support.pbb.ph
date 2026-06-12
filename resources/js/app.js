@@ -1868,6 +1868,17 @@ const supportRequestDetailRow = (label, value) => {
     `;
 };
 
+const supportRequestJustificationLabel = (request) => {
+    const labels = Array.isArray(request?.justification_labels) ? request.justification_labels : [];
+    const codes = Array.isArray(request?.justification_codes) ? request.justification_codes : [];
+    const values = labels.length ? labels : codes;
+
+    return values
+        .map((value) => String(value || '').trim())
+        .filter(Boolean)
+        .join(', ');
+};
+
 const supportRequestDeliveryLabel = (request) => {
     const delivery = request?.latest_update_delivery || (Array.isArray(request?.update_deliveries) ? request.update_deliveries[0] : null);
     if (!delivery) return '';
@@ -2032,6 +2043,7 @@ const renderSupportRequestDetail = (request) => {
                 ${supportRequestDetailRow('Requested assistance', request.requested_assistance)}
                 ${supportRequestDetailRow('Capability', capability)}
                 ${supportRequestDetailRow('Quantity', quantity)}
+                ${supportRequestDetailRow('Justification', supportRequestJustificationLabel(request))}
                 ${supportRequestDetailRow('Requester', requester)}
                 ${supportRequestDetailRow('Requested at', supportRequestTime(request.requested_at))}
                 ${supportRequestDetailRow('Received at', supportRequestOptionalTime(request.received_at) || 'Not yet acknowledged')}

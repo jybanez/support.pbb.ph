@@ -19,24 +19,25 @@ class SupportRequestLifecycleRelayService
     public function queueLifecycleUpdate(SupportRequest $supportRequest, string $status, bool $dispatch = true): SupportRequestUpdateDelivery
     {
         $supportRequest->refresh();
+        $outboundStatus = $this->outboundStatus($status);
         $settings = $this->settings->all();
         $sourceSystem = (string) ($settings['supportRequestUpdateSourceSystem'] ?? 'support.dispatch');
         $targetSystem = (string) ($settings['supportRequestUpdateTargetSystem']
             ?? $settings['supportRequestSourceSystem']
             ?? 'hotline.command');
         $updatedAt = $supportRequest->updated_at ?? now();
-        $updateId = $this->updateId($supportRequest, $status, $updatedAt->toIso8601String());
+        $updateId = $this->updateId($supportRequest, $outboundStatus, $updatedAt->toIso8601String());
 
         $delivery = SupportRequestUpdateDelivery::query()->firstOrCreate(
             ['update_id' => $updateId],
             [
                 'support_request_id' => $supportRequest->id,
-                'message_type' => 'support.request.'.$status,
+                'message_type' => 'support.request.'.$outboundStatus,
                 'source_system' => $sourceSystem,
                 'target_system' => $targetSystem,
-                'status' => $status,
+                'status' => $outboundStatus,
                 'delivery_status' => SupportRequestUpdateDelivery::STATUS_PENDING,
-                'envelope' => $this->envelope($supportRequest, $status, $updateId, $sourceSystem, $targetSystem, $updatedAt->toIso8601String()),
+                'envelope' => $this->envelope($supportRequest, $outboundStatus, $updateId, $sourceSystem, $targetSystem, $updatedAt->toIso8601String()),
             ],
         );
 
@@ -191,6 +192,11 @@ class SupportRequestLifecycleRelayService
             'high' => 'high',
             default => 'normal',
         };
+    }
+
+    private function outboundStatus(string $status): string
+    {
+        return $status === 'completed' ? 'fulfilled' : $status;
     }
 
     private function markFailed(SupportRequestUpdateDelivery $delivery, string $message): SupportRequestUpdateDelivery

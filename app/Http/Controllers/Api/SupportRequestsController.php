@@ -202,6 +202,8 @@ class SupportRequestsController extends BaseApiController
             $payload += [
                 'staging_notes' => $supportRequest->staging_notes,
                 'command_notes' => $supportRequest->command_notes,
+                'justification_codes' => $supportRequest->justification_codes ?? [],
+                'justification_labels' => $supportRequest->justification_labels ?? [],
                 'sitrep_context' => $supportRequest->sitrep_context,
                 'gap_context' => $supportRequest->gap_context,
                 'evidence_row' => $supportRequest->evidence_row,
