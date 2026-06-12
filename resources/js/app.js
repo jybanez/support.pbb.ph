@@ -94,6 +94,7 @@ const state = {
         sections: [],
         sources: [],
         sourceHeartbeats: [],
+        sourceHeartbeatsLoading: false,
         activeSection: 'summary',
         mapPoints: [],
     },
@@ -113,6 +114,7 @@ let dashboardMapControls = null;
 let dashboardMapResizeObserver = null;
 let navbarClock = null;
 let currentSitrepStyleMounted = false;
+let currentSitrepLoadId = 0;
 let sourceVirtualList = null;
 let usersVirtualList = null;
 let supportRequestsVirtualList = null;
@@ -922,6 +924,18 @@ const mountLoadingSkeletons = (host) => {
     });
 };
 
+const sourceHeartbeatLoadingStrip = () => {
+    const host = document.createElement('div');
+    host.className = 'support-source-heartbeat-strip support-source-heartbeat-strip-loading';
+    mountSkeleton(host, {
+        lines: 2,
+    }, {
+        className: 'support-source-heartbeat-strip-skeleton',
+    });
+
+    return host;
+};
+
 const sourceCard = (source) => {
     const card = document.createElement('article');
     card.className = ['support-source-card', alertToneClass(source?.alert_level)].filter(Boolean).join(' ');
@@ -973,6 +987,8 @@ const sourceCard = (source) => {
 
     if (source?.heartbeat) {
         heading.appendChild(sourceHeartbeatStrip(source.heartbeat));
+    } else if (state.currentSitrep.sourceHeartbeatsLoading) {
+        heading.appendChild(sourceHeartbeatLoadingStrip());
     }
 
     const toggleHost = document.createElement('div');
@@ -1281,20 +1297,22 @@ const loadCurrentSitrep = async () => {
     const host = document.querySelector('[data-current-sitrep-host]');
     if (!host || !state.account) return;
 
+    const loadId = ++currentSitrepLoadId;
     state.currentSitrep.loading = true;
+    state.currentSitrep.sourceHeartbeatsLoading = true;
     renderCurrentSitrepPane();
     renderSourcesRail();
 
+    const heartbeatRequest = api('/api/source-heartbeats?hours=48', {
+        reauthOnUnauthorized: false,
+    }).catch(() => ({ available: false, sources: [] }));
+
     try {
-        const [data, heartbeatData] = await Promise.all([
-            api('/api/sitreps/current', {
-                reauthOnUnauthorized: false,
-            }),
-            api('/api/source-heartbeats?hours=48', {
-                reauthOnUnauthorized: false,
-            }).catch(() => ({ available: false, sources: [] })),
-        ]);
-        const sourceHeartbeats = Array.isArray(heartbeatData.sources) ? heartbeatData.sources : [];
+        const data = await api('/api/sitreps/current', {
+            reauthOnUnauthorized: false,
+        });
+        if (loadId !== currentSitrepLoadId) return;
+
         state.currentSitrep = {
             loading: false,
             available: Boolean(data.available),
@@ -1304,8 +1322,9 @@ const loadCurrentSitrep = async () => {
             identity: data.identity || null,
             contextBoundary: data.context_boundary || null,
             sections: Array.isArray(data.sections) ? data.sections : [],
-            sources: mergeSourceHeartbeats(Array.isArray(data.sources) ? data.sources : [], sourceHeartbeats),
-            sourceHeartbeats,
+            sources: Array.isArray(data.sources) ? data.sources : [],
+            sourceHeartbeats: [],
+            sourceHeartbeatsLoading: true,
             activeSection: state.currentSitrep.activeSection || 'summary',
             mapPoints: Array.isArray(data.map_points) ? data.map_points : [],
         };
@@ -1318,7 +1337,23 @@ const loadCurrentSitrep = async () => {
         if (state.currentSitrep.mapPoints.length) {
             dashboardMap?.fitContent?.({ duration: 700 });
         }
+        renderCurrentSitrepPane();
+        renderSourcesRail();
+
+        const heartbeatData = await heartbeatRequest;
+        if (loadId !== currentSitrepLoadId) return;
+
+        const sourceHeartbeats = Array.isArray(heartbeatData.sources) ? heartbeatData.sources : [];
+        state.currentSitrep = {
+            ...state.currentSitrep,
+            sourceHeartbeats,
+            sourceHeartbeatsLoading: false,
+            sources: mergeSourceHeartbeats(state.currentSitrep.sources || [], sourceHeartbeats),
+        };
+        renderSourcesRail();
     } catch (error) {
+        if (loadId !== currentSitrepLoadId) return;
+
         state.currentSitrep = {
             loading: false,
             available: false,
@@ -1330,6 +1365,7 @@ const loadCurrentSitrep = async () => {
             sections: [],
             sources: [],
             sourceHeartbeats: [],
+            sourceHeartbeatsLoading: false,
             activeSection: state.currentSitrep.activeSection || 'summary',
             mapPoints: [],
         };
@@ -1350,10 +1386,12 @@ const loadCurrentSitrep = async () => {
                 return;
             }
         }
-    }
 
-    renderCurrentSitrepPane();
-    renderSourcesRail();
+        heartbeatRequest.catch(() => {});
+
+        renderCurrentSitrepPane();
+        renderSourcesRail();
+    }
 };
 
 const mountDashboardMapControls = () => {

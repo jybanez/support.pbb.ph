@@ -2001,6 +2001,14 @@ input {
     max-width: 100%;
 }
 
+.support-source-heartbeat-strip-loading {
+    min-height: 34px;
+}
+
+.support-source-heartbeat-strip-skeleton {
+    min-height: 34px;
+}
+
 .support-source-card-toggle {
     flex: 0 0 auto;
 }
