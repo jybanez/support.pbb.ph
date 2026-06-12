@@ -3,12 +3,15 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\Api\SupportRequestsController;
+use App\Jobs\SubmitSupportRequestUpdateDelivery;
 use App\Models\SupportRequest;
 use App\Models\SupportRequestAction;
+use App\Models\SupportRequestUpdateDelivery;
 use App\Models\User;
 use App\Support\SupportRequests\SupportRequestLifecycleRelayService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class SupportRequestApiTest extends TestCase
@@ -191,6 +194,88 @@ class SupportRequestApiTest extends TestCase
         $this->assertActionWritten($request, 'completed', 'en_route', 'completed', $user->id);
     }
 
+    public function test_successful_lifecycle_actions_queue_matching_outbound_updates(): void
+    {
+        Queue::fake();
+        $user = User::factory()->create(['role' => 'operator']);
+
+        $cases = [
+            [
+                'key' => 'accept',
+                'initial_status' => 'received',
+                'endpoint' => 'accept',
+                'payload' => ['notes' => 'Support can respond.'],
+                'local_status' => 'accepted',
+                'outbound_status' => 'accepted',
+                'message_type' => 'support.request.accepted',
+            ],
+            [
+                'key' => 'reject',
+                'initial_status' => 'received',
+                'endpoint' => 'reject',
+                'payload' => ['reason' => 'No safe route available.'],
+                'local_status' => 'rejected',
+                'outbound_status' => 'rejected',
+                'message_type' => 'support.request.rejected',
+            ],
+            [
+                'key' => 'assign',
+                'initial_status' => 'accepted',
+                'endpoint' => 'assign',
+                'payload' => ['team_name' => 'Rescue Team 1', 'eta' => '20 minutes'],
+                'local_status' => 'assigned',
+                'outbound_status' => 'assigned',
+                'message_type' => 'support.request.assigned',
+            ],
+            [
+                'key' => 'en-route',
+                'initial_status' => 'assigned',
+                'endpoint' => 'en-route',
+                'payload' => ['notes' => 'Team departed staging area.'],
+                'local_status' => 'en_route',
+                'outbound_status' => 'en_route',
+                'message_type' => 'support.request.en_route',
+            ],
+            [
+                'key' => 'complete',
+                'initial_status' => 'en_route',
+                'endpoint' => 'complete',
+                'payload' => ['outcome' => 'Transport completed.'],
+                'local_status' => 'completed',
+                'outbound_status' => 'fulfilled',
+                'message_type' => 'support.request.fulfilled',
+            ],
+        ];
+
+        foreach ($cases as $index => $case) {
+            $request = $this->supportRequest([
+                'support_request_id' => 'sup_action_'.$index,
+                'local_request_id' => 'hotline-action-'.$index,
+                'correlation_id' => 'corr-action-'.$index,
+                'relay_message_id' => 'relay-action-'.$index,
+                'status' => $case['initial_status'],
+            ]);
+
+            $this->actingAs($user)
+                ->postJson('/api/support-requests/'.$request->id.'/'.$case['endpoint'], $case['payload'])
+                ->assertOk()
+                ->assertJsonPath('data.request.status', $case['local_status'])
+                ->assertJsonPath('data.request.latest_update_delivery.message_type', $case['message_type'])
+                ->assertJsonPath('data.request.latest_update_delivery.status', $case['outbound_status'])
+                ->assertJsonPath('data.request.latest_update_delivery.delivery_status', SupportRequestUpdateDelivery::STATUS_PENDING);
+
+            $this->assertDatabaseHas('support_request_update_deliveries', [
+                'support_request_id' => $request->id,
+                'message_type' => $case['message_type'],
+                'status' => $case['outbound_status'],
+                'delivery_status' => SupportRequestUpdateDelivery::STATUS_PENDING,
+            ]);
+        }
+
+        $this->assertSame(count($cases), SupportRequestUpdateDelivery::query()->count());
+        Queue::assertPushed(SubmitSupportRequestUpdateDelivery::class, count($cases));
+    }
+
     public function test_invalid_lifecycle_transition_is_rejected_without_history(): void
     {
         $user = User::factory()->create(['role' => 'operator']);
@@ -204,10 +289,12 @@ class SupportRequestApiTest extends TestCase
 
         $this->assertSame('received', $request->refresh()->status);
         $this->assertDatabaseCount('support_request_actions', 0);
+        $this->assertDatabaseCount('support_request_update_deliveries', 0);
     }
 
     public function test_repeated_lifecycle_transition_is_rejected_without_duplicate_history(): void
     {
+        Queue::fake();
         $user = User::factory()->create(['role' => 'operator']);
         $request = $this->supportRequest(['status' => 'received']);
 
@@ -223,6 +310,7 @@ class SupportRequestApiTest extends TestCase
 
         $this->assertSame('accepted', $request->refresh()->status);
         $this->assertDatabaseCount('support_request_actions', 1);
+        $this->assertDatabaseCount('support_request_update_deliveries', 1);
     }
 
     public function test_terminal_support_requests_cannot_be_changed(): void
@@ -245,6 +333,7 @@ class SupportRequestApiTest extends TestCase
         }
 
         $this->assertDatabaseCount('support_request_actions', 0);
+        $this->assertDatabaseCount('support_request_update_deliveries', 0);
     }
 
     public function test_stale_requested_receive_does_not_overwrite_cancelled_request(): void
