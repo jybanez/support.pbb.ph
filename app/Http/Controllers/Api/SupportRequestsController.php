@@ -98,24 +98,32 @@ class SupportRequestsController extends BaseApiController
         ]);
     }
 
-    public function accept(Request $request, SupportRequest $supportRequest)
+    public function accept(
+        Request $request,
+        SupportRequest $supportRequest,
+        SupportRequestLifecycleRelayService $lifecycleRelay,
+    )
     {
         $validated = $request->validate([
             'notes' => ['nullable', 'string', 'max:4000'],
         ]);
 
-        return $this->transition($request, $supportRequest, 'accepted', 'accepted', ['received'], [
+        return $this->transition($request, $supportRequest, $lifecycleRelay, 'accepted', 'accepted', ['received'], [
             'notes' => $validated['notes'] ?? null,
         ]);
     }
 
-    public function reject(Request $request, SupportRequest $supportRequest)
+    public function reject(
+        Request $request,
+        SupportRequest $supportRequest,
+        SupportRequestLifecycleRelayService $lifecycleRelay,
+    )
     {
         $validated = $request->validate([
             'reason' => ['required', 'string', 'max:4000'],
         ]);
 
-        return $this->transition($request, $supportRequest, 'rejected', 'rejected', ['received'], [
+        return $this->transition($request, $supportRequest, $lifecycleRelay, 'rejected', 'rejected', ['received'], [
             'notes' => $validated['reason'],
             'metadata' => [
                 'reason' => $validated['reason'],
@@ -123,7 +131,11 @@ class SupportRequestsController extends BaseApiController
         ]);
     }
 
-    public function assign(Request $request, SupportRequest $supportRequest)
+    public function assign(
+        Request $request,
+        SupportRequest $supportRequest,
+        SupportRequestLifecycleRelayService $lifecycleRelay,
+    )
     {
         $validated = $request->validate([
             'team_name' => ['required', 'string', 'max:255'],
@@ -131,7 +143,7 @@ class SupportRequestsController extends BaseApiController
             'notes' => ['nullable', 'string', 'max:4000'],
         ]);
 
-        return $this->transition($request, $supportRequest, 'assigned', 'assigned', ['accepted'], [
+        return $this->transition($request, $supportRequest, $lifecycleRelay, 'assigned', 'assigned', ['accepted'], [
             'notes' => $validated['notes'] ?? null,
             'metadata' => [
                 'team_name' => $validated['team_name'],
@@ -140,25 +152,33 @@ class SupportRequestsController extends BaseApiController
         ]);
     }
 
-    public function markEnRoute(Request $request, SupportRequest $supportRequest)
+    public function markEnRoute(
+        Request $request,
+        SupportRequest $supportRequest,
+        SupportRequestLifecycleRelayService $lifecycleRelay,
+    )
     {
         $validated = $request->validate([
             'notes' => ['nullable', 'string', 'max:4000'],
         ]);
 
-        return $this->transition($request, $supportRequest, 'en_route', 'en_route', ['assigned'], [
+        return $this->transition($request, $supportRequest, $lifecycleRelay, 'en_route', 'en_route', ['assigned'], [
             'notes' => $validated['notes'] ?? null,
         ]);
     }
 
-    public function complete(Request $request, SupportRequest $supportRequest)
+    public function complete(
+        Request $request,
+        SupportRequest $supportRequest,
+        SupportRequestLifecycleRelayService $lifecycleRelay,
+    )
     {
         $validated = $request->validate([
             'notes' => ['nullable', 'string', 'max:4000'],
             'outcome' => ['nullable', 'string', 'max:4000'],
         ]);
 
-        return $this->transition($request, $supportRequest, 'completed', 'completed', ['en_route'], [
+        return $this->transition($request, $supportRequest, $lifecycleRelay, 'completed', 'completed', ['en_route'], [
             'notes' => $validated['notes'] ?? ($validated['outcome'] ?? null),
             'metadata' => [
                 'outcome' => $validated['outcome'] ?? null,
@@ -289,6 +309,7 @@ class SupportRequestsController extends BaseApiController
     private function transition(
         Request $request,
         SupportRequest $supportRequest,
+        SupportRequestLifecycleRelayService $lifecycleRelay,
         string $action,
         string $toStatus,
         array $allowedFrom,
@@ -344,8 +365,10 @@ class SupportRequestsController extends BaseApiController
             return $this->fail($result['error'], $result['status_code'], $result['data'] ?? null);
         }
 
+        $lifecycleRelay->queueLifecycleUpdate($result['request'], $toStatus);
+
         return $this->ok([
-            'request' => $this->requestPayload($result['request'], true),
+            'request' => $this->requestPayload($result['request']->refresh()->load('messages'), true),
         ]);
     }
 
