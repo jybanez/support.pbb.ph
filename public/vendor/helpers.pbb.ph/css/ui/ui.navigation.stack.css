@@ -1,0 +1,104 @@
+.ui-navigation-stack {
+  --ui-navigation-stack-duration: 180ms;
+  --ui-navigation-stack-easing: ease;
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 240px;
+  width: 100%;
+  border: 1px solid var(--ui-border, #2b3750);
+  border-radius: var(--ui-radius-md, 8px);
+  background: var(--ui-surface, #0f1726);
+  color: var(--ui-text, #d7e0f4);
+  overflow: hidden;
+}
+
+.ui-navigation-stack-viewport {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ui-navigation-stack-page {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  background: inherit;
+  color: inherit;
+  opacity: 0;
+  transform: translateX(0);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ui-navigation-stack-page-body {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.ui-navigation-stack-page.is-active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.ui-navigation-stack-page.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ui-navigation-stack--slide .ui-navigation-stack-page,
+.ui-navigation-stack--fade .ui-navigation-stack-page {
+  transition:
+    transform var(--ui-navigation-stack-duration) var(--ui-navigation-stack-easing),
+    opacity var(--ui-navigation-stack-duration) var(--ui-navigation-stack-easing);
+}
+
+.ui-navigation-stack--slide .ui-navigation-stack-page.is-entering.is-push {
+  opacity: 1;
+  transform: translateX(100%);
+  z-index: 3;
+}
+
+.ui-navigation-stack--slide .ui-navigation-stack-page.is-exiting.is-push {
+  opacity: 1;
+  transform: translateX(-24%);
+  z-index: 2;
+}
+
+.ui-navigation-stack--slide .ui-navigation-stack-page.is-entering.is-pop {
+  opacity: 1;
+  transform: translateX(-24%);
+  z-index: 2;
+}
+
+.ui-navigation-stack--slide .ui-navigation-stack-page.is-exiting.is-pop {
+  opacity: 1;
+  transform: translateX(100%);
+  z-index: 3;
+}
+
+.ui-navigation-stack--slide .ui-navigation-stack-page.is-entering.is-replace,
+.ui-navigation-stack--fade .ui-navigation-stack-page.is-entering {
+  opacity: 0;
+  transform: translateX(0);
+  z-index: 3;
+}
+
+.ui-navigation-stack--slide .ui-navigation-stack-page.is-exiting.is-replace,
+.ui-navigation-stack--fade .ui-navigation-stack-page.is-exiting {
+  opacity: 0;
+  transform: translateX(0);
+  z-index: 2;
+}
+
+.ui-navigation-stack--none .ui-navigation-stack-page {
+  transition: none;
+}

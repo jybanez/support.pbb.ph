@@ -14,6 +14,7 @@ const DEFAULT_OPTIONS = {
   disabled: false,
   readonly: false,
   ariaLabel: "Number input",
+  describedBy: "",
   decrementLabel: "Decrease value",
   incrementLabel: "Increase value",
   prefixText: "",
@@ -124,6 +125,11 @@ export function createNumberStepper(container, options = {}) {
       input.setAttribute("aria-label", currentOptions.ariaLabel);
     } else {
       input.removeAttribute("aria-label");
+    }
+    if (currentOptions.describedBy) {
+      input.setAttribute("aria-describedby", currentOptions.describedBy);
+    } else {
+      input.removeAttribute("aria-describedby");
     }
     decrementButton.setAttribute("aria-label", currentOptions.decrementLabel);
     incrementButton.setAttribute("aria-label", currentOptions.incrementLabel);
@@ -296,6 +302,7 @@ function normalizeOptions(options = {}) {
   next.required = Boolean(next.required);
   next.disabled = Boolean(next.disabled);
   next.readonly = Boolean(next.readonly);
+  next.describedBy = String(next.describedBy || "").trim();
   next.prefixText = String(next.prefixText || "");
   next.suffixText = String(next.suffixText || "");
   return next;

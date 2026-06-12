@@ -88,6 +88,7 @@ const DEMO_GROUPS = [
       { href: "./demo.dropup.html", label: "Dropup" },
       { href: "./demo.stepper.html", label: "Stepper" },
       { href: "./demo.splitter.html", label: "Splitter" },
+      { href: "./demo.navigation.stack.html", label: "Navigation Stack" },
     ],
   },
   {

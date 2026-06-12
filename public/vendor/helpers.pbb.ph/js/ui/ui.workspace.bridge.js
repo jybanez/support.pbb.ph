@@ -1264,16 +1264,18 @@ function isJsonSafeValue(value) {
 }
 
 const BRIDGE_FORM_SUPPORTED_TYPES = {
-  input: ["type", "input", "name", "label", "value", "placeholder", "autocomplete", "required", "readonly", "disabled", "help", "span", "pattern", "min", "max", "step", "inputmode"],
-  textarea: ["type", "name", "label", "value", "placeholder", "required", "readonly", "disabled", "help", "span"],
-  select: ["type", "name", "label", "value", "required", "disabled", "help", "span", "options"],
-  checkbox: ["type", "name", "label", "value", "required", "disabled", "help", "span"],
-  "ui.select": ["type", "name", "label", "value", "required", "disabled", "help", "span", "items", "placeholder", "searchable", "multiple", "closeOnSelect", "selectOnTab", "clearable", "emptyText"],
-  hidden: ["type", "name", "value"],
-  text: ["type", "content", "className", "span"],
-  alert: ["type", "content", "tone", "className", "span"],
-  divider: ["type", "className", "span"],
-  display: ["type", "name", "label", "value", "help", "emptyText", "span"],
+  input: ["type", "input", "name", "label", "value", "placeholder", "autocomplete", "required", "readonly", "disabled", "help", "span", "rowClassName", "className", "pattern", "min", "max", "step", "inputmode"],
+  textarea: ["type", "name", "label", "value", "placeholder", "required", "readonly", "disabled", "help", "span", "rowClassName", "className"],
+  select: ["type", "name", "label", "value", "required", "disabled", "help", "span", "rowClassName", "className", "options"],
+  checkbox: ["type", "name", "label", "value", "required", "disabled", "help", "span", "rowClassName", "className"],
+  "ui.select": ["type", "name", "label", "value", "required", "disabled", "help", "span", "rowClassName", "className", "items", "placeholder", "searchable", "multiple", "closeOnSelect", "selectOnTab", "clearable", "emptyText"],
+  "number-stepper": ["type", "name", "label", "value", "placeholder", "required", "readonly", "disabled", "help", "span", "rowClassName", "className", "min", "max", "step", "decimals", "allowEmpty", "prefixText", "suffixText", "decrementLabel", "incrementLabel", "ariaLabel"],
+  number_stepper: ["type", "name", "label", "value", "placeholder", "required", "readonly", "disabled", "help", "span", "rowClassName", "className", "min", "max", "step", "decimals", "allowEmpty", "prefixText", "suffixText", "decrementLabel", "incrementLabel", "ariaLabel"],
+  hidden: ["type", "name", "value", "rowClassName", "className"],
+  text: ["type", "content", "rowClassName", "className", "span"],
+  alert: ["type", "content", "tone", "rowClassName", "className", "span"],
+  divider: ["type", "rowClassName", "className", "span"],
+  display: ["type", "name", "label", "value", "help", "emptyText", "span", "rowClassName", "className"],
 };
 
 function getDelegatedDialogFallbackResult(kind) {
