@@ -17,6 +17,7 @@ await uiLoader.loadMany([
     'ui.elapsed.time',
     'ui.clock',
     'ui.heartbeat.strip',
+    'ui.navigation.stack',
     'ui.skeleton',
     'ui.toggle.button',
     'ui.form.modal',
@@ -38,6 +39,7 @@ const helpers = {
     createElapsedTime: await uiLoader.get('ui.elapsed.time', helperLoadOptions),
     createClock: await uiLoader.get('ui.clock', helperLoadOptions),
     createHeartbeatStrip: await uiLoader.get('ui.heartbeat.strip', helperLoadOptions),
+    createNavigationStack: await uiLoader.get('ui.navigation.stack', helperLoadOptions),
     createSkeleton: await uiLoader.get('ui.skeleton', helperLoadOptions),
     createToggleButton: await uiLoader.get('ui.toggle.button', helperLoadOptions),
     createFormModal: await uiLoader.get('ui.form.modal', helperLoadOptions),
@@ -116,6 +118,9 @@ let navbarClock = null;
 let currentSitrepStyleMounted = false;
 let currentSitrepLoadId = 0;
 let sourceVirtualList = null;
+let sourcesNavigationStack = null;
+let activeSourceDetailId = null;
+const sourceDetailVirtualLists = new Map();
 let usersVirtualList = null;
 let supportRequestsVirtualList = null;
 let sourceAlertSelect = null;
@@ -763,6 +768,54 @@ const mountSitrepViewerCss = (css) => {
 
 const currentSitrepSourceId = (source) => String(source?.id || source?.code || source?.name || '').trim();
 
+const normalizeMatchKey = (value) => String(value || '').trim().toLowerCase();
+
+const sourceHubKeys = (source = {}) => [
+    source?.id,
+    source?.source_hub_id,
+    source?.data?.source_hub_id,
+    source?.data?.hub_id,
+    source?.data?.snapshot?.hub_id,
+]
+    .map(normalizeMatchKey)
+    .filter(Boolean);
+
+const sourceRelayHubKeys = (source = {}) => [
+    source?.relay_hub_id,
+    source?.source_relay_hub_id,
+    source?.data?.source_relay_hub_id,
+    source?.data?.relay_hub_id,
+    source?.data?.snapshot?.relay_hub_id,
+]
+    .map(normalizeMatchKey)
+    .filter(Boolean);
+
+const sourceNameKeys = (source = {}) => [
+    source?.name,
+    source?.source_hub_name,
+    source?.data?.source_hub_name,
+    source?.data?.name,
+    source?.data?.snapshot?.name,
+]
+    .map(normalizeMatchKey)
+    .filter(Boolean);
+
+const sourceMatchesRequest = (source, request) => {
+    const sourceIds = new Set(sourceHubKeys(source));
+    const sourceRelayIds = new Set(sourceRelayHubKeys(source));
+    const sourceNames = new Set(sourceNameKeys(source));
+    const requestHubId = normalizeMatchKey(request?.source_hub_id);
+    const requestRelayHubId = normalizeMatchKey(request?.source_relay_hub_id);
+    const requestSourceName = normalizeMatchKey(request?.source_hub_name);
+
+    if (requestHubId && sourceIds.has(requestHubId)) return true;
+    if (requestRelayHubId && sourceRelayIds.has(requestRelayHubId)) return true;
+
+    return !!(requestSourceName && sourceNames.has(requestSourceName));
+};
+
+const relatedSupportRequestsForSource = (source) => supportRequestsData.filter((request) => sourceMatchesRequest(source, request));
+
 const sourceHeartbeatKeys = (source = {}) => [
     source?.id,
     source?.relay_hub_id,
@@ -942,6 +995,9 @@ const sourceCard = (source) => {
     const sourceId = currentSitrepSourceId(source);
     const sourceVisible = !sourceDataVisibleIds.has(sourceId);
     const isSourceBoundaryVisible = () => !sourceDataVisibleIds.has(sourceId);
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `Open source details for ${source?.name || 'source hub'}`);
 
     const top = document.createElement('div');
     top.className = 'support-source-card-top';
@@ -1018,6 +1074,18 @@ const sourceCard = (source) => {
         if (isSourceBoundaryVisible()) {
             dashboardMap?.fitSourceBoundary?.(sourceId, { duration: 650 });
         }
+        openSourceDetail(source);
+    });
+
+    card.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+        event.preventDefault();
+        if (isSourceBoundaryVisible()) {
+            dashboardMap?.fitSourceBoundary?.(sourceId, { duration: 650 });
+        }
+        openSourceDetail(source);
     });
 
     const toggle = helpers.createToggleButton(toggleHost, {
@@ -1052,6 +1120,283 @@ const sourceCard = (source) => {
     setSourceToggleButtonIcon(toggleHost, sourceVisible);
 
     return card;
+};
+
+const destroySourcesStack = () => {
+    sourceVirtualList?.destroy?.();
+    sourceVirtualList = null;
+    sourceAlertSelect?.destroy?.();
+    sourceAlertSelect = null;
+    sourceDetailVirtualLists.forEach((list) => list?.destroy?.());
+    sourceDetailVirtualLists.clear();
+    sourcesNavigationStack?.destroy?.();
+    sourcesNavigationStack = null;
+    activeSourceDetailId = null;
+};
+
+const sourceStackBackButton = (label) => `
+    <button type="button" class="support-source-stack-back" data-source-stack-back>
+        ${icons.arrow || ''}
+        <span>${escapeHtml(label)}</span>
+    </button>
+`;
+
+const sourceHeartbeatStatusLabel = (source) => {
+    if (state.currentSitrep.sourceHeartbeatsLoading && !source?.heartbeat) return 'Heartbeat loading';
+    if (!source?.heartbeat) return 'Heartbeat unavailable';
+
+    return [
+        source.heartbeat.status ? titleCase(source.heartbeat.status) : 'Heartbeat unknown',
+        source.heartbeat.last_seen_at ? `seen ${supportRequestOptionalTime(source.heartbeat.last_seen_at)}` : '',
+    ].filter(Boolean).join(' - ');
+};
+
+const sourceDetailMetaMarkup = (source) => {
+    const hubIds = [
+        source?.id ? `Hub ${source.id}` : '',
+        source?.relay_hub_id ? `Relay ${source.relay_hub_id}` : '',
+    ].filter(Boolean).join(' - ');
+
+    return `
+        <div class="support-source-detail-meta">
+            ${source?.alert_level ? `<span class="support-source-alert ${alertToneClass(source.alert_level)}">${escapeHtml(titleCase(source.alert_level))}</span>` : ''}
+            <span>${escapeHtml(source?.snapshot_at ? `${supportRequestOptionalTime(source.snapshot_at)} snapshot` : 'Snapshot age unavailable')}</span>
+            <span>${escapeHtml(sourceHeartbeatStatusLabel(source))}</span>
+            ${hubIds ? `<span>${escapeHtml(hubIds)}</span>` : ''}
+        </div>
+    `;
+};
+
+const renderRelatedSourceRequests = async (source, listHost) => {
+    if (!listHost) return;
+    const sourceId = currentSitrepSourceId(source);
+
+    sourceDetailVirtualLists.get(sourceId)?.destroy?.();
+    sourceDetailVirtualLists.delete(sourceId);
+    listHost.innerHTML = supportRequestListLoadingMarkup();
+    mountLoadingSkeletons(listHost);
+
+    try {
+        await loadSupportRequests();
+        const requests = relatedSupportRequestsForSource(source);
+        listHost.innerHTML = '';
+        listHost.onclick = (event) => {
+            const card = event.target?.closest?.('[data-support-request-id]');
+            if (!card || !listHost.contains(card)) return;
+            openSourceStackRequestDetail(source, card.dataset.supportRequestId);
+        };
+        listHost.onkeydown = (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            const card = event.target?.closest?.('[data-support-request-id]');
+            if (!card || !listHost.contains(card)) return;
+            event.preventDefault();
+            openSourceStackRequestDetail(source, card.dataset.supportRequestId);
+        };
+        const virtualList = helpers.createVirtualList(listHost, requests, {
+            ariaLabel: `Support requests related to ${source?.name || 'source hub'}`,
+            chrome: false,
+            emptyText: 'No explicit support requests are linked to this source yet.',
+            height: Math.max(220, listHost.clientHeight || 360),
+            rowHeight: 138,
+            overscan: 4,
+            renderItem: (request) => supportRequestCard(request, {
+                onClick: () => openSourceStackRequestDetail(source, request?.id),
+            }),
+        });
+        sourceDetailVirtualLists.set(sourceId, virtualList);
+    } catch (error) {
+        listHost.innerHTML = supportRequestEmptyState('Unable to load related requests', firstError(error, 'Unable to load support requests.'));
+    }
+};
+
+const refreshActiveSourceDetailRequests = () => {
+    if (!activeSourceDetailId) return;
+    const source = (state.currentSitrep.sources || []).find((item) => currentSitrepSourceId(item) === activeSourceDetailId);
+    const listHost = document.querySelector('[data-source-detail-request-list]');
+    if (source && listHost) {
+        renderRelatedSourceRequests(source, listHost);
+    }
+};
+
+const sourceDetailPage = (source) => {
+    const sourceId = currentSitrepSourceId(source);
+
+    return {
+        id: `source-${sourceId || 'detail'}`,
+        title: source?.name || 'Source detail',
+        className: 'support-source-stack-page is-source-detail',
+        mount(body, { api: stackApi }) {
+            body.innerHTML = `
+                <div class="support-source-detail-page">
+                    <header class="support-source-detail-header">
+                        ${sourceStackBackButton('Sources')}
+                        <div>
+                            <p class="ui-eyebrow">Source Detail</p>
+                            <h3>${escapeHtml(source?.name || 'Source hub')}</h3>
+                            <p>${escapeHtml(source?.subtitle || source?.domain || source?.code || 'No deployment label')}</p>
+                            ${sourceDetailMetaMarkup(source)}
+                        </div>
+                    </header>
+                    <div class="support-source-detail-content">
+                        <section class="support-source-detail-section">
+                            <div class="support-source-detail-section-head">
+                                <p class="ui-eyebrow">Support Requests</p>
+                                <span>Explicit requests matched by hub, relay hub, or source name.</span>
+                            </div>
+                            <div class="support-source-detail-request-list" data-source-detail-request-list="${escapeHtml(sourceId)}"></div>
+                        </section>
+                        <section class="support-source-detail-section is-context">
+                            <div class="support-source-detail-section-head">
+                                <p class="ui-eyebrow">Source Context</p>
+                                <span>SITREP visibility only; deployment requires an explicit request.</span>
+                            </div>
+                            <div class="support-source-detail-context">
+                                ${supportRequestDetailRow('Hub ID', source?.id)}
+                                ${supportRequestDetailRow('Relay hub ID', source?.relay_hub_id)}
+                                ${supportRequestDetailRow('Domain', source?.domain)}
+                                ${supportRequestDetailRow('Status', source?.status)}
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            `;
+            body.querySelector('[data-source-stack-back]')?.addEventListener('click', () => stackApi.pop({ transition: 'none' }));
+            renderRelatedSourceRequests(source, body.querySelector('[data-source-detail-request-list]'));
+        },
+        onShow() {
+            activeSourceDetailId = sourceId;
+            if (sourceId) {
+                dashboardMap?.fitSourceBoundary?.(sourceId, { duration: 650 });
+                dashboardMap?.highlightSourceBoundary?.(sourceId);
+            }
+        },
+        onHide() {
+            dashboardMap?.clearSourceBoundaryHighlight?.();
+        },
+        onDestroy() {
+            sourceDetailVirtualLists.get(sourceId)?.destroy?.();
+            sourceDetailVirtualLists.delete(sourceId);
+            if (activeSourceDetailId === sourceId) {
+                activeSourceDetailId = null;
+            }
+        },
+    };
+};
+
+const renderSourceStackRequestDetail = (detailHost, request, source) => {
+    renderSupportRequestDetailContent(detailHost, request, {
+        emptyTitle: 'Select a request',
+        emptyMessage: 'Request details will appear here.',
+        onUpdated(updatedRequest) {
+            renderSourceStackRequestDetail(detailHost, updatedRequest, source);
+            refreshActiveSourceDetailRequests();
+        },
+    });
+};
+
+const openSourceStackRequestDetail = (source, requestId) => {
+    if (!sourcesNavigationStack) return;
+    const id = String(requestId || '');
+    if (!id) return;
+    const cachedRequest = supportRequestsData.find((item) => String(item?.id) === id);
+    const sourceId = currentSitrepSourceId(source);
+    const pageId = `source-${sourceId || 'detail'}-request-${id}`;
+
+    if (sourcesNavigationStack.getState?.().currentPage?.id === pageId) {
+        return;
+    }
+
+    sourcesNavigationStack.push({
+        id: pageId,
+        title: cachedRequest?.requested_assistance || 'Support request detail',
+        className: 'support-source-stack-page is-request-detail',
+        mount(body, { api: stackApi }) {
+            const backToSource = () => {
+                const sourcePageId = `source-${sourceId || 'detail'}`;
+                if (!stackApi.goTo(sourcePageId, { transition: 'none' })) {
+                    stackApi.replace(sourceDetailPage(source), { transition: 'none' });
+                }
+            };
+
+            body.innerHTML = `
+                <div class="support-source-request-page">
+                    <header class="support-source-detail-header">
+                        ${sourceStackBackButton(source?.name || 'Source Detail')}
+                        <div>
+                            <p class="ui-eyebrow">Support Request</p>
+                            <h3>${escapeHtml(cachedRequest?.requested_assistance || 'Support request')}</h3>
+                            <p>${escapeHtml(source?.name || supportRequestSourceLabel(cachedRequest) || 'Source hub')}</p>
+                        </div>
+                    </header>
+                    <section class="support-source-request-detail" data-source-stack-request-detail>
+                        ${supportRequestDetailLoadingMarkup()}
+                    </section>
+                </div>
+            `;
+            body.querySelector('[data-source-stack-back]')?.addEventListener('click', backToSource);
+            const detailHost = body.querySelector('[data-source-stack-request-detail]');
+            mountLoadingSkeletons(detailHost);
+
+            (async () => {
+                try {
+                    const shouldAcknowledgeReview = String(cachedRequest?.status || '').toLowerCase() === 'requested';
+                    const data = shouldAcknowledgeReview
+                        ? await api(`/api/support-requests/${encodeURIComponent(id)}/receive`, {
+                            method: 'POST',
+                            body: '{}',
+                        })
+                        : await api(`/api/support-requests/${encodeURIComponent(id)}`);
+
+                    if (data.request) {
+                        upsertCachedSupportRequest(data.request);
+                        renderSourceStackRequestDetail(detailHost, data.request, source);
+                    }
+                } catch (error) {
+                    detailHost.innerHTML = supportRequestEmptyState('Unable to load request details', firstError(error, 'Unable to load request details.'));
+                }
+            })();
+        },
+    }, { transition: 'none' });
+};
+
+const openSourceDetail = (source) => {
+    if (!sourcesNavigationStack) return;
+
+    const sourceId = currentSitrepSourceId(source);
+    if (sourceId) {
+        dashboardMap?.fitSourceBoundary?.(sourceId, { duration: 650 });
+        dashboardMap?.highlightSourceBoundary?.(sourceId);
+    }
+
+    sourcesNavigationStack.push(sourceDetailPage(source), { transition: 'none' });
+};
+
+const sourcesListPage = () => ({
+    id: 'sources-list',
+    title: 'Sources',
+    className: 'support-source-stack-page is-sources-list',
+    mount(body) {
+        body.innerHTML = sourcesPanelMarkup();
+        bindSourcesToolbar(body);
+        mountSourcesList(body.querySelector('[data-sitrep-sources-list]'), filteredSources());
+    },
+});
+
+const mountSourcesNavigationStack = (host) => {
+    const stackHost = host.querySelector('[data-sources-stack-host]');
+    if (!stackHost) return;
+
+    sourcesNavigationStack = helpers.createNavigationStack(stackHost, {
+        ariaLabel: 'Sources drill-down navigation',
+        className: 'support-sources-navigation-stack',
+        transition: 'none',
+        initialPages: [sourcesListPage()],
+        onChange({ currentPage }) {
+            if (currentPage?.id === 'sources-list') {
+                refreshSourcesList();
+            }
+        },
+    });
 };
 
 const mountSourcesList = (container, sources) => {
@@ -1136,12 +1481,8 @@ const renderSourcesRail = () => {
     const host = document.querySelector('[data-dashboard-sources-host]');
     if (!host) return;
 
-    sourceVirtualList?.destroy?.();
-    sourceVirtualList = null;
-    sourceAlertSelect?.destroy?.();
-    sourceAlertSelect = null;
-
     if (state.currentSitrep.loading) {
+        destroySourcesStack();
         host.innerHTML = `
             <div class="support-sources-panel">
                 <div class="support-sources-loading" aria-label="Loading source hubs" aria-busy="true">
@@ -1168,6 +1509,7 @@ const renderSourcesRail = () => {
     }
 
     if (!state.currentSitrep.available) {
+        destroySourcesStack();
         host.innerHTML = `
             <div class="support-sources-panel">
                 <div class="support-sources-rail-placeholder">
@@ -1179,9 +1521,16 @@ const renderSourcesRail = () => {
         return;
     }
 
-    host.innerHTML = sourcesPanelMarkup();
-    bindSourcesToolbar(host);
-    mountSourcesList(host.querySelector('[data-sitrep-sources-list]'), filteredSources());
+    if (!sourcesNavigationStack) {
+        host.innerHTML = '<div class="support-sources-stack-host" data-sources-stack-host></div>';
+        mountSourcesNavigationStack(host);
+        return;
+    }
+
+    if (sourcesNavigationStack.getState?.().currentPage?.id === 'sources-list') {
+        refreshSourcesList();
+    }
+    refreshActiveSourceDetailRequests();
 };
 
 const renderCurrentSitrepPane = () => {
@@ -1964,9 +2313,13 @@ const supportRequestStatusClass = (status) => {
     return '';
 };
 
-const supportRequestCard = (request) => {
+const supportRequestCard = (request, options = {}) => {
     const card = document.createElement('article');
-    card.className = `support-request-card ${supportRequestStatusClass(request?.status)}${String(request?.id) === String(selectedSupportRequestId) ? ' is-selected' : ''}`.trim();
+    const selected = options.selected ?? (String(request?.id) === String(selectedSupportRequestId));
+    const onClick = typeof options.onClick === 'function'
+        ? options.onClick
+        : () => openSupportRequestDetail(request?.id);
+    card.className = `support-request-card ${supportRequestStatusClass(request?.status)}${selected ? ' is-selected' : ''}`.trim();
     card.dataset.supportRequestId = String(request?.id || '');
     card.tabIndex = 0;
 
@@ -1993,13 +2346,17 @@ const supportRequestCard = (request) => {
             ${supportRequestJustificationChips(request, 2)}
         </div>
     `;
-    card.addEventListener('click', () => openSupportRequestDetail(request?.id));
-    card.addEventListener('keydown', (event) => {
+    card.onclick = (event) => {
+        event.stopPropagation();
+        onClick(request);
+    };
+    card.onkeydown = (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
-            openSupportRequestDetail(request?.id);
+            event.stopPropagation();
+            onClick(request);
         }
-    });
+    };
 
     return card;
 };
@@ -2302,15 +2659,7 @@ const supportRequestDetailLoadingMarkup = () => `
     </div>
 `;
 
-const renderSupportRequestDetail = (request) => {
-    const detail = supportRequestsModal?.body?.querySelector?.('[data-support-request-detail]');
-    if (!detail) return;
-
-    if (!request) {
-        detail.innerHTML = supportRequestEmptyState('Select a request', 'Details, context, and lifecycle history will appear here.');
-        return;
-    }
-
+const supportRequestDetailMarkup = (request) => {
     const quantity = supportRequestQuantityLabel(request);
     const source = supportRequestSourceLabel(request);
     const capability = request.requested_capability ? titleCase(request.requested_capability) : '';
@@ -2330,7 +2679,7 @@ const renderSupportRequestDetail = (request) => {
         supportRequestContextBlock('Evidence context', request.evidence_row),
         supportRequestContextBlock('Incident refs', request.incident_refs),
     ].join('');
-    detail.innerHTML = `
+    return `
         <header class="support-request-detail-header">
             <div class="support-request-detail-kicker">
                 <span class="support-request-status ${supportRequestStatusClass(request.status)}">${escapeHtml(supportRequestStatusLabel(request.status))}</span>
@@ -2361,14 +2710,45 @@ const renderSupportRequestDetail = (request) => {
         ${supportRequestDetailSection('SITREP And Gap Context', contextMarkup || supportRequestEmptyState('No context attached'))}
         ${supportRequestDetailSection('Lifecycle History', supportRequestLifecycleMarkup(request), 'is-history')}
     `;
+};
+
+const renderSupportRequestDetailContent = (detail, request, options = {}) => {
+    if (!detail) return;
+
+    if (!request) {
+        detail.innerHTML = supportRequestEmptyState(
+            options.emptyTitle || 'Select a request',
+            options.emptyMessage || 'Details, context, and lifecycle history will appear here.',
+        );
+        return;
+    }
+
+    detail.innerHTML = supportRequestDetailMarkup(request);
     detail.querySelectorAll('[data-support-request-action]').forEach((button) => {
-        button.addEventListener('click', () => openSupportRequestAction(request, button.dataset.supportRequestAction));
+        button.addEventListener('click', () => openSupportRequestAction(request, button.dataset.supportRequestAction, options.onUpdated));
     });
 };
 
-const openSupportRequestAction = (request, action) => {
+const renderSupportRequestDetail = (request) => {
+    renderSupportRequestDetailContent(
+        supportRequestsModal?.body?.querySelector?.('[data-support-request-detail]'),
+        request,
+    );
+};
+
+const cachedSupportRequestById = (requestId) => supportRequestsData.find((item) => String(item?.id) === String(requestId || '')) || null;
+
+const openSupportRequestAction = (request, action, onUpdated = null) => {
     const config = supportRequestActionConfigs[action];
     if (!config || !request?.id || supportRequestActionBusy) return;
+
+    const renderUpdatedRequest = (nextRequest) => {
+        if (typeof onUpdated === 'function') {
+            onUpdated(nextRequest);
+            return;
+        }
+        renderSupportRequestDetail(nextRequest);
+    };
 
     const modal = helpers.createFormModal({
         title: config.title,
@@ -2380,7 +2760,7 @@ const openSupportRequestAction = (request, action) => {
         rows: config.rows || [],
         async onSubmit(values, ctx) {
             supportRequestActionBusy = true;
-            renderSupportRequestDetail({ ...request });
+            renderUpdatedRequest({ ...request });
 
             try {
                 const payload = Object.fromEntries(
@@ -2393,8 +2773,10 @@ const openSupportRequestAction = (request, action) => {
 
                 if (data.request) {
                     upsertCachedSupportRequest(data.request);
-                    if (isCurrentSupportRequestSelection(data.request.id)) {
-                        renderSupportRequestDetail(data.request);
+                    if (typeof onUpdated === 'function') {
+                        onUpdated(data.request);
+                    } else if (isCurrentSupportRequestSelection(data.request.id)) {
+                        renderUpdatedRequest(data.request);
                     }
                 }
 
@@ -2411,8 +2793,10 @@ const openSupportRequestAction = (request, action) => {
             } finally {
                 supportRequestActionBusy = false;
                 const selected = supportRequestsData.find((item) => isCurrentSupportRequestSelection(item?.id));
-                if (selected) {
-                    renderSupportRequestDetail(selected);
+                if (typeof onUpdated === 'function') {
+                    onUpdated(cachedSupportRequestById(request?.id) || request);
+                } else if (selected) {
+                    renderUpdatedRequest(selected);
                 }
             }
         },
