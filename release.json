@@ -1,11 +1,33 @@
 {
+  "schema_version": 1,
+  "app": "pbb-support",
   "name": "PBB Support System",
+  "display_name": "Support",
   "slug": "pbb-support",
   "version": "0.1.0",
+  "display_version": "v0-0.1.0",
+  "milestone": 0,
   "build": {
+    "version": "0.1.0",
     "id": "pbb-support-0.1.0-foundation",
     "git_commit": null,
-    "built_at": null
+    "built_at": null,
+    "builder": "pbb-support-bundle-builder"
+  },
+  "release_date": "2026-06-16",
+  "release_name": "Support Request And Landing Gateway Baseline",
+  "type": "laravel",
+  "requires": {
+    "os": ["windows", "linux"],
+    "php": ">=8.2",
+    "php_extensions": ["ctype", "curl", "dom", "fileinfo", "filter", "hash", "json", "mbstring", "openssl", "pdo", "pdo_mysql", "session", "tokenizer", "xml", "zip"],
+    "mysql": ">=8.0",
+    "node": "not-required-assets-built",
+    "composer": "not-required-vendor-bundled",
+    "apps": {
+      "pbb-relay": ">=1.1.0",
+      "pbb-mapserver": ">=1.0.0"
+    }
   },
   "runtime": {
     "type": "laravel",
@@ -15,6 +37,45 @@
   "relay": {
     "target_system": "sitrep.ingestor"
   },
+  "launcher": {
+    "logo_url": "https://support.pbb.ph/assets/launcher/app-icon.png",
+    "logo_alt": "PBB Support System",
+    "logo_kind": "mark",
+    "icon": "pbb-support"
+  },
+  "landing": {
+    "id": "pbb-support",
+    "name": "PBB Support System",
+    "enabled": true,
+    "local_url": "https://support.pbb.ph",
+    "launch_url": "https://support.pbb.ph/dashboard",
+    "health_url": "https://support.pbb.ph/api/bootstrap",
+    "audience": ["support", "admin"],
+    "launcher": {
+      "visible": true,
+      "sort": 30,
+      "primary_launch_url": "https://support.pbb.ph/dashboard",
+      "audience": ["support", "admin"],
+      "logo_url": "https://support.pbb.ph/assets/launcher/app-icon.png",
+      "logo_kind": "mark",
+      "icon": "pbb-support"
+    },
+    "surfaces": {
+      "dashboard": "https://support.pbb.ph/dashboard"
+    },
+    "public_gateway": {
+      "enabled": true,
+      "path_prefix": "/support",
+      "allowed_path_prefixes": [
+        "/api/relay/support-requests",
+        "/api/relay/support-request-lifecycle"
+      ],
+      "m2m_only": true,
+      "exposure": "machine",
+      "owner": "pbb-support",
+      "reason": "Support request and lifecycle machine API for hub-to-hub support workflows"
+    }
+  },
   "policies": {
     "consolidation_cadence_minutes": 15,
     "latest_valid_sitrep_per_source_hub_wins": true,
@@ -22,16 +83,20 @@
   },
   "repository": {
     "type": "github",
-    "owner": null,
-    "repo": null,
-    "url": null
+    "owner": "jybanez",
+    "repo": "support.pbb.ph",
+    "url": "https://github.com/jybanez/support.pbb.ph"
   },
   "updates": {
     "source": "github-releases",
     "channel": "testing"
   },
   "update": {
-    "compatibility": "initial-foundation",
+    "contract_version": 1,
+    "channel": "testing",
+    "immutable_release": false,
+    "from_versions": ["0.1.0"],
+    "compatibility": "same-version-rebuild",
     "requires_database_migration": true,
     "database_migration": {
       "policy": "additive",
@@ -43,5 +108,67 @@
     "requires_data_prep_rerun": false,
     "requires_service_restart": true,
     "rollback_supported": false
-  }
+  },
+  "installer": {
+    "interactive": "installer/index.php",
+    "unattended": "installer/install-run.php",
+    "status": "installer/status.php",
+    "schema": "installer/schema/install.schema.json",
+    "database": {
+      "fresh_install_strategy": "baseline_schema",
+      "baseline_schema": {
+        "path": "database/schema/mysql-schema.sql",
+        "engine": "mysql",
+        "generated_at": null,
+        "source": "current-release-schema",
+        "sha256": null
+      },
+      "upgrade_strategy": "versioned_migrations"
+    }
+  },
+  "data_prep": {
+    "version": 1,
+    "capabilities": {
+      "prepare_data": false,
+      "apply_settings": true,
+      "verify": true
+    },
+    "tools": {
+      "apply_settings": {
+        "path": "tools/data-prep/apply-settings.php",
+        "config_section": "support.data_prep.apply_settings",
+        "timeout_seconds": 30
+      },
+      "verify": {
+        "path": "tools/data-prep/verify.php",
+        "config_section": "support.data_prep.verify",
+        "timeout_seconds": 30
+      }
+    }
+  },
+  "health": {
+    "status": "/api/bootstrap"
+  },
+  "runtime_services": [
+    {
+      "id": "pbb-support-worker",
+      "name": "PBB Support Queue Worker",
+      "type": "background_process",
+      "required": true,
+      "required_for_smoke": false,
+      "manager": "kit",
+      "working_directory": "{app.install_path}",
+      "command": "{runtime.php_binary}",
+      "args": ["artisan", "queue:work", "--queue=default", "--sleep=3", "--tries=3"],
+      "health_check": {
+        "type": "process",
+        "command_contains": "artisan queue:work"
+      },
+      "logs": {
+        "stdout": "storage/logs/pbb-support-worker.out.log",
+        "stderr": "storage/logs/pbb-support-worker.err.log"
+      },
+      "notes": "Processes queued outbound support request lifecycle deliveries."
+    }
+  ]
 }

@@ -2,6 +2,7 @@ import { createElement, clearNode } from "./ui.dom.js";
 
 const DEFAULT_OPTIONS = {
   className: "",
+  chrome: true,
   ariaLabel: "Navigation stack",
   initialPages: [],
   transition: "slide",
@@ -189,6 +190,7 @@ export function createNavigationStack(container, options = {}) {
       pages: pages.map((entry) => entry.config),
       depth: pages.length,
       transition: currentOptions.transition,
+      chrome: currentOptions.chrome,
     };
   }
 
@@ -390,6 +392,7 @@ export function createNavigationStack(container, options = {}) {
     return [
       "ui-navigation-stack",
       `ui-navigation-stack--${currentOptions.transition}`,
+      currentOptions.chrome === false ? "is-chrome-less" : "",
       currentOptions.className,
     ].filter(Boolean).join(" ");
   }
@@ -408,6 +411,7 @@ function normalizeOptions(options = {}) {
     ...DEFAULT_OPTIONS,
     ...(options || {}),
     className: String(options.className || "").trim(),
+    chrome: options.chrome !== false,
     ariaLabel: String(options.ariaLabel || DEFAULT_OPTIONS.ariaLabel),
     initialPages: normalizePages(options.initialPages),
     transition: normalizeTransition(options.transition),

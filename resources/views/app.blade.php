@@ -1,5 +1,6 @@
 @php
     $appName = config('app.name', 'PBB Support System');
+    $helperUiBundleRev = '0.21.89';
 @endphp
 <!doctype html>
 <html lang="en">
@@ -9,9 +10,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $appName }}</title>
     <link rel="stylesheet"
-          href="/vendor/helpers.pbb.ph/dist/helpers.ui.bundle.min.css"
+          href="/vendor/helpers.pbb.ph/dist/helpers.ui.bundle.min.css?v={{ $helperUiBundleRev }}"
           data-ui-bundle="ui"
-          data-ui-loader-href="{{ url('/vendor/helpers.pbb.ph/dist/helpers.ui.bundle.min.css') }}">
+          data-ui-loader-href="{{ url('/vendor/helpers.pbb.ph/dist/helpers.ui.bundle.min.css') }}?v={{ $helperUiBundleRev }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body data-theme="dark">
