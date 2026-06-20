@@ -99,6 +99,7 @@ const state = {
         sourceHeartbeatsLoading: false,
         activeSection: 'summary',
         mapPoints: [],
+        mediaRefs: [],
     },
 };
 
@@ -816,6 +817,37 @@ const sourceMatchesRequest = (source, request) => {
 
 const relatedSupportRequestsForSource = (source) => supportRequestsData.filter((request) => sourceMatchesRequest(source, request));
 
+const sourceMatchesHubRecord = (source, record = {}) => {
+    const sourceIds = new Set(sourceHubKeys(source));
+    const sourceRelayIds = new Set(sourceRelayHubKeys(source));
+    const sourceNames = new Set(sourceNameKeys(source));
+    const recordHubId = normalizeMatchKey(record?.source_hub_id || record?.hub_id);
+    const recordRelayHubId = normalizeMatchKey(record?.source_relay_hub_id || record?.relay_hub_id);
+    const recordSourceName = normalizeMatchKey(record?.source_hub_name || record?.hub_name || record?.source_name);
+
+    if (recordHubId && sourceIds.has(recordHubId)) return true;
+    if (recordRelayHubId && sourceRelayIds.has(recordRelayHubId)) return true;
+
+    return !!(recordSourceName && sourceNames.has(recordSourceName));
+};
+
+const relatedIncidentReportsForSource = (source) => (state.currentSitrep.mapPoints || [])
+    .filter((incident) => sourceMatchesHubRecord(source, incident));
+
+const relatedMediaForSource = (source) => (state.currentSitrep.mediaRefs || [])
+    .filter((media) => sourceMatchesHubRecord(source, media));
+
+const incidentMediaRefs = (source, incident) => {
+    const incidentId = normalizeMatchKey(String(incident?.incident_id || incident?.id || '').replace(/^#/, ''));
+    if (!incidentId) return [];
+
+    return relatedMediaForSource(source).filter((media) => {
+        const mediaIncidentId = normalizeMatchKey(media?.incident_id);
+
+        return mediaIncidentId === incidentId;
+    });
+};
+
 const sourceHeartbeatKeys = (source = {}) => [
     source?.id,
     source?.relay_hub_id,
@@ -1167,12 +1199,104 @@ const sourceDetailMetaMarkup = (source) => {
     `;
 };
 
-const renderRelatedSourceRequests = async (source, listHost) => {
-    if (!listHost) return;
+const sourceDetailListKey = (source, name) => `${currentSitrepSourceId(source) || 'source'}:${name}`;
+
+const destroySourceDetailLists = (source) => {
     const sourceId = currentSitrepSourceId(source);
 
-    sourceDetailVirtualLists.get(sourceId)?.destroy?.();
-    sourceDetailVirtualLists.delete(sourceId);
+    Array.from(sourceDetailVirtualLists.keys())
+        .filter((key) => key.startsWith(`${sourceId}:`))
+        .forEach((key) => {
+            sourceDetailVirtualLists.get(key)?.destroy?.();
+            sourceDetailVirtualLists.delete(key);
+        });
+};
+
+const incidentReportNumber = (incident) => {
+    const raw = String(incident?.display_id || incident?.incident_ref || incident?.incident_id || incident?.id || '').trim().replace(/^#/, '');
+    if (!raw) return '#----';
+
+    return `#${/^\d+$/.test(raw) ? raw.padStart(4, '0') : raw}`;
+};
+
+const incidentReportTypes = (incident) => {
+    const values = [
+        incident?.incident_types,
+        incident?.incident_type,
+        incident?.type,
+        incident?.classification,
+        incident?.status,
+    ].flatMap((value) => Array.isArray(value) ? value : [value])
+        .map((value) => String(value || '').trim())
+        .filter(Boolean);
+
+    return values.join(', ') || 'SITREP point';
+};
+
+const mediaTitle = (media) => {
+    const filename = String(media?.original_filename || '').trim();
+    if (filename) return filename;
+
+    const kind = String(media?.kind || 'media').replace(/_/g, ' ');
+    const id = media?.media_id || media?.attachment_id || media?.id || '';
+
+    return `${titleCase(kind)}${id ? ` #${id}` : ''}`;
+};
+
+const mediaSubtitle = (media) => {
+    const parts = [
+        media?.mime_type,
+        media?.incident_id ? `Incident #${media.incident_id}` : '',
+    ].filter(Boolean);
+
+    return parts.join(' - ') || 'SITREP media evidence';
+};
+
+const mediaKindLabel = (media) => titleCase(String(media?.kind || 'media').replace(/_/g, ' '));
+
+const sourceStackIncidentReportCard = (source, incident) => {
+    const card = document.createElement('article');
+    const mediaCount = incidentMediaRefs(source, incident).length;
+    card.className = 'support-source-stack-list-card support-source-stack-incident-card';
+    card.innerHTML = `
+        <strong>${escapeHtml(incidentReportNumber(incident))} <span aria-hidden="true">|</span> ${escapeHtml(incidentReportTypes(incident))}</strong>
+        <span>${escapeHtml(mediaCount ? `${mediaCount} media item${mediaCount === 1 ? '' : 's'}` : 'No linked media')}</span>
+    `;
+
+    return card;
+};
+
+const sourceStackMediaCard = (media, options = {}) => {
+    const card = document.createElement('article');
+    card.className = 'support-source-stack-list-card support-source-stack-media-card';
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.dataset.mediaPath = media?.local_url || '';
+
+    if (options.onClick) {
+        card.addEventListener('click', options.onClick);
+        card.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            options.onClick(event);
+        });
+    }
+
+    card.innerHTML = `
+        <strong>${escapeHtml(mediaTitle(media))}</strong>
+        <span>${escapeHtml(mediaSubtitle(media))}</span>
+        <small>${escapeHtml(mediaKindLabel(media))}</small>
+    `;
+
+    return card;
+};
+
+const renderRelatedSourceRequests = async (source, listHost) => {
+    if (!listHost) return;
+    const listKey = sourceDetailListKey(source, 'requests');
+
+    sourceDetailVirtualLists.get(listKey)?.destroy?.();
+    sourceDetailVirtualLists.delete(listKey);
     listHost.innerHTML = supportRequestListLoadingMarkup();
     mountLoadingSkeletons(listHost);
 
@@ -1203,18 +1327,73 @@ const renderRelatedSourceRequests = async (source, listHost) => {
                 onClick: () => openSourceStackRequestDetail(source, request?.id),
             }),
         });
-        sourceDetailVirtualLists.set(sourceId, virtualList);
+        sourceDetailVirtualLists.set(listKey, virtualList);
     } catch (error) {
         listHost.innerHTML = supportRequestEmptyState('Unable to load related requests', firstError(error, 'Unable to load support requests.'));
     }
 };
 
+const renderRelatedSourceIncidents = (source, listHost) => {
+    if (!listHost) return;
+    const listKey = sourceDetailListKey(source, 'incidents');
+
+    sourceDetailVirtualLists.get(listKey)?.destroy?.();
+    sourceDetailVirtualLists.delete(listKey);
+    listHost.innerHTML = '';
+
+    const incidents = relatedIncidentReportsForSource(source);
+    const virtualList = helpers.createVirtualList(listHost, incidents, {
+        ariaLabel: `Incident reports related to ${source?.name || 'source hub'}`,
+        chrome: false,
+        emptyText: 'No incident reports are linked to this source yet.',
+        height: Math.max(220, listHost.clientHeight || 360),
+        rowHeight: 76,
+        overscan: 5,
+        renderItem: (incident) => sourceStackIncidentReportCard(source, incident),
+    });
+    sourceDetailVirtualLists.set(listKey, virtualList);
+};
+
+const renderRelatedSourceMedia = (source, listHost) => {
+    if (!listHost) return;
+    const listKey = sourceDetailListKey(source, 'media');
+
+    sourceDetailVirtualLists.get(listKey)?.destroy?.();
+    sourceDetailVirtualLists.delete(listKey);
+    listHost.innerHTML = '';
+
+    const mediaRefs = relatedMediaForSource(source);
+    const virtualList = helpers.createVirtualList(listHost, mediaRefs, {
+        ariaLabel: `SITREP media related to ${source?.name || 'source hub'}`,
+        chrome: false,
+        emptyText: 'No media refs are linked to this source yet.',
+        height: Math.max(220, listHost.clientHeight || 360),
+        rowHeight: 86,
+        overscan: 5,
+        renderItem: (media) => sourceStackMediaCard(media, {
+            onClick: () => openSourceStackMediaDetail(source, media),
+        }),
+    });
+    sourceDetailVirtualLists.set(listKey, virtualList);
+};
+
 const refreshActiveSourceDetailRequests = () => {
     if (!activeSourceDetailId) return;
     const source = (state.currentSitrep.sources || []).find((item) => currentSitrepSourceId(item) === activeSourceDetailId);
-    const listHost = document.querySelector('[data-source-detail-request-list]');
-    if (source && listHost) {
-        renderRelatedSourceRequests(source, listHost);
+    if (!source) return;
+
+    const requestList = document.querySelector('[data-source-detail-request-list]');
+    const incidentList = document.querySelector('[data-source-detail-incident-list]');
+    const mediaList = document.querySelector('[data-source-detail-media-list]');
+
+    if (requestList) {
+        renderRelatedSourceRequests(source, requestList);
+    }
+    if (incidentList) {
+        renderRelatedSourceIncidents(source, incidentList);
+    }
+    if (mediaList) {
+        renderRelatedSourceMedia(source, mediaList);
     }
 };
 
@@ -1238,30 +1417,56 @@ const sourceDetailPage = (source) => {
                         </div>
                     </header>
                     <div class="support-source-detail-content">
-                        <section class="support-source-detail-section">
-                            <div class="support-source-detail-section-head">
-                                <p class="ui-eyebrow">Support Requests</p>
-                                <span>Explicit requests matched by hub, relay hub, or source name.</span>
-                            </div>
-                            <div class="support-source-detail-request-list" data-source-detail-request-list="${escapeHtml(sourceId)}"></div>
-                        </section>
-                        <section class="support-source-detail-section is-context">
-                            <div class="support-source-detail-section-head">
-                                <p class="ui-eyebrow">Source Context</p>
-                                <span>SITREP visibility only; deployment requires an explicit request.</span>
-                            </div>
-                            <div class="support-source-detail-context">
-                                ${supportRequestDetailRow('Hub ID', source?.id)}
-                                ${supportRequestDetailRow('Relay hub ID', source?.relay_hub_id)}
-                                ${supportRequestDetailRow('Domain', source?.domain)}
-                                ${supportRequestDetailRow('Status', source?.status)}
-                            </div>
-                        </section>
+                        <div class="support-source-detail-tabs" role="tablist" aria-label="Source detail views">
+                            <button type="button" class="support-source-detail-tab is-active" role="tab" aria-selected="true" data-source-detail-tab="requests">Support Requests</button>
+                            <button type="button" class="support-source-detail-tab" role="tab" aria-selected="false" data-source-detail-tab="incidents">Incident Reports</button>
+                            <button type="button" class="support-source-detail-tab" role="tab" aria-selected="false" data-source-detail-tab="media">Media</button>
+                        </div>
+                        <div class="support-source-detail-tabpanels">
+                            <section class="support-source-detail-tabpanel is-active" role="tabpanel" data-source-detail-panel="requests">
+                                <div class="support-source-detail-request-list" data-source-detail-request-list="${escapeHtml(sourceId)}"></div>
+                            </section>
+                            <section class="support-source-detail-tabpanel" role="tabpanel" data-source-detail-panel="incidents" hidden>
+                                <div class="support-source-detail-request-list" data-source-detail-incident-list="${escapeHtml(sourceId)}"></div>
+                            </section>
+                            <section class="support-source-detail-tabpanel" role="tabpanel" data-source-detail-panel="media" hidden>
+                                <div class="support-source-detail-request-list" data-source-detail-media-list="${escapeHtml(sourceId)}"></div>
+                            </section>
+                        </div>
                     </div>
                 </div>
             `;
             body.querySelector('[data-source-stack-back]')?.addEventListener('click', () => stackApi.pop({ transition: 'none' }));
+            const setActiveTab = (tabName) => {
+                body.querySelectorAll('[data-source-detail-tab]').forEach((tab) => {
+                    const active = tab.dataset.sourceDetailTab === tabName;
+                    tab.classList.toggle('is-active', active);
+                    tab.setAttribute('aria-selected', active ? 'true' : 'false');
+                });
+                body.querySelectorAll('[data-source-detail-panel]').forEach((panel) => {
+                    const active = panel.dataset.sourceDetailPanel === tabName;
+                    panel.classList.toggle('is-active', active);
+                    panel.hidden = !active;
+                });
+            };
+
+            body.querySelectorAll('[data-source-detail-tab]').forEach((tab) => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.dataset.sourceDetailTab || 'requests';
+                    setActiveTab(tabName);
+                    if (tabName === 'requests') {
+                        renderRelatedSourceRequests(source, body.querySelector('[data-source-detail-request-list]'));
+                    } else if (tabName === 'incidents') {
+                        renderRelatedSourceIncidents(source, body.querySelector('[data-source-detail-incident-list]'));
+                    } else if (tabName === 'media') {
+                        renderRelatedSourceMedia(source, body.querySelector('[data-source-detail-media-list]'));
+                    }
+                });
+            });
+
             renderRelatedSourceRequests(source, body.querySelector('[data-source-detail-request-list]'));
+            renderRelatedSourceIncidents(source, body.querySelector('[data-source-detail-incident-list]'));
+            renderRelatedSourceMedia(source, body.querySelector('[data-source-detail-media-list]'));
         },
         onShow() {
             activeSourceDetailId = sourceId;
@@ -1274,8 +1479,7 @@ const sourceDetailPage = (source) => {
             dashboardMap?.clearSourceBoundaryHighlight?.();
         },
         onDestroy() {
-            sourceDetailVirtualLists.get(sourceId)?.destroy?.();
-            sourceDetailVirtualLists.delete(sourceId);
+            destroySourceDetailLists(source);
             if (activeSourceDetailId === sourceId) {
                 activeSourceDetailId = null;
             }
@@ -1355,6 +1559,85 @@ const openSourceStackRequestDetail = (source, requestId) => {
                     detailHost.innerHTML = supportRequestEmptyState('Unable to load request details', firstError(error, 'Unable to load request details.'));
                 }
             })();
+        },
+    }, { transition: 'none' });
+};
+
+const mediaPreviewMarkup = (media) => {
+    const url = media?.local_url || '';
+    const mime = String(media?.mime_type || '').toLowerCase();
+
+    if (!url) {
+        return '<div class="support-source-media-preview-empty">Media URL unavailable</div>';
+    }
+
+    if (mime.startsWith('image/')) {
+        return `<img src="${escapeHtml(url)}" alt="${escapeHtml(mediaTitle(media))}" loading="lazy">`;
+    }
+
+    if (mime.startsWith('video/')) {
+        return `<video src="${escapeHtml(url)}" controls preload="metadata"></video>`;
+    }
+
+    if (mime.startsWith('audio/')) {
+        return `<audio src="${escapeHtml(url)}" controls preload="metadata"></audio>`;
+    }
+
+    return `
+        <div class="support-source-media-preview-empty">
+            <p>${escapeHtml(mediaKindLabel(media))}</p>
+            <a href="${escapeHtml(url)}" target="_blank" rel="noopener">Open media</a>
+        </div>
+    `;
+};
+
+const openSourceStackMediaDetail = (source, media) => {
+    if (!sourcesNavigationStack || !media?.local_url) return;
+
+    const sourceId = currentSitrepSourceId(source);
+    const pageId = `source-${sourceId || 'detail'}-media-${btoa(media.local_url).replace(/=+$/g, '')}`;
+
+    if (sourcesNavigationStack.getState?.().currentPage?.id === pageId) {
+        return;
+    }
+
+    sourcesNavigationStack.push({
+        id: pageId,
+        title: mediaTitle(media),
+        className: 'support-source-stack-page is-media-detail',
+        mount(body, { api: stackApi }) {
+            const backToSource = () => {
+                const sourcePageId = `source-${sourceId || 'detail'}`;
+                if (!stackApi.goTo(sourcePageId, { transition: 'none' })) {
+                    stackApi.replace(sourceDetailPage(source), { transition: 'none' });
+                }
+            };
+
+            body.innerHTML = `
+                <div class="support-source-media-page">
+                    <header class="support-source-detail-header">
+                        ${sourceStackBackButton(source?.name || 'Source Detail')}
+                        <div>
+                            <p class="ui-eyebrow">SITREP Media</p>
+                            <h3>${escapeHtml(mediaTitle(media))}</h3>
+                            <p>${escapeHtml(source?.name || 'Source hub')}</p>
+                        </div>
+                    </header>
+                    <section class="support-source-media-detail">
+                        <div class="support-source-media-preview">
+                            ${mediaPreviewMarkup(media)}
+                        </div>
+                        <div class="support-source-detail-context">
+                            ${supportRequestDetailRow('Kind', mediaKindLabel(media))}
+                            ${supportRequestDetailRow('Incident', media?.incident_id ? `#${media.incident_id}` : null)}
+                            ${supportRequestDetailRow('Source hub', media?.source_hub_id)}
+                            ${supportRequestDetailRow('MIME type', media?.mime_type)}
+                            ${supportRequestDetailRow('Local URL', media?.local_url)}
+                        </div>
+                    </section>
+                </div>
+            `;
+            body.querySelector('[data-source-stack-back]')?.addEventListener('click', backToSource);
         },
     }, { transition: 'none' });
 };
@@ -1676,6 +1959,7 @@ const loadCurrentSitrep = async () => {
             sourceHeartbeatsLoading: true,
             activeSection: state.currentSitrep.activeSection || 'summary',
             mapPoints: Array.isArray(data.map_points) ? data.map_points : [],
+            mediaRefs: Array.isArray(data.media_refs) ? data.media_refs : [],
         };
         dashboardMap?.setIncidents?.(state.currentSitrep.mapPoints);
         await Promise.all([
@@ -1717,6 +2001,7 @@ const loadCurrentSitrep = async () => {
             sourceHeartbeatsLoading: false,
             activeSection: state.currentSitrep.activeSection || 'summary',
             mapPoints: [],
+            mediaRefs: [],
         };
         dashboardMap?.setIncidents?.([]);
         dashboardMap?.setContextBoundary?.(null);
