@@ -10,9 +10,11 @@
 /.nova
 /.playwright-cli
 /.phpunit.cache
+/.codex/secrets/
 /.vscode
 /.zed
 /auth.json
+/pbb-chat-token.local.json
 /node_modules
 /output/playwright
 /public/build
