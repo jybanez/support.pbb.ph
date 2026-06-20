@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\ConsolidatedSitrep;
 use App\Models\User;
+use App\Support\Settings\SupportSettings;
+use App\Support\Sitreps\CurrentSitrepMediaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -27,6 +29,49 @@ class SitrepMediaAccessTest extends TestCase
         $this->getJson('/api/sitreps/current')
             ->assertOk()
             ->assertJsonPath('data.media_refs.0.local_url', '/media/13/593/incident_media/citizen_photo/501');
+    }
+
+    public function test_media_refs_can_span_multiple_source_hubs(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'admin']));
+        $this->createCurrentSitrep();
+
+        $this->getJson('/api/sitreps/current/media')
+            ->assertOk()
+            ->assertJsonCount(2, 'data.media_refs')
+            ->assertJsonPath('data.media_refs.0.source_hub_id', '13')
+            ->assertJsonPath('data.media_refs.0.local_url', '/media/13/593/incident_media/citizen_photo/501')
+            ->assertJsonPath('data.media_refs.1.source_hub_id', '14')
+            ->assertJsonPath('data.media_refs.1.local_url', '/media/14/605/message_attachment/70/701');
+    }
+
+    public function test_media_sdk_config_uses_relay_relationship_resolution(): void
+    {
+        app(SupportSettings::class)->update([
+            'relayToken' => 'relay-client-token',
+            'supportRequestUpdateSourceSystem' => 'support.dispatch',
+        ]);
+
+        $current = $this->createCurrentSitrep();
+        $config = app(CurrentSitrepMediaService::class)->sdkConfig($current->sitrep_payload);
+
+        $this->assertSame('relay-client-token', $config['relay_token'] ?? null);
+        $this->assertSame('support.dispatch', $config['source_system'] ?? null);
+        $this->assertSame('11', $config['source_hub_id'] ?? null);
+        $this->assertArrayNotHasKey('token', $config);
+        $this->assertArrayNotHasKey('source_hubs', $config);
+    }
+
+    public function test_support_settings_do_not_expose_legacy_hotline_media_token(): void
+    {
+        $settings = app(SupportSettings::class);
+
+        $settings->update([
+            'relayToken' => 'relay-client-token',
+            'hotlineMediaAccessToken' => 'legacy-static-token',
+        ]);
+
+        $this->assertArrayNotHasKey('hotlineMediaAccessToken', $settings->all());
     }
 
     public function test_local_media_route_streams_cached_current_sitrep_media(): void
@@ -79,6 +124,14 @@ class SitrepMediaAccessTest extends TestCase
                                     'domain' => 'apas-cebu-cebu.pbb.ph',
                                 ],
                             ],
+                            [
+                                'snapshot' => [
+                                    'hub_id' => '14',
+                                    'name' => 'Barangay Lahug',
+                                    'deployment' => 'barangay',
+                                    'domain' => 'lahug-cebu-cebu.pbb.ph',
+                                ],
+                            ],
                         ],
                         'media_refs' => [
                             [
@@ -89,6 +142,16 @@ class SitrepMediaAccessTest extends TestCase
                                 'type' => 'citizen_photo',
                                 'mime_type' => 'image/jpeg',
                                 'original_filename' => 'incident-photo.jpg',
+                            ],
+                            [
+                                'kind' => 'message_attachment',
+                                'source_hub_id' => '14',
+                                'incident_id' => 605,
+                                'message_id' => 70,
+                                'attachment_id' => 701,
+                                'type' => 'citizen_photo',
+                                'mime_type' => 'image/jpeg',
+                                'original_filename' => 'lahug-photo.jpg',
                             ],
                         ],
                     ],

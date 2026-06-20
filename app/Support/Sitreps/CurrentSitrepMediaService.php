@@ -70,12 +70,11 @@ class CurrentSitrepMediaService
 
     /**
      * @param array<string, mixed> $payload
-     * @return array{source_system:string,source_hub_id:string,source_hubs?:array<string, string>,token?:string,relay_token?:string}
+     * @return array{source_system:string,source_hub_id:string,relay_token?:string}
      */
     public function sdkConfig(array $payload): array
     {
         $settings = $this->settings->all();
-        $token = trim((string) ($settings['hotlineMediaAccessToken'] ?? env('HOTLINE_MEDIA_ACCESS_TOKEN', '')));
         $relayToken = trim((string) ($settings['relayToken'] ?? ''));
 
         $config = [
@@ -83,10 +82,7 @@ class CurrentSitrepMediaService
             'source_hub_id' => $this->localHubId($payload),
         ];
 
-        if ($token !== '') {
-            $config['token'] = $token;
-            $config['source_hubs'] = $this->resolver->resolveSourceHubs($payload);
-        } elseif ($relayToken !== '') {
+        if ($relayToken !== '') {
             $config['relay_token'] = $relayToken;
         }
 
