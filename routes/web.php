@@ -3,11 +3,13 @@
 use App\Http\Controllers\Api\AdminUsersController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BootstrapController;
+use App\Http\Controllers\Api\CurrentSitrepMediaController;
 use App\Http\Controllers\Api\CurrentSitrepController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\SourceHeartbeatController;
 use App\Http\Controllers\Api\SupportRequestsController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Web\SitrepMediaController;
 use App\Http\Controllers\Web\SupportMapBoundaryController;
 use App\Http\Controllers\Web\SupportMapConfigController;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +24,22 @@ Route::get('/map-boundaries/{scope}/{code}.geojson', [SupportMapBoundaryControll
     ->whereIn('scope', ['barangay', 'city', 'province', 'region'])
     ->where('code', '[A-Za-z0-9_-]+')
     ->name('support.map-boundary');
+
+Route::middleware('auth')->group(function (): void {
+    Route::get('/media/{sourceHubId}/{incidentId}/incident_media/{mediaType}/{mediaId}', [SitrepMediaController::class, 'incidentMedia'])
+        ->where('sourceHubId', '[A-Za-z0-9_-]+')
+        ->whereNumber('incidentId')
+        ->where('mediaType', '[A-Za-z0-9_-]+')
+        ->whereNumber('mediaId')
+        ->name('support.sitrep-media.incident');
+
+    Route::get('/media/{sourceHubId}/{incidentId}/message_attachment/{messageId}/{attachmentId}', [SitrepMediaController::class, 'messageAttachment'])
+        ->where('sourceHubId', '[A-Za-z0-9_-]+')
+        ->whereNumber('incidentId')
+        ->whereNumber('messageId')
+        ->whereNumber('attachmentId')
+        ->name('support.sitrep-media.attachment');
+});
 
 Route::prefix('api')->group(function (): void {
     Route::get('/bootstrap', [BootstrapController::class, 'show']);
@@ -47,6 +65,7 @@ Route::prefix('api')->group(function (): void {
         Route::post('/support-requests/{supportRequest}/en-route', [SupportRequestsController::class, 'markEnRoute']);
         Route::post('/support-requests/{supportRequest}/complete', [SupportRequestsController::class, 'complete']);
         Route::get('/sitreps/current', [CurrentSitrepController::class, 'show']);
+        Route::get('/sitreps/current/media', [CurrentSitrepMediaController::class, 'index']);
         Route::get('/source-heartbeats', [SourceHeartbeatController::class, 'index']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/session/ping', [AuthController::class, 'ping']);
