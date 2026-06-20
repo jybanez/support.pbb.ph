@@ -22,6 +22,7 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "Pbb\\Hotline\\Media\\": "packages/pbb-hotline-media-sdk/src/",
             "Pbb\\Sitreps\\Consolidation\\": "packages/pbb-sitrep-consolidator/src/",
             "Pbb\\Sitreps\\Viewer\\": "packages/pbb-sitrep-viewer/src/",
             "Database\\Factories\\": "database/factories/",

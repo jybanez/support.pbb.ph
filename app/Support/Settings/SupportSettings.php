@@ -26,10 +26,10 @@ class SupportSettings
             return $this->defaults();
         }
 
-        return [
+        return $this->withoutLegacySecrets([
             ...$this->defaults(),
             ...(is_array($payload) ? $payload : []),
-        ];
+        ]);
     }
 
     /**
@@ -42,6 +42,7 @@ class SupportSettings
             ...$this->all(),
             ...$settings,
         ];
+        $next = $this->withoutLegacySecrets($next);
 
         SupportSetting::query()->updateOrCreate(
             ['key' => self::KEY],
@@ -73,5 +74,16 @@ class SupportSettings
             'adminProjectCode' => '',
             'realtimeBackendIngressSecret' => '',
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $settings
+     * @return array<string, mixed>
+     */
+    private function withoutLegacySecrets(array $settings): array
+    {
+        unset($settings['hotlineMediaAccessToken']);
+
+        return $settings;
     }
 }

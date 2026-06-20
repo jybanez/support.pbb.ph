@@ -4,11 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\ConsolidatedSitrep;
 use App\Support\Maps\MapServerUrls;
+use App\Support\Sitreps\CurrentSitrepMediaService;
 use Pbb\Sitreps\Viewer\SitrepViewer;
 
 class CurrentSitrepController extends BaseApiController
 {
-    public function show(SitrepViewer $viewer)
+    public function show(SitrepViewer $viewer, CurrentSitrepMediaService $media)
     {
         $current = ConsolidatedSitrep::query()
             ->where('status', ConsolidatedSitrep::STATUS_CURRENT)
@@ -43,6 +44,7 @@ class CurrentSitrepController extends BaseApiController
             'sections' => $this->sections($viewer, $current->sitrep_payload),
             'sources' => $this->sources($current->sitrep_payload),
             'map_points' => $this->mapPoints($current->sitrep_payload),
+            'media_refs' => $media->mediaRefs($current->sitrep_payload),
             'html' => $viewer->render($current->sitrep_payload, [
                 'full_document' => false,
                 'inline_css' => false,
