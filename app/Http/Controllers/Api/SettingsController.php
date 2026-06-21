@@ -33,6 +33,7 @@ class SettingsController extends BaseApiController
             'server_project_code' => ['nullable', 'string', 'max:4096'],
             'admin_project_code' => ['nullable', 'string', 'max:4096'],
             'realtime_backend_ingress_secret' => ['nullable', 'string', 'max:4096'],
+            'realtime_token_signing_secret' => ['nullable', 'string', 'max:4096'],
         ]);
 
         $next = $settings->update([
@@ -47,6 +48,7 @@ class SettingsController extends BaseApiController
             'serverProjectCode' => $validated['server_project_code'] ?? '',
             'adminProjectCode' => $validated['admin_project_code'] ?? '',
             'realtimeBackendIngressSecret' => $validated['realtime_backend_ingress_secret'] ?? '',
+            'realtimeTokenSigningSecret' => $validated['realtime_token_signing_secret'] ?? '',
         ]);
 
         return $this->ok([

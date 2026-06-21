@@ -76,6 +76,7 @@ class SupportSettings
             'serverProjectCode' => '',
             'adminProjectCode' => '',
             'realtimeBackendIngressSecret' => '',
+            'realtimeTokenSigningSecret' => '',
         ];
     }
 

@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BootstrapController;
 use App\Http\Controllers\Api\CurrentSitrepMediaController;
 use App\Http\Controllers\Api\CurrentSitrepController;
+use App\Http\Controllers\Api\RealtimeAdmissionController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\SourceHeartbeatController;
 use App\Http\Controllers\Api\SupportRequestsController;
@@ -67,6 +68,7 @@ Route::prefix('api')->group(function (): void {
         Route::get('/sitreps/current', [CurrentSitrepController::class, 'show']);
         Route::get('/sitreps/current/media', [CurrentSitrepMediaController::class, 'index']);
         Route::get('/source-heartbeats', [SourceHeartbeatController::class, 'index']);
+        Route::post('/realtime/source-heartbeats/admission', [RealtimeAdmissionController::class, 'sourceHeartbeats']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/session/ping', [AuthController::class, 'ping']);
     });

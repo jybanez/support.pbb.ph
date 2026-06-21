@@ -183,13 +183,15 @@ class BaselineApiTest extends TestCase
                 'server_project_code' => 'server-code',
                 'admin_project_code' => 'admin-code',
                 'realtime_backend_ingress_secret' => 'ingress-secret',
+                'realtime_token_signing_secret' => 'token-signing-secret',
             ])
             ->assertOk()
             ->assertJsonPath('data.settings.alertLevel', 'Critical')
             ->assertJsonPath('data.settings.consolidationCadenceMinutes', 30)
             ->assertJsonPath('data.settings.sitrepRelayToken', 'sitrep-relay-secret')
             ->assertJsonPath('data.settings.supportRequestRelayToken', 'support-request-relay-secret')
-            ->assertJsonPath('data.settings.realtimeBackendIngressSecret', 'ingress-secret');
+            ->assertJsonPath('data.settings.realtimeBackendIngressSecret', 'ingress-secret')
+            ->assertJsonPath('data.settings.realtimeTokenSigningSecret', 'token-signing-secret');
 
         $this->actingAs($admin)
             ->getJson('/api/bootstrap')
