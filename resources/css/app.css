@@ -253,6 +253,7 @@ input {
 .support-dashboard-sources-rail {
     width: 360px;
     min-width: 360px;
+    grid-template-rows: minmax(0, 1fr);
     border-left: 1px solid var(--ui-border);
     box-sizing: border-box;
 }
@@ -261,7 +262,7 @@ input {
     height: 100%;
     min-height: 0;
     overflow: hidden;
-    padding: 10px 8px 10px 10px;
+    padding: 0;
     box-sizing: border-box;
 }
 
@@ -737,6 +738,11 @@ input {
 
 .support-sources-navigation-stack .ui-navigation-stack-page-body {
     overflow: hidden;
+}
+
+.support-source-stack-page.is-sources-list .ui-navigation-stack-page-body {
+    padding: 8px;
+    box-sizing: border-box;
 }
 
 .support-source-stack-page,

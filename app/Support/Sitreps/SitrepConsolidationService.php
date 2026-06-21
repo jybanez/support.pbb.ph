@@ -4,6 +4,7 @@ namespace App\Support\Sitreps;
 
 use App\Models\ConsolidatedSitrep;
 use App\Models\SitrepStaging;
+use App\Support\Relay\RelayHttpOptions;
 use App\Support\Settings\SupportSettings;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -145,7 +146,12 @@ class SitrepConsolidationService
             $url = (string) config('services.relay.hub_json_url', 'https://relay.pbb.ph/hub.json');
 
             try {
-                $payload = Http::acceptJson()->timeout(5)->get($url)->throw()->json();
+                $payload = Http::acceptJson()
+                    ->withOptions(RelayHttpOptions::verifyOptions())
+                    ->timeout(5)
+                    ->get($url)
+                    ->throw()
+                    ->json();
             } catch (\Throwable) {
                 return [];
             }

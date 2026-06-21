@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Support\Settings\SupportSettings;
+use App\Support\Relay\RelayHttpOptions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -26,6 +27,7 @@ class SourceHeartbeatController extends BaseApiController
 
         try {
             $response = Http::acceptJson()
+                ->withOptions(RelayHttpOptions::verifyOptions())
                 ->withHeaders([
                     'Connection' => 'close',
                     'X-Relay-Key' => $relayToken,

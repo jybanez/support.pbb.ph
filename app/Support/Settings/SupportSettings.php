@@ -64,6 +64,7 @@ class SupportSettings
             'relayUrl' => 'https://relay.pbb.ph',
             'relayToken' => '',
             'relayHandlerToken' => '',
+            'relayCaBundle' => '',
             'supportRequestSourceSystem' => 'hotline.command',
             'supportRequestTargetSystem' => 'support.dispatch',
             'supportRequestUpdateSourceSystem' => 'support.dispatch',

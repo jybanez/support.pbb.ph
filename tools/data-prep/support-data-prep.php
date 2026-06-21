@@ -136,6 +136,15 @@ function support_data_prep_setting_plan(array $config): array
             'shared.secrets.values.support_handler_token',
             'shared.secrets.values.relay_handler_token',
         ],
+        'relayCaBundle' => [
+            'support.data_prep.apply_settings.relay.ca_bundle',
+            'support.data_prep.apply_settings.relay_ca_bundle',
+            'support.relay.ca_bundle',
+            'services.relay.ca_bundle',
+            'dependencies.relay.ca_bundle',
+            'relay.ca_bundle',
+            'ssl.chain_file',
+        ],
         'realtimeUrl' => [
             'support.data_prep.apply_settings.realtime.base_url',
             'support.data_prep.apply_settings.realtime_url',

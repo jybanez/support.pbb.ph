@@ -37,6 +37,7 @@ return [
 
     'relay' => [
         'hub_json_url' => env('RELAY_HUB_JSON_URL', 'https://relay.pbb.ph/hub.json'),
+        'ca_bundle' => env('RELAY_CA_BUNDLE'),
     ],
 
     'map_server' => [

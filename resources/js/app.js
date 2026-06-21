@@ -39,7 +39,7 @@ const helpers = {
     createElapsedTime: await uiLoader.get('ui.elapsed.time', helperLoadOptions),
     createClock: await uiLoader.get('ui.clock', helperLoadOptions),
     createHeartbeatStrip: await uiLoader.get('ui.heartbeat.strip', helperLoadOptions),
-    createNavigationStack: await uiLoader.get('ui.navigation.stack', helperLoadOptions),
+    createNavigationStack: await uiLoader.get('ui.navigation.stack', { ...helperLoadOptions, preferBundles: false }),
     createSkeleton: await uiLoader.get('ui.skeleton', helperLoadOptions),
     createToggleButton: await uiLoader.get('ui.toggle.button', helperLoadOptions),
     createFormModal: await uiLoader.get('ui.form.modal', helperLoadOptions),
@@ -1077,6 +1077,8 @@ const sourceCard = (source) => {
         heading.appendChild(sourceHeartbeatStrip(source.heartbeat));
     } else if (state.currentSitrep.sourceHeartbeatsLoading) {
         heading.appendChild(sourceHeartbeatLoadingStrip());
+    } else {
+        heading.appendChild(sourceHeartbeatStrip(null));
     }
 
     const toggleHost = document.createElement('div');
@@ -1669,17 +1671,48 @@ const mountSourcesNavigationStack = (host) => {
     const stackHost = host.querySelector('[data-sources-stack-host]');
     if (!stackHost) return;
 
-    sourcesNavigationStack = helpers.createNavigationStack(stackHost, {
-        ariaLabel: 'Sources drill-down navigation',
-        className: 'support-sources-navigation-stack',
-        transition: 'none',
-        initialPages: [sourcesListPage()],
-        onChange({ currentPage }) {
-            if (currentPage?.id === 'sources-list') {
-                refreshSourcesList();
+    try {
+        sourcesNavigationStack = helpers.createNavigationStack(stackHost, {
+            ariaLabel: 'Sources drill-down navigation',
+            chrome: false,
+            className: 'support-sources-navigation-stack',
+            transition: 'none',
+            initialPages: [sourcesListPage()],
+            onChange({ currentPage }) {
+                if (currentPage?.id === 'sources-list') {
+                    refreshSourcesList();
+                }
+            },
+        });
+
+        if (!stackHost.querySelector('[data-sitrep-sources-list]')) {
+            throw new Error('Sources navigation stack did not mount the initial list page.');
+        }
+    } catch (error) {
+        console.error('Unable to mount sources navigation stack.', error);
+        sourcesNavigationStack?.destroy?.();
+        sourcesNavigationStack = null;
+        sourceVirtualList?.destroy?.();
+        sourceVirtualList = null;
+        sourceAlertSelect?.destroy?.();
+        sourceAlertSelect = null;
+        host.innerHTML = sourcesPanelMarkup();
+        bindSourcesToolbar(host);
+        try {
+            mountSourcesList(host.querySelector('[data-sitrep-sources-list]'), filteredSources());
+        } catch (fallbackError) {
+            console.error('Unable to mount sources fallback list.', fallbackError);
+            const listHost = host.querySelector('[data-sitrep-sources-list]');
+            if (listHost) {
+                listHost.innerHTML = `
+                    <div class="support-sources-rail-placeholder">
+                        <p class="ui-eyebrow">Sources</p>
+                        <p>Unable to render source hubs.</p>
+                    </div>
+                `;
             }
-        },
-    });
+        }
+    }
 };
 
 const mountSourcesList = (container, sources) => {

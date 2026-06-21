@@ -5,6 +5,7 @@ namespace App\Support\SupportRequests;
 use App\Jobs\SubmitSupportRequestUpdateDelivery;
 use App\Models\SupportRequest;
 use App\Models\SupportRequestUpdateDelivery;
+use App\Support\Relay\RelayHttpOptions;
 use App\Support\Settings\SupportSettings;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -73,6 +74,7 @@ class SupportRequestLifecycleRelayService
 
         try {
             $response = Http::acceptJson()
+                ->withOptions(RelayHttpOptions::verifyOptions())
                 ->asJson()
                 ->withHeaders([
                     'Connection' => 'close',

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Support\Settings\SupportSettings;
+use App\Support\Relay\RelayHttpOptions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -53,6 +54,7 @@ class BootstrapController extends BaseApiController
 
             try {
                 $payload = Http::acceptJson()
+                    ->withOptions(RelayHttpOptions::verifyOptions())
                     ->timeout(5)
                     ->get($url)
                     ->throw()
