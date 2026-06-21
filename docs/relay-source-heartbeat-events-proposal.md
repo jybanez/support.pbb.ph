@@ -2,6 +2,26 @@
 
 Date: 2026-06-22
 
+## Decision Update
+
+Relay accepted the goal but proposed a separate Relay operational webhook subscriber model instead of routing heartbeat telemetry through `hub_relay_clients` and `hub_relay_handlers`.
+
+Support agrees with that counter-proposal.
+
+Accepted direction:
+
+- Relay owns `source.heartbeat.updated` as operational telemetry.
+- Support receives the event through a dedicated webhook subscription.
+- The webhook uses its own subscriber token and delivery/retry state.
+- Support publishes the received heartbeat update to its dashboard Realtime room.
+- Support keeps `GET /api/source-heartbeats?hours=48` for initial load and fallback.
+
+This avoids mixing heartbeat telemetry with Support's app message identities:
+
+- `sitrep.ingestor` for SITREP records
+- `support.dispatch` for support requests
+- Relay webhook subscriber for source heartbeat telemetry
+
 ## Goal
 
 Remove Support-side polling for source heartbeat changes.
@@ -29,7 +49,7 @@ That endpoint is still useful for initial dashboard load and fallback, but it fo
 
 Support should keep the existing HTTP heartbeat fetch as initial load and fallback. Realtime should improve live behavior without becoming the only way to render heartbeat state.
 
-## Relay Message
+## Original Relay Message Option
 
 Recommended message type:
 
@@ -91,21 +111,21 @@ Rationale: source heartbeat health belongs to SITREP/source ingestion context, n
 }
 ```
 
-## Support Receiver
+## Accepted Support Receiver
 
-Support can add a Relay-authenticated endpoint such as:
+Support should add a webhook-authenticated endpoint such as:
 
 ```http
 POST /api/relay/source-heartbeats
 ```
 
-Authentication should use the existing inbound Relay handler token model. It should not use Support's outbound Relay client tokens.
+Authentication should use a dedicated source heartbeat webhook token. It should not use Support's outbound Relay client tokens and should not use the SITREP/support request handler token unless Relay chooses to explicitly bridge webhook delivery to the old handler model for compatibility.
 
 Receiver behavior:
 
-- Validate Relay handler authentication.
+- Validate webhook authentication.
 - Validate `message_type = source.heartbeat.updated`.
-- Validate target system includes `sitrep.ingestor`.
+- Validate `event_type = source.heartbeat.updated`.
 - Normalize source identity using the existing source matching aliases:
   - `hub_id`
   - `source_hub_id`
@@ -171,3 +191,7 @@ This remains the initial load and fallback path for dashboards that load after e
 Can Relay emit `source.heartbeat.updated` as a routed message to Support targets using the same handler/token model as SITREP delivery?
 
 If yes, Support can remove the scheduled heartbeat polling approach and implement an event receiver instead.
+
+## Answer From Relay
+
+Relay can support the normal handler/token model, but recommends a cleaner operational webhook subscriber model. Support accepts the webhook subscriber direction.
