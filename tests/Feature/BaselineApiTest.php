@@ -184,6 +184,7 @@ class BaselineApiTest extends TestCase
                 'admin_project_code' => 'admin-code',
                 'realtime_backend_ingress_secret' => 'ingress-secret',
                 'realtime_token_signing_secret' => 'token-signing-secret',
+                'source_heartbeat_webhook_token' => 'heartbeat-webhook-secret',
             ])
             ->assertOk()
             ->assertJsonPath('data.settings.alertLevel', 'Critical')
@@ -191,9 +192,10 @@ class BaselineApiTest extends TestCase
             ->assertJsonPath('data.settings.sitrepRelayToken', 'sitrep-relay-secret')
             ->assertJsonPath('data.settings.supportRequestRelayToken', 'support-request-relay-secret')
             ->assertJsonPath('data.settings.realtimeBackendIngressSecret', 'ingress-secret')
-            ->assertJsonMissing(['token-signing-secret']);
+            ->assertJsonMissing(['token-signing-secret', 'heartbeat-webhook-secret']);
 
         $this->assertSame('token-signing-secret', app(SupportSettings::class)->all()['realtimeTokenSigningSecret']);
+        $this->assertSame('heartbeat-webhook-secret', app(SupportSettings::class)->all()['sourceHeartbeatWebhookToken']);
 
         $this->actingAs($admin)
             ->getJson('/api/bootstrap')
@@ -201,7 +203,7 @@ class BaselineApiTest extends TestCase
             ->assertJsonPath('data.settings.alertLevel', 'Critical')
             ->assertJsonPath('data.settings.consolidationCadenceMinutes', 30)
             ->assertJsonPath('data.settings.realtimeClientCode', 'client-code')
-            ->assertJsonMissing(['token-signing-secret']);
+            ->assertJsonMissing(['token-signing-secret', 'heartbeat-webhook-secret']);
     }
 
     public function test_non_admin_cannot_update_support_settings(): void

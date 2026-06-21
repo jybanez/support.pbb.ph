@@ -34,6 +34,7 @@ class SettingsController extends BaseApiController
             'admin_project_code' => ['nullable', 'string', 'max:4096'],
             'realtime_backend_ingress_secret' => ['nullable', 'string', 'max:4096'],
             'realtime_token_signing_secret' => ['nullable', 'string', 'max:4096'],
+            'source_heartbeat_webhook_token' => ['nullable', 'string', 'max:4096'],
         ]);
 
         $updates = [
@@ -52,6 +53,10 @@ class SettingsController extends BaseApiController
 
         if (array_key_exists('realtime_token_signing_secret', $validated)) {
             $updates['realtimeTokenSigningSecret'] = $validated['realtime_token_signing_secret'] ?? '';
+        }
+
+        if (array_key_exists('source_heartbeat_webhook_token', $validated)) {
+            $updates['sourceHeartbeatWebhookToken'] = $validated['source_heartbeat_webhook_token'] ?? '';
         }
 
         $settings->update($updates);

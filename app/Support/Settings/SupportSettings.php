@@ -59,6 +59,7 @@ class SupportSettings
     {
         $settings = $this->all();
         unset($settings['realtimeTokenSigningSecret']);
+        unset($settings['sourceHeartbeatWebhookToken']);
 
         return $settings;
     }
@@ -88,6 +89,7 @@ class SupportSettings
             'adminProjectCode' => '',
             'realtimeBackendIngressSecret' => '',
             'realtimeTokenSigningSecret' => '',
+            'sourceHeartbeatWebhookToken' => '',
         ];
     }
 
