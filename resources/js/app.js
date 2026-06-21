@@ -1177,6 +1177,12 @@ const sourceStackBackButton = (label) => `
     </button>
 `;
 
+const sourceStackCloseButton = (label) => `
+    <button type="button" class="support-source-stack-close" data-source-stack-close aria-label="${escapeHtml(label)}">
+        ${icons.close || ''}
+    </button>
+`;
+
 const sourceHeartbeatStatusLabel = (source) => {
     if (state.currentSitrep.sourceHeartbeatsLoading && !source?.heartbeat) return 'Heartbeat loading';
     if (!source?.heartbeat) return 'Heartbeat unavailable';
@@ -1411,14 +1417,14 @@ const sourceDetailPage = (source) => {
         mount(body, { api: stackApi }) {
             body.innerHTML = `
                 <div class="support-source-detail-page">
-                    <header class="support-source-detail-header">
-                        ${sourceStackBackButton('Sources')}
+                    <header class="support-source-detail-header has-close-action">
                         <div>
                             <p class="ui-eyebrow">Source Detail</p>
                             <h3>${escapeHtml(source?.name || 'Source hub')}</h3>
                             <p>${escapeHtml(source?.subtitle || source?.domain || source?.code || 'No deployment label')}</p>
                             ${sourceDetailMetaMarkup(source)}
                         </div>
+                        ${sourceStackCloseButton('Close source details')}
                     </header>
                     <div class="support-source-detail-content">
                         <div class="support-source-detail-tabs" role="tablist" aria-label="Source detail views">
@@ -1440,7 +1446,7 @@ const sourceDetailPage = (source) => {
                     </div>
                 </div>
             `;
-            body.querySelector('[data-source-stack-back]')?.addEventListener('click', () => stackApi.pop({ transition: 'none' }));
+            body.querySelector('[data-source-stack-close]')?.addEventListener('click', () => stackApi.pop({ transition: 'none' }));
             const setActiveTab = (tabName) => {
                 body.querySelectorAll('[data-source-detail-tab]').forEach((tab) => {
                     const active = tab.dataset.sourceDetailTab === tabName;

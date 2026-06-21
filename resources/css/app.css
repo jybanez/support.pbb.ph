@@ -781,6 +781,10 @@ input {
     border-bottom: 1px solid rgba(52, 71, 105, 0.55);
 }
 
+.support-source-detail-header.has-close-action {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .support-source-detail-header h3,
 .support-source-detail-header p {
     margin: 0;
@@ -836,6 +840,36 @@ input {
 .support-source-stack-back:focus-visible {
     border-color: rgba(143, 230, 255, 0.9);
     background: rgba(33, 54, 88, 0.95);
+    outline: none;
+}
+
+.support-source-stack-close {
+    width: 34px;
+    height: 34px;
+    display: inline-grid;
+    place-items: center;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #b9c8e5;
+    cursor: pointer;
+    padding: 0;
+}
+
+.support-source-stack-close svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+}
+
+.support-source-stack-close:hover,
+.support-source-stack-close:focus-visible {
+    background: rgba(104, 134, 190, 0.14);
+    color: var(--ui-text);
     outline: none;
 }
 
