@@ -41,7 +41,7 @@ class SitrepRelaySubmissionService
 
         $settings = $this->settings->all();
         $relayUrl = rtrim(trim((string) ($settings['relayUrl'] ?? 'https://relay.pbb.ph')), '/');
-        $relayToken = trim((string) ($settings['relayToken'] ?? ''));
+        $relayToken = trim((string) ($settings['sitrepRelayToken'] ?? $settings['relayToken'] ?? ''));
 
         if ($relayUrl === '' || $relayToken === '') {
             return $this->markFailed($delivery, 'Relay URL or token is not configured.');

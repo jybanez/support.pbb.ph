@@ -41,6 +41,10 @@ Because `.env` sets `SESSION_DOMAIN=support.pbb.ph`, browser login should be ver
 
 ## Relay and SITREP Operations
 
+Support has two Relay identities. See
+[`docs/relay-identities-and-tokens.md`](relay-identities-and-tokens.md) for the
+canonical identity and token contract.
+
 Support receives SITREPs through the local Relay handler endpoint:
 
 ```text
@@ -55,7 +59,10 @@ Configure a Relay client handler for target system `sitrep.ingestor` with:
 - Auth Token: a dedicated Support Relay handler token
 - Active: checked
 
-The handler token is stored in Support Settings as `Relay handler token`. It is separate from the Relay client API key used by Support when posting upstream to Relay.
+Handler tokens are machine-to-machine secrets used by Relay when posting into
+Support endpoints. Operator-visible Support Relay settings should describe
+outbound client tokens only: Relay URL, SITREP Relay Client Token, and Support
+Request Relay Client Token.
 
 Useful commands:
 

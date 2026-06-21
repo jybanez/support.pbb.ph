@@ -48,14 +48,15 @@ class SitrepMediaAccessTest extends TestCase
     public function test_media_sdk_config_uses_relay_relationship_resolution(): void
     {
         app(SupportSettings::class)->update([
-            'relayToken' => 'relay-client-token',
+            'sitrepRelayToken' => 'sitrep-relay-client-token',
+            'supportRequestRelayToken' => 'support-request-relay-client-token',
             'supportRequestUpdateSourceSystem' => 'support.dispatch',
         ]);
 
         $current = $this->createCurrentSitrep();
         $config = app(CurrentSitrepMediaService::class)->sdkConfig($current->sitrep_payload);
 
-        $this->assertSame('relay-client-token', $config['relay_token'] ?? null);
+        $this->assertSame('sitrep-relay-client-token', $config['relay_token'] ?? null);
         $this->assertSame('support.dispatch', $config['source_system'] ?? null);
         $this->assertSame('11', $config['source_hub_id'] ?? null);
         $this->assertArrayNotHasKey('token', $config);

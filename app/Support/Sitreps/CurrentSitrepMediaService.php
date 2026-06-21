@@ -75,7 +75,7 @@ class CurrentSitrepMediaService
     public function sdkConfig(array $payload): array
     {
         $settings = $this->settings->all();
-        $relayToken = trim((string) ($settings['relayToken'] ?? ''));
+        $relayToken = trim((string) ($settings['sitrepRelayToken'] ?? $settings['relayToken'] ?? ''));
 
         $config = [
             'source_system' => (string) ($settings['supportRequestUpdateSourceSystem'] ?? 'support.dispatch'),

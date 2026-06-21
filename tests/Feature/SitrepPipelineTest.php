@@ -178,7 +178,8 @@ class SitrepPipelineTest extends TestCase
 
         app(SupportSettings::class)->update([
             'relayUrl' => 'https://relay.pbb.ph',
-            'relayToken' => 'relay-secret',
+            'sitrepRelayToken' => 'sitrep-relay-secret',
+            'supportRequestRelayToken' => 'support-request-relay-secret',
             'relayTargetSystem' => 'sitrep.ingestor',
         ]);
 
@@ -211,7 +212,7 @@ class SitrepPipelineTest extends TestCase
             $payload = $request->data();
 
             return $request->url() === 'https://relay.pbb.ph/api/v1/messages'
-                && $request->hasHeader('X-Relay-Key', 'relay-secret')
+                && $request->hasHeader('X-Relay-Key', 'sitrep-relay-secret')
                 && $payload['source_system'] === 'sitrep.ingestor'
                 && $payload['message_type'] === 'sitrep.record'
                 && $payload['payload_format'] === 'json'

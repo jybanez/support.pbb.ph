@@ -30,7 +30,7 @@ try {
             'type' => 'settings',
             'action' => 'verify',
             'status' => $status,
-            'checked' => 4,
+            'checked' => 6,
             'missing' => count($missing),
         ]],
         $warnings,
@@ -40,6 +40,8 @@ try {
             'settings' => support_data_prep_public_settings([
                 'relayUrl' => $settings['relayUrl'] ?? '',
                 'relayToken' => $settings['relayToken'] ?? '',
+                'sitrepRelayToken' => $settings['sitrepRelayToken'] ?? '',
+                'supportRequestRelayToken' => $settings['supportRequestRelayToken'] ?? '',
                 'relayHandlerToken' => $settings['relayHandlerToken'] ?? '',
                 'realtimeUrl' => $settings['realtimeUrl'] ?? '',
                 'realtimeClientCode' => $settings['realtimeClientCode'] ?? '',

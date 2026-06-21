@@ -125,6 +125,27 @@ function support_data_prep_setting_plan(array $config): array
             'shared.secrets.values.relay_client_token',
             'shared.secrets.values.relay_token',
         ],
+        'sitrepRelayToken' => [
+            'support.data_prep.apply_settings.relay.sitrep_client_token',
+            'support.data_prep.apply_settings.relay.sitrep_token',
+            'support.data_prep.apply_settings.sitrep_relay_token',
+            'support.relay.sitrep_client_token',
+            'support.relay.sitrep_token',
+            'support.sitrep_relay_token',
+            'shared.secrets.values.support_sitrep_relay_token',
+            'shared.secrets.values.support_relay_token',
+        ],
+        'supportRequestRelayToken' => [
+            'support.data_prep.apply_settings.relay.support_request_client_token',
+            'support.data_prep.apply_settings.relay.support_request_token',
+            'support.data_prep.apply_settings.support_request_relay_token',
+            'support.data_prep.apply_settings.dispatch_relay_token',
+            'support.relay.support_request_client_token',
+            'support.relay.support_request_token',
+            'support.support_request_relay_token',
+            'shared.secrets.values.support_request_relay_token',
+            'shared.secrets.values.support_dispatch_relay_token',
+        ],
         'relayHandlerToken' => [
             'support.data_prep.apply_settings.relay.handler_token',
             'support.data_prep.apply_settings.relay.inbound_handler_token',
@@ -193,6 +214,11 @@ function support_data_prep_setting_plan(array $config): array
         }
     }
 
+    if (($settings['relayToken'] ?? '') !== '') {
+        $settings['sitrepRelayToken'] = $settings['sitrepRelayToken'] ?? $settings['relayToken'];
+        $settings['supportRequestRelayToken'] = $settings['supportRequestRelayToken'] ?? $settings['relayToken'];
+    }
+
     return $settings;
 }
 
@@ -200,6 +226,8 @@ function support_data_prep_public_setting_value(string $key, mixed $value): arra
 {
     $secretKeys = [
         'relayToken' => true,
+        'sitrepRelayToken' => true,
+        'supportRequestRelayToken' => true,
         'relayHandlerToken' => true,
         'realtimeBackendIngressSecret' => true,
     ];
@@ -262,7 +290,7 @@ function support_data_prep_report(string $tool, array $options, string $status, 
 function support_data_prep_missing_required_settings(array $settings): array
 {
     $missing = [];
-    foreach (['relayUrl', 'relayToken', 'relayHandlerToken', 'realtimeUrl'] as $key) {
+    foreach (['relayUrl', 'sitrepRelayToken', 'supportRequestRelayToken', 'relayHandlerToken', 'realtimeUrl'] as $key) {
         if (trim((string) ($settings[$key] ?? '')) === '') {
             $missing[] = $key;
         }

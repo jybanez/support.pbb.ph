@@ -63,6 +63,8 @@ class SupportSettings
             'consolidationCadenceMinutes' => 15,
             'relayUrl' => 'https://relay.pbb.ph',
             'relayToken' => '',
+            'sitrepRelayToken' => '',
+            'supportRequestRelayToken' => '',
             'relayHandlerToken' => '',
             'relayCaBundle' => '',
             'supportRequestSourceSystem' => 'hotline.command',

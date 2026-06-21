@@ -96,7 +96,8 @@ class SupportRequestLifecycleRelayTest extends TestCase
         Queue::fake();
         $this->settings([
             'relayUrl' => 'https://relay.pbb.ph',
-            'relayToken' => 'relay-secret',
+            'sitrepRelayToken' => 'sitrep-relay-secret',
+            'supportRequestRelayToken' => 'support-request-relay-secret',
         ]);
         Http::fake([
             'relay.pbb.ph/api/v1/messages' => Http::response([
@@ -124,7 +125,7 @@ class SupportRequestLifecycleRelayTest extends TestCase
         $this->assertNull($delivery->last_error);
 
         Http::assertSent(fn (Request $request): bool => $request->url() === 'https://relay.pbb.ph/api/v1/messages'
-            && $request->hasHeader('X-Relay-Key', 'relay-secret')
+            && $request->hasHeader('X-Relay-Key', 'support-request-relay-secret')
             && $request['message_type'] === 'support.request.received'
             && $request['payload']['support_request_id'] === 'sup_01K00000000000000000000000'
             && $request['payload']['status'] === 'received'
@@ -136,7 +137,7 @@ class SupportRequestLifecycleRelayTest extends TestCase
         Queue::fake();
         $this->settings([
             'relayUrl' => 'https://relay.pbb.ph',
-            'relayToken' => 'relay-secret',
+            'supportRequestRelayToken' => 'support-request-relay-secret',
         ]);
         Http::fake([
             'relay.pbb.ph/api/v1/messages' => Http::response(['error' => 'downstream unavailable'], 503),
@@ -171,7 +172,7 @@ class SupportRequestLifecycleRelayTest extends TestCase
         $httpOptions = [];
         $this->settings([
             'relayUrl' => 'https://relay.pbb.ph',
-            'relayToken' => 'relay-secret',
+            'supportRequestRelayToken' => 'support-request-relay-secret',
         ]);
         Http::fake([
             'relay.pbb.ph/api/v1/messages' => function (Request $request, array $options) use (&$httpOptions) {

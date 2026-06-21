@@ -105,7 +105,8 @@ class BaselineApiTest extends TestCase
     {
         app(SupportSettings::class)->update([
             'relayUrl' => 'https://relay.pbb.ph',
-            'relayToken' => 'relay-secret',
+            'sitrepRelayToken' => 'sitrep-relay-secret',
+            'supportRequestRelayToken' => 'support-request-relay-secret',
         ]);
 
         Http::fake([
@@ -137,9 +138,9 @@ class BaselineApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.available', true)
             ->assertJsonPath('data.sources.0.source_relay_hub_id', '072217029')
-            ->assertJsonMissing(['relay-secret']);
+            ->assertJsonMissing(['sitrep-relay-secret']);
 
-        Http::assertSent(fn ($request): bool => $request->hasHeader('X-Relay-Key', 'relay-secret')
+        Http::assertSent(fn ($request): bool => $request->hasHeader('X-Relay-Key', 'sitrep-relay-secret')
             && str_contains($request->url(), '/api/v1/source-heartbeats')
             && str_contains($request->url(), 'hours=48'));
     }
@@ -175,8 +176,8 @@ class BaselineApiTest extends TestCase
                 'alert_level' => 'Critical',
                 'sitrep_cadence' => 30,
                 'relay_url' => 'https://relay.pbb.ph',
-                'relay_token' => 'relay-secret',
-                'relay_handler_token' => 'handler-secret',
+                'sitrep_relay_token' => 'sitrep-relay-secret',
+                'support_request_relay_token' => 'support-request-relay-secret',
                 'realtime_url' => 'https://realtime.pbb.ph',
                 'realtime_client_code' => 'client-code',
                 'server_project_code' => 'server-code',
@@ -186,8 +187,8 @@ class BaselineApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.settings.alertLevel', 'Critical')
             ->assertJsonPath('data.settings.consolidationCadenceMinutes', 30)
-            ->assertJsonPath('data.settings.relayToken', 'relay-secret')
-            ->assertJsonPath('data.settings.relayHandlerToken', 'handler-secret')
+            ->assertJsonPath('data.settings.sitrepRelayToken', 'sitrep-relay-secret')
+            ->assertJsonPath('data.settings.supportRequestRelayToken', 'support-request-relay-secret')
             ->assertJsonPath('data.settings.realtimeBackendIngressSecret', 'ingress-secret');
 
         $this->actingAs($admin)

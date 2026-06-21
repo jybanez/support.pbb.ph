@@ -15,7 +15,7 @@ class SourceHeartbeatController extends BaseApiController
         $hours = max(1, min(72, (int) $request->query('hours', 48)));
         $allSettings = $settings->all();
         $relayUrl = rtrim(trim((string) ($allSettings['relayUrl'] ?? '')), '/');
-        $relayToken = trim((string) ($allSettings['relayToken'] ?? ''));
+        $relayToken = trim((string) ($allSettings['sitrepRelayToken'] ?? $allSettings['relayToken'] ?? ''));
 
         if ($relayUrl === '' || $relayToken === '') {
             return $this->ok([

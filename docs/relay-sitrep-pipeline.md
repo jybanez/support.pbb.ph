@@ -15,6 +15,11 @@ Relay owns transport. Support owns:
 
 Inbound Relay requests must not consolidate. The inbound handler only authenticates, stores, validates, and stages.
 
+Support's Relay identity and token model is documented in
+[`docs/relay-identities-and-tokens.md`](relay-identities-and-tokens.md). The
+SITREP pipeline uses the `sitrep.ingestor` identity. Support request dispatch
+uses the separate `support.dispatch` identity.
+
 ## Vendored SDKs
 
 Support vendors the official PBB SITREP SDKs so it can be installed without Hotline:

@@ -61,6 +61,8 @@ Relay posts handler callbacks with top-level `event`, `message`, and `receipt` k
       "consolidationCadenceMinutes": 15,
       "relayUrl": "https://relay.pbb.ph",
       "relayToken": "",
+      "sitrepRelayToken": "",
+      "supportRequestRelayToken": "",
       "relayHandlerToken": "",
       "realtimeUrl": "https://realtime.pbb.ph"
     },
@@ -81,6 +83,12 @@ Relay posts handler callbacks with top-level `event`, `message`, and `receipt` k
   "error": null
 }
 ```
+
+Relay settings are being clarified around the two Support Relay identities in
+[`docs/relay-identities-and-tokens.md`](relay-identities-and-tokens.md).
+Current legacy response keys such as `relayToken` and `relayHandlerToken` should
+be treated as compatibility/internal fields. Operator-facing settings should use
+`sitrepRelayToken` and `supportRequestRelayToken` for outbound Relay calls.
 
 `GET /api/session/ping` is authenticated and returns the current account, a refreshed CSRF token, and `touched_at` for the activity-aware keepalive loop.
 

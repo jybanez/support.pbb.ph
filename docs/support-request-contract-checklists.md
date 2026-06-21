@@ -16,6 +16,11 @@ Ownership boundaries:
 - Relay owns transport, routing, delivery, retry, handler registration, and transport authentication.
 - Support owns request intake, validation, triage, assignment, lifecycle updates, and support-side status history.
 
+Relay identity and token boundaries are documented in
+[`docs/relay-identities-and-tokens.md`](relay-identities-and-tokens.md). Support
+is one app with separate `sitrep.ingestor` and `support.dispatch` Relay
+identities.
+
 ## Jonathan Decisions For V1
 
 These decisions are the approved baseline for first implementation planning:
@@ -29,6 +34,7 @@ These decisions are the approved baseline for first implementation planning:
 - Dispatching a received support request is owned by PBB Support.
 - SITREP context is included as support request detail/context, but Support Request development must not change the current SITREP JSON structure.
 - Support Request payloads must follow the current SITREP privacy boundary: no citizen/private details are added.
+- Operator-visible Support Relay settings should contain outbound client tokens only: Relay URL, SITREP Relay Client Token, and Support Request Relay Client Token. Inbound Relay handler tokens are machine-to-machine secrets owned by Relay/Kit handler registration.
 
 ## Shared Support Request Contract Checklist
 
@@ -48,9 +54,9 @@ Use this checklist as the joint Hotline, Support, and Relay agreement before imp
   - [x] `support.request.cancelled`
   - [ ] `support.request.updated`
 - [ ] Confirm Relay handler disambiguation rules for similarly named message types:
-  - [ ] distinguish by `source_system`
-  - [ ] distinguish by target system in `targets[].systems`
-  - [ ] distinguish by message direction
+  - [x] distinguish by `source_system`
+  - [x] distinguish by target system in `targets[].systems`
+  - [x] distinguish by message direction
   - [ ] prevent Hotline outbound amendments such as `support.request.cancelled` or `support.request.updated` from being routed to Hotline's inbound `support.request.*` update handler
   - [ ] prevent Support lifecycle updates such as `support.request.accepted` or `support.request.assigned` from being routed back into Support intake
 - [ ] Confirm Relay envelope fields and target pattern:
