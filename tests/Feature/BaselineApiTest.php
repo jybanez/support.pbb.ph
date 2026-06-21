@@ -191,14 +191,17 @@ class BaselineApiTest extends TestCase
             ->assertJsonPath('data.settings.sitrepRelayToken', 'sitrep-relay-secret')
             ->assertJsonPath('data.settings.supportRequestRelayToken', 'support-request-relay-secret')
             ->assertJsonPath('data.settings.realtimeBackendIngressSecret', 'ingress-secret')
-            ->assertJsonPath('data.settings.realtimeTokenSigningSecret', 'token-signing-secret');
+            ->assertJsonMissing(['token-signing-secret']);
+
+        $this->assertSame('token-signing-secret', app(SupportSettings::class)->all()['realtimeTokenSigningSecret']);
 
         $this->actingAs($admin)
             ->getJson('/api/bootstrap')
             ->assertOk()
             ->assertJsonPath('data.settings.alertLevel', 'Critical')
             ->assertJsonPath('data.settings.consolidationCadenceMinutes', 30)
-            ->assertJsonPath('data.settings.realtimeClientCode', 'client-code');
+            ->assertJsonPath('data.settings.realtimeClientCode', 'client-code')
+            ->assertJsonMissing(['token-signing-secret']);
     }
 
     public function test_non_admin_cannot_update_support_settings(): void

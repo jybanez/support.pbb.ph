@@ -34,7 +34,7 @@ class BootstrapController extends BaseApiController
                 'touched_at' => now()->toIso8601String(),
             ],
             'settings' => [
-                ...$settings->all(),
+                ...$settings->publicSettings(),
             ],
             'hub' => $this->hubIdentity(),
         ]);

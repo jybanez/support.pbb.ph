@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('support:sitreps:consolidate')->everyFifteenMinutes();
 Schedule::command('support:sitreps:relay-latest')->everyFiveMinutes();
+Schedule::command('support:source-heartbeats:publish')->everyMinute()->withoutOverlapping();

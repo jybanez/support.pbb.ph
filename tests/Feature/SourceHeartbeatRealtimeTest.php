@@ -51,7 +51,41 @@ class SourceHeartbeatRealtimeTest extends TestCase
             ->assertJsonPath('status', false);
     }
 
-    public function test_source_heartbeat_proxy_publishes_snapshot_to_realtime(): void
+    public function test_source_heartbeat_proxy_remains_read_only_fallback(): void
+    {
+        Cache::forget('support.source_heartbeats.last_publish_hash');
+        app(SupportSettings::class)->update([
+            'relayUrl' => 'https://relay.pbb.ph',
+            'sitrepRelayToken' => 'sitrep-relay-secret',
+            'realtimeUrl' => 'https://realtime.pbb.ph',
+            'realtimeClientCode' => 'clt_support',
+            'serverProjectCode' => 'prj_support_server',
+            'realtimeBackendIngressSecret' => 'backend-ingress-secret',
+        ]);
+
+        Http::fake([
+            'relay.pbb.ph/api/v1/source-heartbeats*' => Http::response([
+                'data' => [
+                    'sources' => [[
+                        'source_hub_id' => 13,
+                        'source_relay_hub_id' => '072217029',
+                        'status' => 'online',
+                        'last_seen_at' => '2026-06-08T08:00:00+08:00',
+                    ]],
+                ],
+            ]),
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->getJson('/api/source-heartbeats?hours=48')
+            ->assertOk()
+            ->assertJsonPath('data.available', true)
+            ->assertJsonPath('data.sources.0.source_relay_hub_id', '072217029');
+
+        Http::assertNotSent(fn ($request): bool => str_contains($request->url(), '/api/v1/events/publish'));
+    }
+
+    public function test_scheduled_source_heartbeat_publisher_publishes_snapshot_to_realtime(): void
     {
         Cache::forget('support.source_heartbeats.last_publish_hash');
         app(SupportSettings::class)->update([
@@ -80,11 +114,8 @@ class SourceHeartbeatRealtimeTest extends TestCase
             ], 202),
         ]);
 
-        $this->actingAs(User::factory()->create())
-            ->getJson('/api/source-heartbeats?hours=48')
-            ->assertOk()
-            ->assertJsonPath('data.available', true)
-            ->assertJsonPath('data.sources.0.source_relay_hub_id', '072217029');
+        $this->artisan('support:source-heartbeats:publish')
+            ->assertExitCode(0);
 
         Http::assertSent(fn ($request): bool => $request->hasHeader('X-Realtime-Backend-Secret', 'backend-ingress-secret')
             && $request->url() === 'https://realtime.pbb.ph/api/v1/events/publish'
@@ -96,7 +127,7 @@ class SourceHeartbeatRealtimeTest extends TestCase
             && $request['payload']['sources'][0]['source_relay_hub_id'] === '072217029');
     }
 
-    public function test_source_heartbeat_realtime_publish_failure_does_not_break_proxy_response(): void
+    public function test_scheduled_source_heartbeat_publish_failure_does_not_fail_command(): void
     {
         Cache::forget('support.source_heartbeats.last_publish_hash');
         app(SupportSettings::class)->update([
@@ -124,10 +155,7 @@ class SourceHeartbeatRealtimeTest extends TestCase
             ], 403),
         ]);
 
-        $this->actingAs(User::factory()->create())
-            ->getJson('/api/source-heartbeats?hours=48')
-            ->assertOk()
-            ->assertJsonPath('data.available', true)
-            ->assertJsonPath('data.sources.0.status', 'online');
+        $this->artisan('support:source-heartbeats:publish')
+            ->assertExitCode(0);
     }
 }

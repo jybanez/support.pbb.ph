@@ -55,6 +55,17 @@ class SupportSettings
     /**
      * @return array<string, mixed>
      */
+    public function publicSettings(): array
+    {
+        $settings = $this->all();
+        unset($settings['realtimeTokenSigningSecret']);
+
+        return $settings;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     private function defaults(): array
     {
         return [

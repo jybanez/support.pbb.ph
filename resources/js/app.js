@@ -84,7 +84,6 @@ const state = {
         serverProjectCode: '',
         adminProjectCode: '',
         realtimeBackendIngressSecret: '',
-        realtimeTokenSigningSecret: '',
     },
     reauthOpen: false,
     lastServerTouchAt: now(),
@@ -3645,7 +3644,6 @@ const openSettings = () => {
             server_project_code: state.settings.serverProjectCode || '',
             admin_project_code: state.settings.adminProjectCode || '',
             realtime_backend_ingress_secret: state.settings.realtimeBackendIngressSecret || '',
-            realtime_token_signing_secret: state.settings.realtimeTokenSigningSecret || '',
         },
         rows: [
             [
@@ -3743,15 +3741,6 @@ const openSettings = () => {
                     name: 'realtime_backend_ingress_secret',
                     label: 'Realtime Backend Ingress Secret',
                     placeholder: 'Enter Realtime Backend Ingress Secret',
-                },
-            ],
-            [
-                {
-                    type: 'input',
-                    input: 'password',
-                    name: 'realtime_token_signing_secret',
-                    label: 'Realtime Token Signing Secret',
-                    placeholder: 'Enter Realtime Token Signing Secret',
                 },
             ],
         ],

@@ -13,7 +13,7 @@ class SettingsController extends BaseApiController
         abort_unless($request->user()?->role === 'admin', 403);
 
         return $this->ok([
-            'settings' => $settings->all(),
+            'settings' => $settings->publicSettings(),
         ]);
     }
 
@@ -36,7 +36,7 @@ class SettingsController extends BaseApiController
             'realtime_token_signing_secret' => ['nullable', 'string', 'max:4096'],
         ]);
 
-        $next = $settings->update([
+        $updates = [
             'alertLevel' => $validated['alert_level'],
             'consolidationCadenceMinutes' => (int) $validated['sitrep_cadence'],
             'relayUrl' => $validated['relay_url'],
@@ -48,11 +48,16 @@ class SettingsController extends BaseApiController
             'serverProjectCode' => $validated['server_project_code'] ?? '',
             'adminProjectCode' => $validated['admin_project_code'] ?? '',
             'realtimeBackendIngressSecret' => $validated['realtime_backend_ingress_secret'] ?? '',
-            'realtimeTokenSigningSecret' => $validated['realtime_token_signing_secret'] ?? '',
-        ]);
+        ];
+
+        if (array_key_exists('realtime_token_signing_secret', $validated)) {
+            $updates['realtimeTokenSigningSecret'] = $validated['realtime_token_signing_secret'] ?? '';
+        }
+
+        $settings->update($updates);
 
         return $this->ok([
-            'settings' => $next,
+            'settings' => $settings->publicSettings(),
             'touched_at' => now()->toIso8601String(),
         ]);
     }

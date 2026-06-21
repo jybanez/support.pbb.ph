@@ -49,8 +49,8 @@ class SourceHeartbeatRealtimePublisher
                     'Connection' => 'close',
                     'X-Realtime-Backend-Secret' => $secret,
                 ])
-                ->connectTimeout(2)
-                ->timeout(5)
+                ->connectTimeout(1)
+                ->timeout(2)
                 ->post(SupportRealtimeUrl::publishEndpoint($realtimeUrl), [
                     'client_code' => $clientCode,
                     'project_code' => $projectCode,
