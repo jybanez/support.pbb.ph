@@ -211,6 +211,7 @@ function support_data_prep_setting_plan(array $config): array
             'support.realtime_token_signing_secret',
             'shared.secrets.values.support_realtime_token_signing_secret',
             'shared.secrets.values.realtime_token_signing_secret',
+            'shared.secrets.values.realtime_token_secret',
         ],
         'sourceHeartbeatWebhookToken' => [
             'support.data_prep.apply_settings.source_heartbeat_webhook_token',
