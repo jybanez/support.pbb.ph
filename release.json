@@ -68,7 +68,8 @@
       "path_prefix": "/support",
       "allowed_path_prefixes": [
         "/api/relay/support-requests",
-        "/api/relay/support-request-lifecycle"
+        "/api/relay/support-request-lifecycle",
+        "/api/relay/source-heartbeats"
       ],
       "m2m_only": true,
       "exposure": "machine",
