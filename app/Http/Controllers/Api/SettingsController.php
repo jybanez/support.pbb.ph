@@ -48,8 +48,11 @@ class SettingsController extends BaseApiController
             'realtimeClientCode' => $validated['realtime_client_code'] ?? '',
             'serverProjectCode' => $validated['server_project_code'] ?? '',
             'adminProjectCode' => $validated['admin_project_code'] ?? '',
-            'realtimeBackendIngressSecret' => $validated['realtime_backend_ingress_secret'] ?? '',
         ];
+
+        if (array_key_exists('realtime_backend_ingress_secret', $validated)) {
+            $updates['realtimeBackendIngressSecret'] = $validated['realtime_backend_ingress_secret'] ?? '';
+        }
 
         if (array_key_exists('realtime_token_signing_secret', $validated)) {
             $updates['realtimeTokenSigningSecret'] = $validated['realtime_token_signing_secret'] ?? '';

@@ -58,6 +58,7 @@ class SupportSettings
     public function publicSettings(): array
     {
         $settings = $this->all();
+        unset($settings['realtimeBackendIngressSecret']);
         unset($settings['realtimeTokenSigningSecret']);
         unset($settings['sourceHeartbeatWebhookToken']);
 

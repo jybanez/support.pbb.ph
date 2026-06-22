@@ -1,5 +1,6 @@
 import './bootstrap';
 import { createSupportDashboardMap } from './maps/supportDashboardMap.js';
+import { mergeHeartbeatCache, mergeSourceHeartbeats } from './sourceHeartbeats.js';
 import { RealtimeSocketClient } from './vendor/pbb-realtime-sdk/index.js';
 
 const root = document.getElementById('app');
@@ -83,7 +84,6 @@ const state = {
         realtimeClientCode: '',
         serverProjectCode: '',
         adminProjectCode: '',
-        realtimeBackendIngressSecret: '',
     },
     reauthOpen: false,
     lastServerTouchAt: now(),
@@ -854,45 +854,6 @@ const incidentMediaRefs = (source, incident) => {
     });
 };
 
-const sourceHeartbeatKeys = (source = {}) => [
-    source?.id,
-    source?.relay_hub_id,
-    source?.source_hub_id,
-    source?.source_relay_hub_id,
-    source?.code,
-    source?.data?.source_hub_id,
-    source?.data?.source_relay_hub_id,
-    source?.data?.snapshot?.hub_id,
-    source?.data?.snapshot?.relay_hub_id,
-]
-    .map((value) => String(value || '').trim())
-    .filter(Boolean);
-
-const heartbeatKeys = (heartbeat = {}) => [
-    heartbeat?.source_hub_id,
-    heartbeat?.source_relay_hub_id,
-    heartbeat?.hub_id,
-    heartbeat?.relay_hub_id,
-]
-    .map((value) => String(value || '').trim())
-    .filter(Boolean);
-
-const mergeSourceHeartbeats = (sources = [], heartbeats = []) => {
-    const byHubId = new Map();
-    (heartbeats || []).forEach((heartbeat) => {
-        heartbeatKeys(heartbeat).forEach((key) => {
-            if (!byHubId.has(key)) {
-                byHubId.set(key, heartbeat);
-            }
-        });
-    });
-
-    return (sources || []).map((source) => ({
-        ...source,
-        heartbeat: sourceHeartbeatKeys(source).map((key) => byHubId.get(key)).find(Boolean) || null,
-    }));
-};
-
 const refreshActiveSourceDetailHeader = () => {
     if (!activeSourceDetailId) return;
 
@@ -903,10 +864,15 @@ const refreshActiveSourceDetailHeader = () => {
     metaHost.innerHTML = sourceDetailMetaMarkup(source);
 };
 
-const applySourceHeartbeatSnapshot = (snapshot = {}) => {
+const applySourceHeartbeatSnapshot = (snapshot = {}, options = {}) => {
     if (!state.currentSitrep.available) return;
 
-    const sourceHeartbeats = Array.isArray(snapshot.sources) ? snapshot.sources : [];
+    const sourceHeartbeats = mergeHeartbeatCache(
+        state.currentSitrep.sourceHeartbeats || [],
+        Array.isArray(snapshot.sources) ? snapshot.sources : [],
+        { replace: options.replace === true },
+    );
+
     state.currentSitrep = {
         ...state.currentSitrep,
         sourceHeartbeats,
@@ -2109,7 +2075,7 @@ const loadCurrentSitrep = async () => {
         if (loadId !== currentSitrepLoadId) return;
 
         const sourceHeartbeats = Array.isArray(heartbeatData.sources) ? heartbeatData.sources : [];
-        applySourceHeartbeatSnapshot({ sources: sourceHeartbeats });
+        applySourceHeartbeatSnapshot({ sources: sourceHeartbeats }, { replace: true });
         renderSourcesRail();
     } catch (error) {
         if (loadId !== currentSitrepLoadId) return;
@@ -3643,7 +3609,6 @@ const openSettings = () => {
             realtime_client_code: state.settings.realtimeClientCode || '',
             server_project_code: state.settings.serverProjectCode || '',
             admin_project_code: state.settings.adminProjectCode || '',
-            realtime_backend_ingress_secret: state.settings.realtimeBackendIngressSecret || '',
         },
         rows: [
             [
@@ -3732,15 +3697,6 @@ const openSettings = () => {
                     name: 'admin_project_code',
                     label: 'Admin Project Code',
                     placeholder: 'Enter Admin Project Code',
-                },
-            ],
-            [
-                {
-                    type: 'input',
-                    input: 'password',
-                    name: 'realtime_backend_ingress_secret',
-                    label: 'Realtime Backend Ingress Secret',
-                    placeholder: 'Enter Realtime Backend Ingress Secret',
                 },
             ],
         ],
