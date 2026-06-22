@@ -183,20 +183,33 @@ class BaselineApiTest extends TestCase
                 'server_project_code' => 'server-code',
                 'admin_project_code' => 'admin-code',
                 'realtime_backend_ingress_secret' => 'ingress-secret',
+                'realtime_token_signing_secret' => 'token-signing-secret',
+                'source_heartbeat_webhook_token' => 'heartbeat-webhook-secret',
             ])
             ->assertOk()
             ->assertJsonPath('data.settings.alertLevel', 'Critical')
             ->assertJsonPath('data.settings.consolidationCadenceMinutes', 30)
             ->assertJsonPath('data.settings.sitrepRelayToken', 'sitrep-relay-secret')
             ->assertJsonPath('data.settings.supportRequestRelayToken', 'support-request-relay-secret')
-            ->assertJsonPath('data.settings.realtimeBackendIngressSecret', 'ingress-secret');
+            ->assertJsonMissing(['ingress-secret', 'token-signing-secret', 'heartbeat-webhook-secret']);
+
+        $this->assertSame('ingress-secret', app(SupportSettings::class)->all()['realtimeBackendIngressSecret']);
+        $this->assertSame('token-signing-secret', app(SupportSettings::class)->all()['realtimeTokenSigningSecret']);
+        $this->assertSame('heartbeat-webhook-secret', app(SupportSettings::class)->all()['sourceHeartbeatWebhookToken']);
+
+        $this->actingAs($admin)
+            ->getJson('/api/settings')
+            ->assertOk()
+            ->assertJsonPath('data.settings.alertLevel', 'Critical')
+            ->assertJsonMissing(['ingress-secret', 'token-signing-secret', 'heartbeat-webhook-secret']);
 
         $this->actingAs($admin)
             ->getJson('/api/bootstrap')
             ->assertOk()
             ->assertJsonPath('data.settings.alertLevel', 'Critical')
             ->assertJsonPath('data.settings.consolidationCadenceMinutes', 30)
-            ->assertJsonPath('data.settings.realtimeClientCode', 'client-code');
+            ->assertJsonPath('data.settings.realtimeClientCode', 'client-code')
+            ->assertJsonMissing(['ingress-secret', 'token-signing-secret', 'heartbeat-webhook-secret']);
     }
 
     public function test_non_admin_cannot_update_support_settings(): void

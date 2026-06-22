@@ -204,6 +204,22 @@ function support_data_prep_setting_plan(array $config): array
             'shared.secrets.values.support_realtime_backend_ingress_secret',
             'shared.secrets.values.realtime_backend_ingress_secret',
         ],
+        'realtimeTokenSigningSecret' => [
+            'support.data_prep.apply_settings.realtime.token_signing_secret',
+            'support.data_prep.apply_settings.realtime_token_signing_secret',
+            'support.realtime.token_signing_secret',
+            'support.realtime_token_signing_secret',
+            'shared.secrets.values.support_realtime_token_signing_secret',
+            'shared.secrets.values.realtime_token_signing_secret',
+        ],
+        'sourceHeartbeatWebhookToken' => [
+            'support.data_prep.apply_settings.source_heartbeat_webhook_token',
+            'support.data_prep.apply_settings.relay.source_heartbeat_webhook_token',
+            'support.relay.source_heartbeat_webhook_token',
+            'support.source_heartbeat_webhook_token',
+            'shared.secrets.values.support_source_heartbeat_webhook_token',
+            'shared.secrets.values.source_heartbeat_webhook_token',
+        ],
     ];
 
     $settings = [];
@@ -230,6 +246,8 @@ function support_data_prep_public_setting_value(string $key, mixed $value): arra
         'supportRequestRelayToken' => true,
         'relayHandlerToken' => true,
         'realtimeBackendIngressSecret' => true,
+        'realtimeTokenSigningSecret' => true,
+        'sourceHeartbeatWebhookToken' => true,
     ];
 
     if (!isset($secretKeys[$key])) {

@@ -1,5 +1,7 @@
 import './bootstrap';
 import { createSupportDashboardMap } from './maps/supportDashboardMap.js';
+import { mergeHeartbeatCache, mergeSourceHeartbeats } from './sourceHeartbeats.js';
+import { RealtimeSocketClient } from './vendor/pbb-realtime-sdk/index.js';
 
 const root = document.getElementById('app');
 const csrfMeta = document.querySelector('meta[name="csrf-token"]');
@@ -82,7 +84,6 @@ const state = {
         realtimeClientCode: '',
         serverProjectCode: '',
         adminProjectCode: '',
-        realtimeBackendIngressSecret: '',
     },
     reauthOpen: false,
     lastServerTouchAt: now(),
@@ -118,6 +119,9 @@ let dashboardMap = null;
 let dashboardMapControls = null;
 let dashboardMapResizeObserver = null;
 let navbarClock = null;
+let sourceHeartbeatRealtimeClient = null;
+let sourceHeartbeatRealtimeConnecting = false;
+let sourceHeartbeatRealtimeEventType = 'support.source_heartbeats.updated';
 let currentSitrepStyleMounted = false;
 let currentSitrepLoadId = 0;
 let sourceVirtualList = null;
@@ -850,43 +854,102 @@ const incidentMediaRefs = (source, incident) => {
     });
 };
 
-const sourceHeartbeatKeys = (source = {}) => [
-    source?.id,
-    source?.relay_hub_id,
-    source?.source_hub_id,
-    source?.source_relay_hub_id,
-    source?.code,
-    source?.data?.source_hub_id,
-    source?.data?.source_relay_hub_id,
-    source?.data?.snapshot?.hub_id,
-    source?.data?.snapshot?.relay_hub_id,
-]
-    .map((value) => String(value || '').trim())
-    .filter(Boolean);
+const refreshActiveSourceDetailHeader = () => {
+    if (!activeSourceDetailId) return;
 
-const heartbeatKeys = (heartbeat = {}) => [
-    heartbeat?.source_hub_id,
-    heartbeat?.source_relay_hub_id,
-    heartbeat?.hub_id,
-    heartbeat?.relay_hub_id,
-]
-    .map((value) => String(value || '').trim())
-    .filter(Boolean);
+    const source = (state.currentSitrep.sources || []).find((item) => currentSitrepSourceId(item) === activeSourceDetailId);
+    const metaHost = document.querySelector('[data-source-detail-live-meta]');
+    if (!source || !metaHost) return;
 
-const mergeSourceHeartbeats = (sources = [], heartbeats = []) => {
-    const byHubId = new Map();
-    (heartbeats || []).forEach((heartbeat) => {
-        heartbeatKeys(heartbeat).forEach((key) => {
-            if (!byHubId.has(key)) {
-                byHubId.set(key, heartbeat);
+    metaHost.innerHTML = sourceDetailMetaMarkup(source);
+};
+
+const applySourceHeartbeatSnapshot = (snapshot = {}, options = {}) => {
+    if (!state.currentSitrep.available) return;
+
+    const sourceHeartbeats = mergeHeartbeatCache(
+        state.currentSitrep.sourceHeartbeats || [],
+        Array.isArray(snapshot.sources) ? snapshot.sources : [],
+        { replace: options.replace === true },
+    );
+
+    state.currentSitrep = {
+        ...state.currentSitrep,
+        sourceHeartbeats,
+        sourceHeartbeatsLoading: false,
+        sources: mergeSourceHeartbeats(state.currentSitrep.sources || [], sourceHeartbeats),
+    };
+
+    if (sourcesNavigationStack?.getState?.().currentPage?.id === 'sources-list') {
+        refreshSourcesList();
+    }
+
+    refreshActiveSourceDetailHeader();
+};
+
+const disconnectSourceHeartbeatRealtime = () => {
+    sourceHeartbeatRealtimeClient?.close?.();
+    sourceHeartbeatRealtimeClient = null;
+    sourceHeartbeatRealtimeConnecting = false;
+};
+
+const connectSourceHeartbeatRealtime = async () => {
+    if (!state.account || sourceHeartbeatRealtimeClient || sourceHeartbeatRealtimeConnecting) return;
+
+    sourceHeartbeatRealtimeConnecting = true;
+
+    try {
+        const data = await api('/api/realtime/source-heartbeats/admission', {
+            method: 'POST',
+            body: '{}',
+            reauthOnUnauthorized: false,
+        });
+        const admission = data.admission || data;
+        const room = String(admission?.room || '').trim();
+        const eventType = String(admission?.event_type || sourceHeartbeatRealtimeEventType).trim() || sourceHeartbeatRealtimeEventType;
+
+        if (!admission?.token || !admission?.websocket_url || !room) {
+            throw new Error('Realtime heartbeat admission is incomplete.');
+        }
+
+        const client = new RealtimeSocketClient({
+            websocketUrl: admission.websocket_url,
+            token: admission.token,
+            onOpen() {
+                client.sendRequest('session.auth.request', null, {
+                    token: admission.token,
+                });
+            },
+            onError(event) {
+                console.debug('Source heartbeat Realtime socket error.', event);
+            },
+            onClose() {
+                if (sourceHeartbeatRealtimeClient === client) {
+                    sourceHeartbeatRealtimeClient = null;
+                }
+            },
+        });
+
+        client.on('envelope', (envelope) => {
+            if (envelope?.phase === 'ack' && envelope?.type === 'session.auth.request') {
+                client.sendRequest('room.join.request', room, {});
+                return;
+            }
+
+            if (envelope?.phase === 'event' && envelope?.type === eventType) {
+                applySourceHeartbeatSnapshot(envelope.payload || {});
             }
         });
-    });
 
-    return (sources || []).map((source) => ({
-        ...source,
-        heartbeat: sourceHeartbeatKeys(source).map((key) => byHubId.get(key)).find(Boolean) || null,
-    }));
+        sourceHeartbeatRealtimeClient = client;
+        sourceHeartbeatRealtimeEventType = eventType;
+        client.connect();
+    } catch (error) {
+        console.debug('Source heartbeat Realtime unavailable.', error);
+        disconnectSourceHeartbeatRealtime();
+    } finally {
+        sourceHeartbeatRealtimeConnecting = false;
+    }
 };
 
 const visibleSourceMapRecords = () => (state.currentSitrep.sources || [])
@@ -1422,7 +1485,7 @@ const sourceDetailPage = (source) => {
                             <p class="ui-eyebrow">Source Detail</p>
                             <h3>${escapeHtml(source?.name || 'Source hub')}</h3>
                             <p>${escapeHtml(source?.subtitle || source?.domain || source?.code || 'No deployment label')}</p>
-                            ${sourceDetailMetaMarkup(source)}
+                            <div data-source-detail-live-meta>${sourceDetailMetaMarkup(source)}</div>
                         </div>
                         ${sourceStackCloseButton('Close source details')}
                     </header>
@@ -2018,12 +2081,7 @@ const loadCurrentSitrep = async () => {
         if (loadId !== currentSitrepLoadId) return;
 
         const sourceHeartbeats = Array.isArray(heartbeatData.sources) ? heartbeatData.sources : [];
-        state.currentSitrep = {
-            ...state.currentSitrep,
-            sourceHeartbeats,
-            sourceHeartbeatsLoading: false,
-            sources: mergeSourceHeartbeats(state.currentSitrep.sources || [], sourceHeartbeats),
-        };
+        applySourceHeartbeatSnapshot({ sources: sourceHeartbeats }, { replace: true });
         renderSourcesRail();
     } catch (error) {
         if (loadId !== currentSitrepLoadId) return;
@@ -2203,6 +2261,7 @@ const renderDashboardSplitter = () => {
     });
     mountDashboardMap();
     renderSourcesRail();
+    connectSourceHeartbeatRealtime();
     loadCurrentSitrep();
 };
 
@@ -2213,6 +2272,9 @@ const render = () => {
     dashboardSplitter?.destroy?.();
     dashboardSplitter = null;
     destroyDashboardMap();
+    if (!state.account) {
+        disconnectSourceHeartbeatRealtime();
+    }
     root.innerHTML = `
         <div class="app-shell" data-theme="dark">
             <div data-navbar-host></div>
@@ -3553,7 +3615,6 @@ const openSettings = () => {
             realtime_client_code: state.settings.realtimeClientCode || '',
             server_project_code: state.settings.serverProjectCode || '',
             admin_project_code: state.settings.adminProjectCode || '',
-            realtime_backend_ingress_secret: state.settings.realtimeBackendIngressSecret || '',
         },
         rows: [
             [
@@ -3644,15 +3705,6 @@ const openSettings = () => {
                     placeholder: 'Enter Admin Project Code',
                 },
             ],
-            [
-                {
-                    type: 'input',
-                    input: 'password',
-                    name: 'realtime_backend_ingress_secret',
-                    label: 'Realtime Backend Ingress Secret',
-                    placeholder: 'Enter Realtime Backend Ingress Secret',
-                },
-            ],
         ],
         async onSubmit(values) {
             const data = await api('/api/settings', {
@@ -3683,6 +3735,7 @@ const logout = async () => {
     applySessionPayload(data);
     state.account = null;
     state.reauthOpen = false;
+    disconnectSourceHeartbeatRealtime();
     render();
 };
 

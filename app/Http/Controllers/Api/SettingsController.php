@@ -13,7 +13,7 @@ class SettingsController extends BaseApiController
         abort_unless($request->user()?->role === 'admin', 403);
 
         return $this->ok([
-            'settings' => $settings->all(),
+            'settings' => $settings->publicSettings(),
         ]);
     }
 
@@ -33,9 +33,11 @@ class SettingsController extends BaseApiController
             'server_project_code' => ['nullable', 'string', 'max:4096'],
             'admin_project_code' => ['nullable', 'string', 'max:4096'],
             'realtime_backend_ingress_secret' => ['nullable', 'string', 'max:4096'],
+            'realtime_token_signing_secret' => ['nullable', 'string', 'max:4096'],
+            'source_heartbeat_webhook_token' => ['nullable', 'string', 'max:4096'],
         ]);
 
-        $next = $settings->update([
+        $updates = [
             'alertLevel' => $validated['alert_level'],
             'consolidationCadenceMinutes' => (int) $validated['sitrep_cadence'],
             'relayUrl' => $validated['relay_url'],
@@ -46,11 +48,24 @@ class SettingsController extends BaseApiController
             'realtimeClientCode' => $validated['realtime_client_code'] ?? '',
             'serverProjectCode' => $validated['server_project_code'] ?? '',
             'adminProjectCode' => $validated['admin_project_code'] ?? '',
-            'realtimeBackendIngressSecret' => $validated['realtime_backend_ingress_secret'] ?? '',
-        ]);
+        ];
+
+        if (array_key_exists('realtime_backend_ingress_secret', $validated)) {
+            $updates['realtimeBackendIngressSecret'] = $validated['realtime_backend_ingress_secret'] ?? '';
+        }
+
+        if (array_key_exists('realtime_token_signing_secret', $validated)) {
+            $updates['realtimeTokenSigningSecret'] = $validated['realtime_token_signing_secret'] ?? '';
+        }
+
+        if (array_key_exists('source_heartbeat_webhook_token', $validated)) {
+            $updates['sourceHeartbeatWebhookToken'] = $validated['source_heartbeat_webhook_token'] ?? '';
+        }
+
+        $settings->update($updates);
 
         return $this->ok([
-            'settings' => $next,
+            'settings' => $settings->publicSettings(),
             'touched_at' => now()->toIso8601String(),
         ]);
     }

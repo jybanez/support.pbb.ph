@@ -55,6 +55,19 @@ class SupportSettings
     /**
      * @return array<string, mixed>
      */
+    public function publicSettings(): array
+    {
+        $settings = $this->all();
+        unset($settings['realtimeBackendIngressSecret']);
+        unset($settings['realtimeTokenSigningSecret']);
+        unset($settings['sourceHeartbeatWebhookToken']);
+
+        return $settings;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     private function defaults(): array
     {
         return [
@@ -76,6 +89,8 @@ class SupportSettings
             'serverProjectCode' => '',
             'adminProjectCode' => '',
             'realtimeBackendIngressSecret' => '',
+            'realtimeTokenSigningSecret' => '',
+            'sourceHeartbeatWebhookToken' => '',
         ];
     }
 
