@@ -1,5 +1,5 @@
-import { createFormModal } from "./ui.form.modal.js?v=0.21.64";
-import { resolveWorkspaceOverlayParent, getWorkspaceUiBridge } from "./ui.workspace.bridge.js?v=0.21.64";
+import { createFormModal } from "./ui.form.modal.js?v=0.21.88";
+import { resolveWorkspaceOverlayParent, getWorkspaceUiBridge } from "./ui.workspace.bridge.js?v=0.21.88";
 
 export function createLoginFormModal(options = {}) {
   if (shouldUseCrossOriginFormBridge(options)) {
@@ -17,6 +17,7 @@ export function createLoginFormModal(options = {}) {
   const passwordLabel = String(options.passwordLabel || "Password");
   const passwordPlaceholder = String(options.passwordPlaceholder || "Enter password");
   const message = String(options.message || "Please sign in to continue.");
+  const brandingRow = buildLoginBrandingRow(options);
 
   return createFormModal({
     ...options,
@@ -25,6 +26,7 @@ export function createLoginFormModal(options = {}) {
     busyMessage: options.busyMessage || "Signing in...",
     submitLabel: options.submitLabel || "Login",
     rows: [
+      ...brandingRow,
       [{ type: "text", content: message }],
       [{
         type: "input",
@@ -366,6 +368,7 @@ function buildLoginBridgePayload(options, state) {
   const passwordLabel = String(options.passwordLabel || "Password");
   const passwordPlaceholder = String(options.passwordPlaceholder || "Enter password");
   const message = String(options.message || "Please sign in to continue.");
+  const brandingRow = buildLoginBrandingRow(options);
 
   return {
     intent: state.intent,
@@ -374,6 +377,8 @@ function buildLoginBridgePayload(options, state) {
     size: options.size || "sm",
     submitLabel: options.submitLabel || "Login",
     cancelLabel: options.cancelLabel || "Cancel",
+    showCancelButton: options.showCancelButton !== false,
+    showCloseButton: options.showCloseButton !== false,
     busyMessage: options.busyMessage || "Signing in...",
     closeOnBackdrop: options.closeOnBackdrop !== false,
     closeOnEscape: options.closeOnEscape !== false,
@@ -383,6 +388,7 @@ function buildLoginBridgePayload(options, state) {
     fieldErrors: state.fieldErrors,
     formError: state.formError,
     rows: [
+      ...brandingRow,
       [{ type: "text", content: message }],
       [{
         type: "input",
@@ -404,6 +410,31 @@ function buildLoginBridgePayload(options, state) {
       }],
     ],
   };
+}
+
+function buildLoginBrandingRow(options = {}) {
+  const mediaUrl = String(options.mediaUrl || "").trim();
+  const backgroundImageUrl = String(options.backgroundImageUrl || "").trim();
+  if (!mediaUrl && !backgroundImageUrl) {
+    return [];
+  }
+  return [[{
+    type: "branding",
+    mediaUrl,
+    mediaAlt: String(options.mediaAlt || ""),
+    backgroundImageUrl,
+    backgroundImageAlt: String(options.backgroundImageAlt || ""),
+    backgroundTone: normalizeBackgroundTone(options.backgroundTone),
+    span: 2,
+  }]];
+}
+
+function normalizeBackgroundTone(value) {
+  const tone = String(value || "auto").trim().toLowerCase();
+  if (tone === "auto" || tone === "dark" || tone === "light" || tone === "none") {
+    return tone;
+  }
+  return "auto";
 }
 
 function buildReauthBridgePayload(options, state) {
@@ -429,6 +460,8 @@ function buildReauthBridgePayload(options, state) {
     size: options.size || "sm",
     submitLabel: options.submitLabel || "Continue",
     cancelLabel: options.cancelLabel || "Cancel",
+    showCancelButton: options.showCancelButton !== false,
+    showCloseButton: options.showCloseButton !== false,
     busyMessage: options.busyMessage || "Re-authenticating...",
     closeOnBackdrop: options.closeOnBackdrop === true ? true : false,
     closeOnEscape: options.closeOnEscape === true ? true : false,
@@ -481,6 +514,8 @@ function buildAccountBridgePayload(options, state) {
     size: options.size || "sm",
     submitLabel: options.submitLabel || "Save",
     cancelLabel: options.cancelLabel || "Cancel",
+    showCancelButton: options.showCancelButton !== false,
+    showCloseButton: options.showCloseButton !== false,
     busyMessage: options.busyMessage || "Saving account...",
     closeOnBackdrop: options.closeOnBackdrop !== false,
     closeOnEscape: options.closeOnEscape !== false,
@@ -587,6 +622,8 @@ function buildChangePasswordBridgePayload(options, state) {
     size: options.size || "sm",
     submitLabel: options.submitLabel || "Update Password",
     cancelLabel: options.cancelLabel || "Cancel",
+    showCancelButton: options.showCancelButton !== false,
+    showCloseButton: options.showCloseButton !== false,
     busyMessage: options.busyMessage || "Updating password...",
     closeOnBackdrop: options.closeOnBackdrop !== false,
     closeOnEscape: options.closeOnEscape !== false,

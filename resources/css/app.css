@@ -51,6 +51,32 @@ input {
     overflow: hidden;
 }
 
+.support-login-modal .ui-form-modal-branding {
+    min-height: 150px;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+.support-login-modal .ui-form-modal-branding::after {
+    background: transparent;
+}
+
+.support-login-modal .ui-form-modal-branding-content {
+    min-height: 150px;
+    padding: 10px 0;
+}
+
+.support-login-modal .ui-form-modal-branding-media {
+    width: min(184px, 70%);
+    max-width: min(184px, 70%);
+    box-shadow: none;
+}
+
+.support-login-modal .ui-form-modal-text {
+    text-align: center;
+}
+
 .support-brand-mark {
     display: inline-grid;
     place-items: center;

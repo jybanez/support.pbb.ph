@@ -1,6 +1,6 @@
 import { createElement } from "./ui.dom.js";
 import { createEventBag } from "./ui.events.js";
-import { createIcon } from "./ui.icons.js?v=0.21.84";
+import { createIcon } from "./ui.icons.js?v=0.21.86";
 
 export function createDrawer(options = {}) {
   const events = createEventBag();

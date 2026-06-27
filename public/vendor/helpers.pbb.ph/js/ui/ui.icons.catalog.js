@@ -30,17 +30,19 @@ export const ICON_DEFINITIONS = {
     path("M4 20l4.5-1 9.3-9.3a2.1 2.1 0 0 0-3-3L5.5 16 4 20z"),
     path("M13.5 6.5l4 4"),
   ]),
+  "actions.lock": icon("actions", [
+    rect(5, 10, 14, 10, 2),
+    path("M8 10V7a4 4 0 0 1 8 0v3"),
+    line(12, 14, 12, 16.5),
+  ]),
+  "actions.unlock": icon("actions", [
+    rect(5, 10, 14, 10, 2),
+    path("M8 10V7a4 4 0 0 1 7.5-1.9"),
+    line(12, 14, 12, 16.5),
+  ]),
   "actions.settings": icon("actions", [
+    path("M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.09a2 2 0 0 1 1 1.73v.5a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.73l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"),
     circle(12, 12, 3),
-    path("M12 5.5v1.5"),
-    path("M12 17v1.5"),
-    path("M5.5 12H7"),
-    path("M17 12h1.5"),
-    path("M7.4 7.4 8.5 8.5"),
-    path("M15.5 15.5l1.1 1.1"),
-    path("M7.4 16.6l1.1-1.1"),
-    path("M15.5 8.5l1.1-1.1"),
-    circle(12, 12, 7),
   ]),
   "actions.options": icon("actions", [
     line(4, 7, 20, 7),
@@ -62,6 +64,26 @@ export const ICON_DEFINITIONS = {
   "actions.refresh": icon("actions", [
     path("M21 12a9 9 0 1 1-3-6.7"),
     path("M21 3v6h-6"),
+  ]),
+  "actions.volume": icon("actions", [
+    path("M4 10v4h4l5 4V6l-5 4H4z"),
+    path("M16 9a4 4 0 0 1 0 6"),
+    path("M18.5 6.5a7 7 0 0 1 0 11"),
+  ]),
+  "actions.volume-muted": icon("actions", [
+    path("M4 10v4h4l5 4V6l-5 4H4z"),
+    line(16, 9, 21, 14),
+    line(21, 9, 16, 14),
+  ]),
+  "actions.rotate-left": icon("actions", [
+    path("M4 12a8 8 0 1 0 2.3-5.7"),
+    path("M4 5v5h5"),
+    path("M12 8v4l3 2"),
+  ]),
+  "actions.rotate-right": icon("actions", [
+    path("M20 12a8 8 0 1 1-2.3-5.7"),
+    path("M20 5v5h-5"),
+    path("M12 8v4l-3 2"),
   ]),
   "actions.more-horizontal": icon("actions", [
     circle(6, 12, 1.3),
@@ -174,6 +196,13 @@ export const ICON_DEFINITIONS = {
     path("M10 8l5-3v14l-5-3H7a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h3z"),
     path("M18 9a4 4 0 0 1 0 6"),
   ]),
+  "media.gamepad": icon("media", [
+    path("M7.5 9h9a4.5 4.5 0 0 1 4.2 3l1.1 3.3a2.4 2.4 0 0 1-4 2.4L15.5 15h-7l-2.3 2.7a2.4 2.4 0 0 1-4-2.4L3.3 12a4.5 4.5 0 0 1 4.2-3Z"),
+    line(7, 13, 11, 13),
+    line(9, 11, 9, 15),
+    circle(16.5, 12.2, 0.9),
+    circle(18.5, 14.2, 0.9),
+  ]),
   "data.grid": icon("data", [
     rect(4, 4, 7, 7, 1.5),
     rect(13, 4, 7, 7, 1.5),
@@ -281,7 +310,7 @@ export const ICON_DEFINITIONS = {
   ]),
   "time.history": icon("time", [
     path("M4 12a8 8 0 1 0 2.3-5.7"),
-    polyline("4 5v5h5"),
+    path("M4 5v5h5"),
     line(12, 8, 12, 12),
     line(12, 12, 15, 13.5),
   ]),
@@ -347,6 +376,9 @@ export const ICON_DEFINITIONS = {
 };
 
 Object.assign(ICON_DEFINITIONS, {
+  "actions.sound-on": alias("actions", "actions.volume"),
+  "actions.sound-off": alias("actions", "actions.volume-muted"),
+
   "sitrep.report": alias("sitrep", "assets.document"),
   "sitrep.summary": alias("sitrep", "assets.clipboard"),
   "sitrep.situation": alias("sitrep", "status.info"),
@@ -511,6 +543,29 @@ Object.assign(ICON_DEFINITIONS, {
   "map.target-hub": alias("map", "places.pin"),
   "map.uplink": alias("map", "navigation.arrow-up"),
   "map.coverage-area": alias("map", "places.map"),
+
+  "community.badge": icon("community", [
+    path("M12 3l2.7 1.7 3.2-.1 1.4 2.9 2.6 1.8-.8 3.1.8 3.1-2.6 1.8-1.4 2.9-3.2-.1L12 21l-2.7-1.7-3.2.1-1.4-2.9-2.6-1.8.8-3.1-.8-3.1 2.6-1.8 1.4-2.9 3.2.1L12 3z"),
+    path("M9 12l2 2 4-4"),
+  ]),
+  "community.award": icon("community", [
+    circle(12, 8, 4),
+    path("M8.8 11.2 7 21l5-3 5 3-1.8-9.8"),
+    path("M10 8l1.4 1.4L14 6.8"),
+  ]),
+  "community.medal": icon("community", [
+    path("M8 3h8l-2 6h-4L8 3z"),
+    path("M8 3l4 6 4-6"),
+    circle(12, 15, 5),
+    path("M12 12.6l.8 1.6 1.8.3-1.3 1.2.3 1.8-1.6-.8-1.6.8.3-1.8-1.3-1.2 1.8-.3.8-1.6z"),
+  ]),
+  "community.certificate": icon("community", [
+    rect(4, 5, 16, 14, 2),
+    path("M7 9h7"),
+    path("M7 12h5"),
+    circle(16, 13, 2),
+    path("M14.8 14.7 14 18l2-1 2 1-.8-3.3"),
+  ]),
 
   "quality.verified": alias("quality", "status.success"),
   "quality.unverified": alias("quality", "status.warning"),

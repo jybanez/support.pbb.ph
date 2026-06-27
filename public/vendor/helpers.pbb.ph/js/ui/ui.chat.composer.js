@@ -42,6 +42,7 @@ export function createChatComposer(container, data = {}, options = {}) {
         currentOptions.disabled ? "is-disabled" : "",
       ].filter(Boolean).join(" "),
     });
+    root.addEventListener("paste", handlePaste);
 
     const controls = createElement("div", {
       className: [
@@ -79,7 +80,7 @@ export function createChatComposer(container, data = {}, options = {}) {
       fileInput.addEventListener("change", () => {
         const files = Array.from(fileInput.files || []);
         if (files.length) {
-          currentOptions.onFilesSelected?.(files, { source: "picker" });
+          emitFilesSelected(files, "picker");
         }
         fileInput.value = "";
       });
@@ -168,6 +169,30 @@ export function createChatComposer(container, data = {}, options = {}) {
     }
   }
 
+  function handlePaste(event) {
+    if (!currentOptions.showAttachmentButton || isInteractionBlocked()) {
+      return;
+    }
+    const files = getClipboardFiles(event.clipboardData);
+    if (!files.length) {
+      return;
+    }
+    const acceptedFiles = normalizeSelectedFiles(files, currentOptions);
+    if (!acceptedFiles.length) {
+      return;
+    }
+    event.preventDefault();
+    emitFilesSelected(acceptedFiles, "paste");
+  }
+
+  function emitFilesSelected(files, source) {
+    const selectedFiles = normalizeSelectedFiles(files, currentOptions);
+    if (!selectedFiles.length) {
+      return;
+    }
+    currentOptions.onFilesSelected?.(selectedFiles, { source });
+  }
+
   async function submit() {
     if (isSendDisabled()) {
       return;
@@ -247,4 +272,50 @@ export function createChatComposer(container, data = {}, options = {}) {
 
   render();
   return { update, destroy, setValue, getValue, clear, focus, setBusy, getState };
+}
+
+function getClipboardFiles(clipboardData) {
+  const files = [];
+  const items = Array.from(clipboardData?.items || []);
+  items.forEach((item) => {
+    if (item?.kind !== "file" || typeof item.getAsFile !== "function") {
+      return;
+    }
+    const file = item.getAsFile();
+    if (file) {
+      files.push(file);
+    }
+  });
+  if (files.length) {
+    return files;
+  }
+  return Array.from(clipboardData?.files || []).filter(Boolean);
+}
+
+function normalizeSelectedFiles(files, currentOptions = {}) {
+  return Array.from(files || [])
+    .filter(Boolean)
+    .filter((file) => matchesAccept(file, currentOptions?.accept))
+    .slice(0, currentOptions?.multiple === false ? 1 : undefined);
+}
+
+function matchesAccept(file, accept) {
+  const tokens = String(accept || "")
+    .split(",")
+    .map((token) => token.trim().toLowerCase())
+    .filter(Boolean);
+  if (!tokens.length) {
+    return true;
+  }
+  const name = String(file?.name || "").toLowerCase();
+  const type = String(file?.type || "").toLowerCase();
+  return tokens.some((token) => {
+    if (token.endsWith("/*")) {
+      return Boolean(type) && type.startsWith(token.slice(0, -1));
+    }
+    if (token.startsWith(".")) {
+      return name.endsWith(token);
+    }
+    return Boolean(type) && type === token;
+  });
 }

@@ -97,6 +97,35 @@
   font: 500 12px/1 var(--ui-font);
 }
 
+.ui-avatar-presence-host {
+  position: relative;
+}
+
+.ui-avatar-presence-dot {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: clamp(8px, 28%, 12px);
+  height: clamp(8px, 28%, 12px);
+  border: 2px solid var(--ui-bg-soft, #101c31);
+  border-radius: var(--ui-radius-pill);
+  background: transparent;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.ui-avatar-presence-host.is-presence-online .ui-avatar-presence-dot {
+  background: #42d982;
+}
+
+.ui-avatar-presence-host.is-presence-away .ui-avatar-presence-dot {
+  background: #f4c14f;
+}
+
+.ui-avatar-presence-host.is-presence-busy .ui-avatar-presence-dot {
+  background: #ff6b7d;
+}
+
 .ui-button,
 .ui-input {
   font-family: var(--ui-font);

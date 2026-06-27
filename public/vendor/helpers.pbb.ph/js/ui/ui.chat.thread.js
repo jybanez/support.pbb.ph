@@ -29,6 +29,7 @@ const DEFAULT_OPTIONS = {
   onAttachmentDownload: null,
   onMessageAction: null,
   onMessageMenuSelect: null,
+  onReplyPreviewOpen: null,
 };
 
 export function createChatThread(container, data = {}, options = {}) {
@@ -45,6 +46,7 @@ export function createChatThread(container, data = {}, options = {}) {
   let scrollRaf = 0;
   let remeasureRaf = 0;
   let measureRetryCount = 0;
+  let bottomPinToken = 0;
   const measuredHeights = new Map();
 
   function render(reason = "replace", restoreSnapshot = null) {
@@ -127,11 +129,13 @@ export function createChatThread(container, data = {}, options = {}) {
     const previous = currentMessages[index - 1] || null;
     const grouped = Boolean(currentOptions.groupAdjacentMessages && isGroupedWithPrevious(previous, message));
     const direction = normalizeDirection(message.direction);
+    const hasSenderAvatar = shouldRenderAvatar(message);
     const row = createElement("article", {
       className: [
         "ui-chat-message",
         `is-${direction}`,
         grouped ? "is-grouped" : "",
+        hasSenderAvatar ? "has-avatar" : "",
         message?.meta?.emphasized ? "is-emphasized" : "",
         message?.meta?.muted ? "is-muted" : "",
       ].filter(Boolean).join(" "),
@@ -149,8 +153,11 @@ export function createChatThread(container, data = {}, options = {}) {
       return row;
     }
 
-    const bubble = createElement("div", { className: "ui-chat-message-bubble" });
+    const avatar = hasSenderAvatar ? createMessageAvatar(message, grouped) : null;
     const menuItems = getMessageMenuItemsFromOptions(message, currentMessages, currentOptions);
+    const bubble = createElement("div", {
+      className: `ui-chat-message-bubble${menuItems.length ? " has-menu" : ""}`,
+    });
     if (menuItems.length) {
       bubble.appendChild(createMessageMenuTrigger(message, menuItems));
     }
@@ -165,6 +172,11 @@ export function createChatThread(container, data = {}, options = {}) {
           text: String(message.senderSubtitle),
         }));
       }
+    }
+
+    const replyTo = getMessageReplyTo(message);
+    if (shouldRenderReplyPreview(replyTo)) {
+      bubble.appendChild(createReplyPreviewNode(message, replyTo));
     }
 
     if (message.text) {
@@ -184,8 +196,67 @@ export function createChatThread(container, data = {}, options = {}) {
       bubble.appendChild(meta);
     }
 
+    if (avatar && direction !== "outgoing") {
+      row.appendChild(avatar);
+    }
     row.appendChild(bubble);
+    if (avatar && direction === "outgoing") {
+      row.appendChild(avatar);
+    }
     return row;
+  }
+
+  function createMessageAvatar(message, grouped) {
+    const senderName = String(message.senderName || "").trim();
+    const avatarUrl = getSenderAvatarUrl(message);
+    const presence = normalizeSenderPresence(message);
+    const renderPresence = shouldRenderPresence(presence) && !grouped;
+    const initials = getInitials(senderName);
+    const avatar = createElement("span", {
+      className: [
+        "ui-chat-message-avatar",
+        "ui-avatar-presence-host",
+        grouped ? "is-placeholder" : "",
+        avatarUrl ? "has-image" : "",
+        renderPresence ? `has-presence is-presence-${presence}` : "",
+      ].filter(Boolean).join(" "),
+      attrs: {
+        "aria-hidden": "true",
+        title: grouped ? "" : senderName,
+      },
+    });
+    if (grouped) {
+      return avatar;
+    }
+    if (avatarUrl) {
+      const image = createElement("img", {
+        className: "ui-chat-message-avatar-image",
+        attrs: {
+          src: avatarUrl,
+          alt: "",
+          loading: "lazy",
+          decoding: "async",
+        },
+      });
+      image.addEventListener("error", () => {
+        avatar.classList.remove("has-image");
+        image.hidden = true;
+      }, { once: true });
+      avatar.appendChild(image);
+    }
+    avatar.appendChild(createElement("span", {
+      className: "ui-chat-message-avatar-fallback",
+      text: initials,
+    }));
+    if (renderPresence) {
+      avatar.appendChild(createElement("span", {
+        className: "ui-avatar-presence-dot ui-chat-message-avatar-presence",
+        attrs: {
+          "aria-hidden": "true",
+        },
+      }));
+    }
+    return avatar;
   }
 
   function createMessageMenuTrigger(message, menuItems) {
@@ -211,6 +282,45 @@ export function createChatThread(container, data = {}, options = {}) {
     });
     messageMenuApis.push(menuApi);
     return trigger;
+  }
+
+  function createReplyPreviewNode(message, replyTo) {
+    const senderName = getReplySenderName(replyTo);
+    const text = getReplyText(replyTo);
+    const attachmentLabel = getReplyAttachmentLabel(replyTo);
+    const isInteractive = typeof currentOptions.onReplyPreviewOpen === "function";
+    const node = createElement(isInteractive ? "button" : "div", {
+      className: "ui-chat-message-reply",
+      attrs: isInteractive ? {
+        type: "button",
+        "aria-label": `Open replied message${senderName ? ` from ${senderName}` : ""}`,
+      } : {},
+    });
+
+    if (senderName) {
+      node.appendChild(createElement("span", {
+        className: "ui-chat-message-reply-sender",
+        text: senderName,
+      }));
+    }
+    if (text) {
+      node.appendChild(createElement("span", {
+        className: "ui-chat-message-reply-text",
+        text,
+      }));
+    }
+    if (attachmentLabel) {
+      node.appendChild(createElement("span", {
+        className: "ui-chat-message-reply-attachment",
+        text: attachmentLabel,
+      }));
+    }
+
+    if (isInteractive) {
+      node.addEventListener("click", () => currentOptions.onReplyPreviewOpen(message, { ...replyTo }));
+    }
+
+    return node;
   }
 
   function createAttachmentsNode(message, attachments) {
@@ -357,8 +467,9 @@ export function createChatThread(container, data = {}, options = {}) {
   }
 
   function onViewportScroll() {
+    bottomPinToken += 1;
     if (scrollRaf) {
-      return;
+      cancelAnimationFrame(scrollRaf);
     }
     scrollRaf = requestAnimationFrame(() => {
       scrollRaf = 0;
@@ -377,6 +488,17 @@ export function createChatThread(container, data = {}, options = {}) {
       scrollRaf = 0;
       renderVirtual("measure", null);
     });
+  }
+
+  function cancelScheduledVirtualRenders() {
+    if (scrollRaf) {
+      cancelAnimationFrame(scrollRaf);
+      scrollRaf = 0;
+    }
+    if (remeasureRaf) {
+      cancelAnimationFrame(remeasureRaf);
+      remeasureRaf = 0;
+    }
   }
 
   function captureVirtualSnapshot() {
@@ -410,22 +532,41 @@ export function createChatThread(container, data = {}, options = {}) {
         if (!virtualViewport || !snapshot.anchorId) {
           return;
         }
-        const anchorNode = findMessageNodeById(virtualViewport, snapshot.anchorId);
-        if (!anchorNode) {
-          return;
-        }
-        const viewportRect = virtualViewport.getBoundingClientRect();
-        const anchorRect = anchorNode.getBoundingClientRect();
-        const offsetDelta = (anchorRect.top - viewportRect.top) - snapshot.anchorOffset;
-        if (Math.abs(offsetDelta) > 1) {
-          virtualViewport.scrollTop += offsetDelta;
-        }
+        renderVirtual("scroll", null);
+        requestAnimationFrame(() => {
+          restoreAnchorOffset(snapshot);
+        });
       });
       return;
     }
 
     if (snapshot.mode === "preserve") {
       virtualViewport.scrollTop = snapshot.scrollTop;
+      requestAnimationFrame(() => {
+        if (!virtualViewport || !snapshot.anchorId) {
+          return;
+        }
+        renderVirtual("scroll", null);
+        requestAnimationFrame(() => {
+          restoreAnchorOffset(snapshot);
+        });
+      });
+    }
+  }
+
+  function restoreAnchorOffset(snapshot) {
+    if (!virtualViewport || !snapshot?.anchorId) {
+      return;
+    }
+    const anchorNode = findMessageNodeById(virtualViewport, snapshot.anchorId);
+    if (!anchorNode) {
+      return;
+    }
+    const viewportRect = virtualViewport.getBoundingClientRect();
+    const anchorRect = anchorNode.getBoundingClientRect();
+    const offsetDelta = (anchorRect.top - viewportRect.top) - snapshot.anchorOffset;
+    if (Math.abs(offsetDelta) > 1) {
+      virtualViewport.scrollTop += offsetDelta;
     }
   }
 
@@ -433,8 +574,10 @@ export function createChatThread(container, data = {}, options = {}) {
     if (!virtualViewport) {
       return;
     }
+    const token = bottomPinToken + 1;
+    bottomPinToken = token;
     const applyBottom = () => {
-      if (!virtualViewport) {
+      if (!virtualViewport || token !== bottomPinToken) {
         return;
       }
       virtualViewport.scrollTop = virtualViewport.scrollHeight;
@@ -486,6 +629,7 @@ export function createChatThread(container, data = {}, options = {}) {
   function update(nextData = {}, nextOptions = {}) {
     const previousMessages = currentMessages;
     const snapshot = captureVirtualSnapshot();
+    cancelScheduledVirtualRenders();
     if (Object.prototype.hasOwnProperty.call(nextData || {}, "messages")) {
       currentMessages = normalizeMessages(nextData.messages || []);
     }
@@ -504,6 +648,7 @@ export function createChatThread(container, data = {}, options = {}) {
   function setMessages(messages = []) {
     const previousMessages = currentMessages;
     const snapshot = captureVirtualSnapshot();
+    cancelScheduledVirtualRenders();
     currentMessages = normalizeMessages(messages);
     render(detectChangeReason(previousMessages, currentMessages), snapshot);
   }
@@ -511,6 +656,7 @@ export function createChatThread(container, data = {}, options = {}) {
   function getMessages() {
     return currentMessages.map((message) => ({
       ...message,
+      replyTo: normalizeReplyTo(message.replyTo),
       attachments: Array.isArray(message.attachments) ? message.attachments.map((item) => ({ ...item })) : [],
       meta: message.meta ? { ...message.meta } : undefined,
     }));
@@ -544,9 +690,14 @@ function normalizeMessages(messages) {
   return Array.isArray(messages) ? messages.map((message) => ({
     ...message,
     direction: normalizeDirection(message?.direction),
+    replyTo: normalizeReplyTo(message?.replyTo || message?.reply),
     attachments: Array.isArray(message?.attachments) ? message.attachments.map((item) => ({ ...item })) : [],
     meta: message?.meta ? { ...message.meta } : undefined,
   })) : [];
+}
+
+function normalizeReplyTo(replyTo) {
+  return replyTo && typeof replyTo === "object" ? { ...replyTo } : null;
 }
 
 function normalizeDirection(direction) {
@@ -574,6 +725,56 @@ function shouldShowSenderName(message, grouped) {
     return Boolean(message.senderName) && !grouped;
   }
   return Boolean(message.senderName) && !grouped;
+}
+
+function shouldRenderAvatar(message) {
+  return normalizeDirection(message?.direction) !== "system"
+    && Boolean(getSenderAvatarUrl(message) || String(message?.senderName || "").trim());
+}
+
+function getSenderAvatarUrl(message) {
+  return String(message?.senderAvatar || message?.sender?.avatar || "").trim();
+}
+
+function normalizeSenderPresence(message) {
+  const value = String(message?.senderPresence || message?.sender?.presence || "").trim().toLowerCase();
+  if (["online", "away", "busy", "offline", "none"].includes(value)) {
+    return value;
+  }
+  return "none";
+}
+
+function shouldRenderPresence(presence) {
+  return presence === "online";
+}
+
+function getMessageReplyTo(message) {
+  return normalizeReplyTo(message?.replyTo || message?.reply);
+}
+
+function getReplySenderName(replyTo) {
+  return String(replyTo?.senderName || replyTo?.authorName || replyTo?.sender?.name || replyTo?.title || "").trim();
+}
+
+function getReplyText(replyTo) {
+  return String(replyTo?.text || replyTo?.preview || replyTo?.excerpt || "").trim();
+}
+
+function getReplyAttachmentLabel(replyTo) {
+  return String(replyTo?.attachmentLabel || replyTo?.attachment?.name || "").trim();
+}
+
+function shouldRenderReplyPreview(replyTo) {
+  return Boolean(replyTo && (getReplySenderName(replyTo) || getReplyText(replyTo) || getReplyAttachmentLabel(replyTo)));
+}
+
+function getInitials(name) {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const initials = parts.slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+  return initials || "?";
 }
 
 function getMessageMenuItemsFromOptions(message, currentMessages, currentOptions) {
@@ -617,6 +818,9 @@ function estimateMessageHeight(message) {
   let height = DEFAULT_MESSAGE_HEIGHT;
   if (message?.text) {
     height += Math.min(56, Math.ceil(String(message.text).length / 42) * 18);
+  }
+  if (shouldRenderReplyPreview(getMessageReplyTo(message))) {
+    height += 54;
   }
   const attachments = Array.isArray(message?.attachments) ? message.attachments : [];
   if (attachments.some((item) => item.kind === "image" || item.kind === "video")) {

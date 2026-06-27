@@ -140,6 +140,15 @@
   background: #12213a;
 }
 
+.ui-navbar-item.ui-button-borderless,
+.ui-navbar-item.ui-button-borderless:hover,
+.ui-navbar-item.ui-button-borderless:focus-visible,
+.ui-navbar-item.ui-button-borderless.is-active {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
 .ui-navbar-actions {
   display: flex;
   gap: 8px;
@@ -306,6 +315,48 @@
 
   .ui-navbar-center.has-content {
     justify-content: flex-start;
+  }
+
+  .ui-navbar.is-mobile-layout-scroll {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ui-navbar.is-mobile-layout-scroll .ui-navbar-start,
+  .ui-navbar.is-mobile-layout-scroll .ui-navbar-center,
+  .ui-navbar.is-mobile-layout-scroll .ui-navbar-end {
+    display: flex;
+    width: auto;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    margin-left: 0;
+  }
+
+  .ui-navbar.is-mobile-layout-scroll .ui-navbar-start {
+    flex: 1 0 auto;
+  }
+
+  .ui-navbar.is-mobile-layout-scroll .ui-navbar-end {
+    margin-left: auto;
+    justify-content: flex-end;
+  }
+
+  .ui-navbar.is-mobile-layout-scroll .ui-navbar-brand {
+    flex: 0 1 auto;
+  }
+
+  .ui-navbar.is-mobile-layout-scroll .ui-navbar-items,
+  .ui-navbar.is-mobile-layout-scroll .ui-navbar-actions {
+    flex: 0 0 auto;
+    overflow: visible;
+    padding-bottom: 0;
   }
 
   .ui-navbar.is-mobile-collapsible.is-mobile-active {

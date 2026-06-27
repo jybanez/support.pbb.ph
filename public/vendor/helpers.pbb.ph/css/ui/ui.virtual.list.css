@@ -12,6 +12,12 @@
   padding: 0;
 }
 
+.ui-virtual-list.is-chrome-less .ui-virtual-list-viewport {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
 .ui-virtual-list-viewport {
   position: relative;
   overflow: auto;

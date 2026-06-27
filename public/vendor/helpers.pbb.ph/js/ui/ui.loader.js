@@ -1,14 +1,20 @@
 const UI_TOKENS_CSS = "../../css/ui/ui.tokens.css";
 const UI_COMPONENTS_CSS = "../../css/ui/ui.components.css";
 const INCIDENT_BASE_CSS = "../../css/incident/incident.css";
-const UI_OVERLAY_ROUTING_REV = "0.21.87";
+const UI_OVERLAY_ROUTING_REV = "0.21.112";
 const UI_AUDIO_REV = "0.21.60";
-const UI_ICONS_REV = "0.21.84";
+const UI_ICONS_REV = "0.21.88";
+const UI_FILE_INPUT_REV = "0.21.108";
+const UI_CHAT_REV = "0.21.109";
 const UI_PASSWORD_REV = "0.21.64";
 const UI_DEVICE_PRIMER_REV = "0.21.65";
-const UI_BUNDLE_REV = "0.21.89";
+const UI_GAME_REV = "0.21.111";
+const UI_BUNDLE_REV = "0.21.112";
+const UI_GAME_BUNDLE_REV = "0.21.107";
 const UI_BUNDLE_JS = `../../dist/helpers.ui.bundle.min.js?v=${UI_BUNDLE_REV}`;
 const UI_BUNDLE_CSS = `../../dist/helpers.ui.bundle.min.css?v=${UI_BUNDLE_REV}`;
+const UI_GAME_BUNDLE_JS = `../../dist/helpers.game.bundle.min.js?v=${UI_GAME_BUNDLE_REV}`;
+const UI_GAME_BUNDLE_CSS = `../../dist/helpers.game.bundle.min.css?v=${UI_GAME_BUNDLE_REV}`;
 
 export const DEFAULT_COMPONENT_REGISTRY = {
   "ui.dom": {
@@ -148,6 +154,12 @@ export const DEFAULT_COMPONENT_REGISTRY = {
     css: [UI_TOKENS_CSS, UI_COMPONENTS_CSS, "../../css/ui/ui.path.picker.css"],
     deps: [],
     export: "createPathPicker",
+  },
+  "ui.file.input": {
+    js: `./ui.file.input.js?v=${UI_FILE_INPUT_REV}`,
+    css: [UI_TOKENS_CSS, UI_COMPONENTS_CSS, "../../css/ui/ui.icons.css", `../../css/ui/ui.file.input.css?v=${UI_FILE_INPUT_REV}`],
+    deps: ["ui.icons"],
+    export: "createFileInput",
   },
   "ui.number.stepper": {
     js: "./ui.number.stepper.js",
@@ -323,6 +335,42 @@ export const DEFAULT_COMPONENT_REGISTRY = {
     deps: ["ui.icons"],
     export: "createStatCards",
   },
+  "ui.icon.grid": {
+    js: "./ui.icon.grid.js",
+    css: [UI_TOKENS_CSS, UI_COMPONENTS_CSS, "../../css/ui/ui.icons.css", "../../css/ui/ui.icon.grid.css"],
+    deps: ["ui.icons"],
+    export: "createIconGrid",
+  },
+  "ui.game.core": {
+    js: `./ui.game.core.js?v=${UI_GAME_REV}`,
+    css: [UI_TOKENS_CSS, UI_COMPONENTS_CSS, "../../css/ui/ui.icons.css", `../../css/ui/ui.game.core.css?v=${UI_GAME_REV}`],
+    deps: ["ui.icons"],
+    export: null,
+  },
+  "ui.game.objects": {
+    js: `./ui.game.objects.js?v=${UI_GAME_REV}`,
+    css: [UI_TOKENS_CSS, UI_COMPONENTS_CSS],
+    deps: [],
+    export: null,
+  },
+  "ui.game.grid": {
+    js: `./ui.game.grid.js?v=${UI_GAME_REV}`,
+    css: [],
+    deps: [],
+    export: null,
+  },
+  "ui.game.audio": {
+    js: `./ui.game.audio.js?v=${UI_GAME_REV}`,
+    css: [],
+    deps: [],
+    export: null,
+  },
+  "ui.game.state.chrome": {
+    js: `./ui.game.state.chrome.js?v=${UI_GAME_REV}`,
+    css: [UI_TOKENS_CSS, UI_COMPONENTS_CSS, "../../css/ui/ui.icons.css", `../../css/ui/ui.game.state.chrome.css?v=${UI_GAME_REV}`],
+    deps: ["ui.icons", "ui.game.core"],
+    export: null,
+  },
   "ui.map.controls": {
     js: "./ui.map.controls.js",
     css: [UI_TOKENS_CSS, UI_COMPONENTS_CSS, "../../css/ui/ui.map.controls.css"],
@@ -438,8 +486,8 @@ export const DEFAULT_COMPONENT_REGISTRY = {
     export: "createFileUploader",
   },
   "ui.chat.thread": {
-    js: "./ui.chat.thread.js",
-    css: [UI_TOKENS_CSS, UI_COMPONENTS_CSS, "../../css/ui/ui.nav.css", "../../css/ui/ui.chat.thread.css", "../../css/ui/ui.media.strip.css", "../../css/ui/ui.media.viewer.css"],
+    js: `./ui.chat.thread.js?v=${UI_CHAT_REV}`,
+    css: [UI_TOKENS_CSS, UI_COMPONENTS_CSS, "../../css/ui/ui.nav.css", `../../css/ui/ui.chat.thread.css?v=${UI_CHAT_REV}`, "../../css/ui/ui.media.strip.css", "../../css/ui/ui.media.viewer.css"],
     deps: ["ui.media.strip", "ui.menu"],
     export: "createChatThread",
   },
@@ -693,6 +741,7 @@ export const DEFAULT_COMPONENT_GROUPS = {
     "ui.form.modal.reason",
     "ui.password",
     "ui.path.picker",
+    "ui.file.input",
     "ui.checkbox",
     "ui.checkbox.group",
     "ui.combobox",
@@ -727,6 +776,7 @@ export const DEFAULT_COMPONENT_GROUPS = {
     "ui.signal.strength",
     "ui.heartbeat.strip",
     "ui.stat.cards",
+    "ui.icon.grid",
     "ui.map.controls",
     "ui.map.legend",
     "ui.map.markers",
@@ -746,6 +796,13 @@ export const DEFAULT_COMPONENT_GROUPS = {
     "ui.audio.audiograph",
     "ui.audio.timeline",
     "ui.audio.callSession",
+  ],
+  games: [
+    "ui.game.core",
+    "ui.game.objects",
+    "ui.game.grid",
+    "ui.game.audio",
+    "ui.game.state.chrome",
   ],
   workflow: [
     "ui.command.palette",
@@ -769,10 +826,17 @@ const DEFAULT_LOADER_OPTIONS = {
   debug: false,
   preferBundles: false,
   bundles: {
+    game: {
+      prefixes: ["ui.game."],
+      js: UI_GAME_BUNDLE_JS,
+      css: [UI_GAME_BUNDLE_CSS],
+      globalName: "__PBB_HELPER_GAME_BUNDLE__",
+    },
     ui: {
       prefixes: ["ui.", "incident."],
       js: UI_BUNDLE_JS,
       css: [UI_BUNDLE_CSS],
+      globalName: "__PBB_HELPER_UI_BUNDLE__",
     },
   },
 };
@@ -803,6 +867,7 @@ export function createUiLoader(initialRegistry = DEFAULT_COMPONENT_REGISTRY, con
           prefixes,
           js: String(bundle.js || ""),
           css: uniqueStrings(bundle.css),
+          globalName: String(bundle.globalName || ""),
         };
       }
     }
@@ -961,9 +1026,16 @@ export function createUiLoader(initialRegistry = DEFAULT_COMPONENT_REGISTRY, con
     if (bundlePromises.has(bundle.id)) {
       return bundlePromises.get(bundle.id);
     }
+    const globalModules = getBundleGlobalModules(bundle);
+    if (globalModules) {
+      const promise = Promise.resolve(globalModules);
+      bundlePromises.set(bundle.id, promise);
+      debugLog("bundle.global", { bundle: bundle.id });
+      return promise;
+    }
     const promise = import(toAbsoluteUrl(bundle.js))
       .then((module) => {
-        const exportsMap = module?.helperUiBundleModules || module?.default || null;
+        const exportsMap = module?.helperGameBundleModules || module?.helperUiBundleModules || module?.default || null;
         if (!exportsMap || typeof exportsMap !== "object") {
           throw new Error(`uiLoader bundle "${bundle.id}" did not expose a module map.`);
         }
@@ -1210,9 +1282,18 @@ function cloneBundles(bundles) {
       prefixes: uniqueStrings(bundle?.prefixes),
       js: String(bundle?.js || ""),
       css: uniqueStrings(bundle?.css),
+      globalName: String(bundle?.globalName || ""),
     };
   }
   return out;
+}
+
+function getBundleGlobalModules(bundle) {
+  if (typeof window === "undefined" || !bundle?.globalName) {
+    return null;
+  }
+  const modules = window[bundle.globalName];
+  return modules && typeof modules === "object" ? modules : null;
 }
 
 function createFailureRecord({ kind, id, path, error }) {

@@ -1,5 +1,5 @@
 import { createElement } from "./ui.dom.js";
-import { createIcon } from "./ui.icons.js?v=0.21.84";
+import { createIcon } from "./ui.icons.js?v=0.21.86";
 
 const ALLOWED_TYPES = new Set(["incident", "source-hub", "target-hub", "hotspot", "route", "boundary-centroid"]);
 const ALLOWED_SHAPES = new Set(["pin", "dot", "hub", "cluster", "hotspot", "route"]);

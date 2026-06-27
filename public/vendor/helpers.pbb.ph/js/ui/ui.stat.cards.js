@@ -1,5 +1,5 @@
 import { createElement, clearNode } from "./ui.dom.js";
-import { createIcon } from "./ui.icons.js?v=0.21.84";
+import { createIcon } from "./ui.icons.js?v=0.21.86";
 
 const DEFAULT_OPTIONS = {
   ariaLabel: "Key metrics",
