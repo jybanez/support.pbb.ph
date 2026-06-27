@@ -1,0 +1,414 @@
+.ui-game-session {
+  --ui-game-background: #050b14;
+  --ui-game-width: 1280px;
+  --ui-game-height: 720px;
+  --ui-game-aspect: 1.7777777778;
+  position: relative;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  background: var(--ui-game-background);
+  color: var(--ui-text, #d7e0f4);
+  font: inherit;
+}
+
+.ui-game-session.is-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 2147482000;
+  width: 100vw;
+  height: 100vh;
+}
+
+.ui-game-session:not(.is-fullscreen) {
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+}
+
+.ui-game-session:focus {
+  outline: none;
+}
+
+.ui-game-viewport {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(100vw, calc(100vh * var(--ui-game-aspect)));
+  height: min(100vh, calc(100vw / var(--ui-game-aspect)));
+  aspect-ratio: var(--ui-game-aspect);
+  max-width: 100vw;
+  max-height: 100vh;
+  overflow: hidden;
+  background: var(--ui-game-background);
+  touch-action: none;
+}
+
+.ui-game-session:not(.is-fullscreen) .ui-game-viewport {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.ui-game-stage,
+.ui-game-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.ui-game-stage {
+  isolation: isolate;
+}
+
+.ui-game-canvas-layer {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.ui-game-overlay {
+  z-index: 100;
+  pointer-events: none;
+}
+
+.ui-game-overlay > * {
+  pointer-events: auto;
+}
+
+.ui-game-close {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 140;
+}
+
+.ui-game-close.is-icon-only {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  line-height: 1;
+}
+
+.ui-game-close.is-icon-only .ui-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.ui-game-session.is-close-pending .ui-game-close {
+  pointer-events: none;
+  opacity: 0.72;
+}
+
+.ui-game-touch-pad,
+.ui-game-action-group,
+.ui-game-joystick {
+  --ui-game-control-opacity: 1;
+}
+
+.ui-game-touch-pad.is-visibility-overlay,
+.ui-game-action-button.is-visibility-overlay,
+.ui-game-action-group.is-visibility-overlay,
+.ui-game-joystick.is-visibility-overlay {
+  --ui-game-control-opacity: 0.72;
+}
+
+.ui-game-touch-pad.is-visibility-ghost,
+.ui-game-action-button.is-visibility-ghost,
+.ui-game-action-group.is-visibility-ghost,
+.ui-game-joystick.is-visibility-ghost {
+  --ui-game-control-opacity: 0.46;
+}
+
+.ui-game-touch-button,
+.ui-game-action-button__button,
+.ui-game-joystick-ring {
+  opacity: var(--ui-game-control-opacity, 1);
+  transition: opacity 140ms ease, transform 120ms ease, border-color 140ms ease, background-color 140ms ease;
+}
+
+.ui-game-touch-pad:hover .ui-game-touch-button,
+.ui-game-touch-pad:focus-within .ui-game-touch-button,
+.ui-game-action-button:hover .ui-game-action-button__button,
+.ui-game-action-button:focus-within .ui-game-action-button__button,
+.ui-game-action-group:hover .ui-game-action-button__button,
+.ui-game-action-group:focus-within .ui-game-action-button__button,
+.ui-game-joystick:hover .ui-game-joystick-ring,
+.ui-game-joystick:focus-within .ui-game-joystick-ring,
+.ui-game-joystick.is-active .ui-game-joystick-ring {
+  opacity: 1;
+}
+
+.ui-game-touch-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 56px);
+  grid-template-rows: repeat(3, 48px);
+  gap: 8px;
+  align-items: stretch;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.ui-game-touch-pad.is-layout-horizontal {
+  grid-template-columns: repeat(2, 56px);
+  grid-template-rows: 48px;
+}
+
+.ui-game-touch-pad.is-layout-vertical {
+  grid-template-columns: 56px;
+  grid-template-rows: repeat(2, 48px);
+}
+
+.ui-game-touch-pad.is-layout-single {
+  grid-template-columns: 56px;
+  grid-template-rows: 48px;
+}
+
+.ui-game-touch-button {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--ui-border, #2b3750);
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--ui-bg-soft, #101a2d) 88%, #fff 4%);
+  color: var(--ui-text, #d7e0f4);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.ui-game-touch-button .ui-icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.2;
+}
+
+.ui-game-touch-button:hover {
+  border-color: color-mix(in oklab, var(--ui-accent, #8db5ff) 50%, var(--ui-border, #2b3750));
+  background: color-mix(in oklab, var(--ui-accent, #8db5ff) 12%, var(--ui-bg-soft, #101a2d));
+}
+
+.ui-game-touch-button:active {
+  transform: translateY(1px);
+}
+
+.ui-game-touch-button:focus-visible {
+  outline: 2px solid var(--ui-focus, #6ea8fe);
+  outline-offset: 2px;
+}
+
+.ui-game-touch-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.ui-game-touch-pad-spacer {
+  min-width: 0;
+  min-height: 0;
+}
+
+.ui-game-action-button {
+  display: inline-grid;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.ui-game-action-button__button {
+  min-width: 72px;
+  min-height: 44px;
+  gap: 8px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.ui-game-action-button__button.is-pressed,
+.ui-game-action-button__button:active {
+  transform: translateY(1px) scale(0.98);
+  border-color: color-mix(in oklab, var(--ui-accent, #8db5ff) 62%, var(--ui-border, #2b3750));
+  background: color-mix(in oklab, var(--ui-accent, #8db5ff) 18%, var(--ui-bg-soft, #101a2d));
+}
+
+.ui-game-action-button__button .ui-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.ui-game-action-button__label {
+  min-width: 0;
+}
+
+.ui-game-action-group {
+  display: grid;
+  gap: 10px;
+  align-items: center;
+  justify-items: center;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.ui-game-action-group.is-layout-row {
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+}
+
+.ui-game-action-group.is-layout-column {
+  grid-auto-flow: row;
+  grid-auto-rows: max-content;
+}
+
+.ui-game-action-group.is-layout-grid,
+.ui-game-action-group.is-layout-cluster {
+  grid-template-columns: repeat(2, max-content);
+}
+
+.ui-game-action-group.is-layout-diamond {
+  grid-template-columns: repeat(3, max-content);
+  grid-template-rows: repeat(3, max-content);
+}
+
+.ui-game-action-group.is-layout-diamond .is-slot-y,
+.ui-game-action-group.is-layout-diamond .is-slot-up {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.ui-game-action-group.is-layout-diamond .is-slot-x,
+.ui-game-action-group.is-layout-diamond .is-slot-left {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.ui-game-action-group.is-layout-diamond .is-slot-b,
+.ui-game-action-group.is-layout-diamond .is-slot-right {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.ui-game-action-group.is-layout-diamond .is-slot-a,
+.ui-game-action-group.is-layout-diamond .is-slot-down {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.ui-game-action-group__slot {
+  display: grid;
+  min-width: 0;
+}
+
+.ui-game-joystick {
+  --ui-game-joystick-size: 136px;
+  --ui-game-joystick-thumb-size: calc(var(--ui-game-joystick-size) * 0.38);
+  display: inline-grid;
+  place-items: center;
+  width: var(--ui-game-joystick-size);
+  height: var(--ui-game-joystick-size);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.ui-game-joystick:focus-visible {
+  outline: 2px solid var(--ui-focus, #6ea8fe);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+
+.ui-game-joystick-ring {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: 1px solid color-mix(in oklab, var(--ui-border, #2b3750) 84%, #fff 8%);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--ui-accent, #8db5ff) 16%, transparent) 0 2px, transparent 3px),
+    radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--ui-accent, #8db5ff) 10%, transparent), transparent 58%),
+    color-mix(in oklab, var(--ui-bg-soft, #101a2d) 88%, #fff 3%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 12px 30px rgba(0, 0, 0, 0.24);
+}
+
+.ui-game-joystick-ring::before,
+.ui-game-joystick-ring::after {
+  content: "";
+  position: absolute;
+  background: color-mix(in oklab, var(--ui-border, #2b3750) 68%, transparent);
+  pointer-events: none;
+}
+
+.ui-game-joystick-ring::before {
+  left: 50%;
+  top: 12px;
+  bottom: 12px;
+  width: 1px;
+}
+
+.ui-game-joystick-ring::after {
+  top: 50%;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+}
+
+.ui-game-joystick-thumb {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--ui-game-joystick-thumb-size);
+  height: var(--ui-game-joystick-thumb-size);
+  margin-left: calc(var(--ui-game-joystick-thumb-size) / -2);
+  margin-top: calc(var(--ui-game-joystick-thumb-size) / -2);
+  border: 1px solid color-mix(in oklab, var(--ui-accent, #8db5ff) 60%, #fff 10%);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.24), transparent 34%),
+    color-mix(in oklab, var(--ui-accent, #8db5ff) 34%, var(--ui-bg-soft, #101a2d));
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.34);
+  transform: translate3d(0, 0, 0);
+  transition: transform 110ms ease-out;
+  will-change: transform;
+}
+
+.ui-game-joystick.is-active .ui-game-joystick-thumb,
+.ui-game-joystick[data-active="true"] .ui-game-joystick-thumb {
+  transition-duration: 20ms;
+}
+
+.ui-game-joystick.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+  .ui-game-touch-pad {
+    grid-template-columns: repeat(3, 52px);
+    grid-template-rows: repeat(3, 44px);
+    gap: 7px;
+  }
+}

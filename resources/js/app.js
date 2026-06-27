@@ -6,6 +6,9 @@ import { RealtimeSocketClient } from './vendor/pbb-realtime-sdk/index.js';
 const root = document.getElementById('app');
 const csrfMeta = document.querySelector('meta[name="csrf-token"]');
 const helperLoaderUrl = '/vendor/helpers.pbb.ph/js/ui/ui.loader.js';
+const APP_ICON_URL = '/assets/launcher/app-icon.png';
+const LOGIN_BACKGROUND_IMAGE_URL = '';
+const LOGIN_EMAIL_STORAGE_KEY = 'pbb.support.login.email';
 const { uiLoader } = await import(/* @vite-ignore */ helperLoaderUrl);
 const helperLoadOptions = { preferBundles: true };
 uiLoader.setPreferBundles(true);
@@ -453,6 +456,24 @@ const loginWithCredentials = async (values) => {
 
         await refreshCsrfToken();
         return submit();
+    }
+};
+
+const getStoredLoginEmail = () => {
+    try {
+        return localStorage.getItem(LOGIN_EMAIL_STORAGE_KEY) || '';
+    } catch {
+        return '';
+    }
+};
+
+const storeLoginEmail = (email) => {
+    const value = String(email || '').trim();
+    if (!value) return;
+    try {
+        localStorage.setItem(LOGIN_EMAIL_STORAGE_KEY, value);
+    } catch {
+        // localStorage can be unavailable in restricted browser contexts.
     }
 };
 
@@ -2274,54 +2295,78 @@ const render = () => {
     destroyDashboardMap();
     if (!state.account) {
         disconnectSourceHeartbeatRealtime();
+        root.innerHTML = '<div class="login-gate" data-theme="dark" aria-hidden="true"></div>';
+        window.requestAnimationFrame(() => openLogin({ required: true }));
+        return;
     }
+
     root.innerHTML = `
         <div class="app-shell" data-theme="dark">
             <div data-navbar-host></div>
             <main class="app-main">
-                ${state.account ? dashboard() : emptyState()}
+                ${dashboard()}
             </main>
         </div>
     `;
     renderNavbar();
-    if (state.account) {
-        renderDashboardSplitter();
-    }
+    renderDashboardSplitter();
 };
 
-const openLogin = () => {
-    loginModal?.destroy?.();
-    loginModal = helpers.createLoginFormModal({
+const openLogin = ({ required = !state.account } = {}) => {
+    if (loginModal?.getState?.().open) {
+        return loginModal;
+    }
+
+    const loginOptions = {
         title: 'Login',
+        message: `Welcome to ${state.app.name}`,
+        className: required ? 'support-login-modal is-required-login' : 'support-login-modal',
         submitLabel: 'Login',
         busyMessage: 'Signing in...',
+        showCloseButton: !required,
+        showCancelButton: !required,
+        closeOnBackdrop: !required,
+        closeOnEscape: !required,
+        mediaUrl: APP_ICON_URL,
+        mediaAlt: state.app.name,
         identifierKind: 'email',
         identifierLabel: 'Email address',
         identifierPlaceholder: 'name@agency.gov.ph',
         identifierAutocomplete: 'username',
         passwordLabel: 'Password',
         passwordPlaceholder: 'Enter your password',
+        initialValues: { email: getStoredLoginEmail() },
         fields: {
             identifier: 'email',
             password: 'password',
         },
-        async onSubmit(values) {
+        onClose: () => {
+            loginModal = null;
+        },
+        async onSubmit(values, ctx) {
             try {
                 const data = await loginWithCredentials(values);
+                storeLoginEmail(values?.email || values?.identifier);
                 applySessionPayload(data);
                 state.reauthOpen = false;
                 render();
                 return true;
             } catch (error) {
-                await helpers.uiAlert(firstError(error, 'Invalid email or password.'), {
-                    title: 'Login failed',
-                    variant: 'error',
-                });
+                ctx?.setFormError?.(firstError(error, 'Invalid email or password.'));
                 return false;
             }
         },
-    });
+    };
+
+    if (LOGIN_BACKGROUND_IMAGE_URL) {
+        loginOptions.backgroundImageUrl = LOGIN_BACKGROUND_IMAGE_URL;
+        loginOptions.backgroundImageAlt = '';
+        loginOptions.backgroundTone = 'dark';
+    }
+
+    loginModal = helpers.createLoginFormModal(loginOptions);
     loginModal.open();
+    return loginModal;
 };
 
 const openReauth = () => {

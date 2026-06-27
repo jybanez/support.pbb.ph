@@ -1,6 +1,6 @@
 @php
     $appName = config('app.name', 'PBB Support System');
-    $helperUiBundleRev = '0.21.89';
+    $helperUiBundleRev = '0.21.112';
 @endphp
 <!doctype html>
 <html lang="en">
