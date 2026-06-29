@@ -65,6 +65,13 @@ const state = {
     app: {
         name: root?.dataset.appName || 'PBB Support System',
         page: root?.dataset.page || 'dashboard',
+        accountSso: {
+            enabled: false,
+            ready: false,
+            loginUrl: '/auth/account/redirect',
+            logoutUrl: '/auth/logout',
+            baseUrl: 'https://account.pbb.ph',
+        },
     },
     account: null,
     csrfToken: csrfMeta?.getAttribute('content') || '',
@@ -475,6 +482,25 @@ const storeLoginEmail = (email) => {
     } catch {
         // localStorage can be unavailable in restricted browser contexts.
     }
+};
+
+const shouldUseAccountSso = () => {
+    const accountSso = state.app?.accountSso || {};
+
+    return Boolean(accountSso.enabled && accountSso.ready && accountSso.loginUrl);
+};
+
+const redirectToAccountSso = () => {
+    const accountSso = state.app?.accountSso || {};
+    const loginUrl = new URL(accountSso.loginUrl || '/auth/account/redirect', window.location.origin);
+    const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}` || '/';
+    loginUrl.searchParams.set('return', returnTo);
+    window.location.assign(loginUrl.toString());
+};
+
+const redirectToAccountLogout = () => {
+    const accountSso = state.app?.accountSso || {};
+    window.location.assign(accountSso.logoutUrl || '/auth/logout');
 };
 
 const syncAuthFromBootstrap = async () => {
@@ -2313,6 +2339,11 @@ const render = () => {
 };
 
 const openLogin = ({ required = !state.account } = {}) => {
+    if (shouldUseAccountSso()) {
+        redirectToAccountSso();
+        return null;
+    }
+
     if (loginModal?.getState?.().open) {
         return loginModal;
     }
@@ -3771,6 +3802,11 @@ const openSettings = () => {
 };
 
 const logout = async () => {
+    if (state.app?.accountSso?.enabled && state.app?.accountSso?.logoutUrl) {
+        redirectToAccountLogout();
+        return;
+    }
+
     const data = await api('/api/logout', { method: 'POST', body: '{}' });
     closeSupportRequests();
     resetSupportRequestsCache();

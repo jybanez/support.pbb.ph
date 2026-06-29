@@ -4,13 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Support\Settings\SupportSettings;
 use App\Support\Relay\RelayHttpOptions;
+use App\Services\Account\AccountSsoProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class BootstrapController extends BaseApiController
 {
-    public function show(Request $request, SupportSettings $settings)
+    public function show(Request $request, SupportSettings $settings, AccountSsoProfile $accountSso)
     {
         $user = $request->user();
 
@@ -18,6 +19,7 @@ class BootstrapController extends BaseApiController
             'app' => [
                 'name' => config('app.name', 'PBB Support System'),
                 'page' => $this->pageName($request),
+                'accountSso' => $accountSso->publicPayload($request),
             ],
             'auth' => [
                 'authenticated' => (bool) $user,

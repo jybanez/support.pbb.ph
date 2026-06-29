@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\SourceHeartbeatController;
 use App\Http\Controllers\Api\SupportRequestsController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Web\AccountSsoController;
 use App\Http\Controllers\Web\SitrepMediaController;
 use App\Http\Controllers\Web\SupportMapBoundaryController;
 use App\Http\Controllers\Web\SupportMapConfigController;
@@ -20,6 +21,9 @@ Route::get('/', function () {
 });
 
 Route::view('/dashboard', 'app')->name('dashboard');
+Route::get('/auth/account/redirect', [AccountSsoController::class, 'redirect'])->name('account.redirect');
+Route::get('/auth/account/callback', [AccountSsoController::class, 'callback'])->name('account.callback');
+Route::get('/auth/logout', [AccountSsoController::class, 'logout'])->name('account.logout');
 Route::get('/support-map.json', [SupportMapConfigController::class, 'show'])->name('support.map-config');
 Route::get('/map-boundaries/{scope}/{code}.geojson', [SupportMapBoundaryController::class, 'show'])
     ->whereIn('scope', ['barangay', 'city', 'province', 'region'])
