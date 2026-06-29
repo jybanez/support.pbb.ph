@@ -9,6 +9,8 @@ const helperLoaderUrl = '/vendor/helpers.pbb.ph/js/ui/ui.loader.js';
 const APP_ICON_URL = '/assets/launcher/app-icon.png';
 const LOGIN_BACKGROUND_IMAGE_URL = '';
 const LOGIN_EMAIL_STORAGE_KEY = 'pbb.support.login.email';
+const ACCOUNT_SSO_ERROR_PARAM = 'account_sso_error';
+const accountSsoErrorOnLoad = new URLSearchParams(window.location.search).has(ACCOUNT_SSO_ERROR_PARAM);
 const { uiLoader } = await import(/* @vite-ignore */ helperLoaderUrl);
 const helperLoadOptions = { preferBundles: true };
 uiLoader.setPreferBundles(true);
@@ -487,7 +489,7 @@ const storeLoginEmail = (email) => {
 const shouldUseAccountSso = () => {
     const accountSso = state.app?.accountSso || {};
 
-    return Boolean(accountSso.enabled && accountSso.ready && accountSso.loginUrl);
+    return Boolean(!accountSsoErrorOnLoad && accountSso.enabled && accountSso.ready && accountSso.loginUrl);
 };
 
 const redirectToAccountSso = () => {
@@ -2350,7 +2352,9 @@ const openLogin = ({ required = !state.account } = {}) => {
 
     const loginOptions = {
         title: 'Login',
-        message: `Welcome to ${state.app.name}`,
+        message: accountSsoErrorOnLoad
+            ? 'Unable to complete PBB Account sign in. You may try again or use local Support login.'
+            : `Welcome to ${state.app.name}`,
         className: required ? 'support-login-modal is-required-login' : 'support-login-modal',
         submitLabel: 'Login',
         busyMessage: 'Signing in...',

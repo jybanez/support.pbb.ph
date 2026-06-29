@@ -41,7 +41,7 @@ class AccountSsoController extends Controller
         } catch (\Throwable $exception) {
             report($exception);
 
-            return redirect('/')->with('account_login_error', 'Unable to complete Account sign in.');
+            return redirect('/?account_sso_error=1')->with('account_login_error', 'Unable to complete Account sign in.');
         }
     }
 

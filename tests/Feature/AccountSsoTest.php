@@ -51,10 +51,30 @@ class AccountSsoTest extends TestCase
     {
         $this->withSession(['_pbb_account_oauth_state' => 'expected-state'])
             ->get('/auth/account/callback?code=test-code&state=wrong-state')
-            ->assertRedirect('/');
+            ->assertRedirect('/?account_sso_error=1')
+            ->assertSessionHas('account_login_error', 'Unable to complete Account sign in.');
 
         $this->assertGuest();
         $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_callback_failure_redirect_marker_prevents_silent_sso_loop(): void
+    {
+        $this->fakeAccountCallback([
+            'pbb_user_id' => 'pbb-user-inactive',
+            'name' => 'Inactive User',
+            'email' => 'inactive@pbb.local',
+            'status' => 'suspended',
+        ]);
+
+        $this->get('/auth/account/callback?code=test-code&state=valid-state')
+            ->assertRedirect('/?account_sso_error=1')
+            ->assertSessionHas('account_login_error', 'Unable to complete Account sign in.');
+
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', [
+            'pbb_user_id' => 'pbb-user-inactive',
+        ]);
     }
 
     public function test_callback_provisions_local_user_by_pbb_user_id_and_logs_in(): void
