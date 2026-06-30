@@ -221,6 +221,18 @@ function support_data_prep_setting_plan(array $config): array
             'shared.secrets.values.support_source_heartbeat_webhook_token',
             'shared.secrets.values.source_heartbeat_webhook_token',
         ],
+        'accountAdminApiToken' => [
+            'support.data_prep.apply_settings.account.admin_api_token',
+            'support.account.admin_api_token',
+            'shared.secrets.values.support_account_admin_api_token',
+            'shared.secrets.values.pbb_support_account_admin_api_token',
+            'account.admin_api_token',
+        ],
+        'accountAdminApiClient' => [
+            'support.data_prep.apply_settings.account.admin_api_client',
+            'support.account.admin_api_client',
+            'account.admin_api_client',
+        ],
     ];
 
     $settings = [];
@@ -234,6 +246,22 @@ function support_data_prep_setting_plan(array $config): array
     if (($settings['relayToken'] ?? '') !== '') {
         $settings['sitrepRelayToken'] = $settings['sitrepRelayToken'] ?? $settings['relayToken'];
         $settings['supportRequestRelayToken'] = $settings['supportRequestRelayToken'] ?? $settings['relayToken'];
+    }
+
+    if (($settings['accountAdminApiClient'] ?? '') === '') {
+        $settings['accountAdminApiClient'] = 'pbb-account';
+    }
+
+    if (support_data_prep_any_path_present($config, [
+        'support.data_prep.apply_settings.account.admin_api_enabled',
+        'support.account.admin_api_enabled',
+        'account.admin_api_enabled',
+    ]) || ($settings['accountAdminApiToken'] ?? '') !== '') {
+        $settings['accountAdminApiEnabled'] = filter_var(support_data_prep_bool_string($config, [
+            'support.data_prep.apply_settings.account.admin_api_enabled',
+            'support.account.admin_api_enabled',
+            'account.admin_api_enabled',
+        ], ($settings['accountAdminApiToken'] ?? '') !== ''), FILTER_VALIDATE_BOOLEAN);
     }
 
     return $settings;
@@ -266,14 +294,6 @@ function support_data_prep_env_plan(array $config): array
         'shared.secrets.values.support_account_client_secret',
         'shared.secrets.values.pbb_support_account_client_secret',
         'account.client_secret',
-    ]);
-
-    $adminApiToken = support_data_prep_first_string($config, [
-        'support.data_prep.apply_settings.account.admin_api_token',
-        'support.account.admin_api_token',
-        'shared.secrets.values.support_account_admin_api_token',
-        'shared.secrets.values.pbb_support_account_admin_api_token',
-        'account.admin_api_token',
     ]);
 
     $redirectUri = support_data_prep_first_string($config, [
@@ -332,9 +352,6 @@ function support_data_prep_env_plan(array $config): array
     if ($clientSecret !== '') {
         $env['PBB_ACCOUNT_CLIENT_SECRET'] = $clientSecret;
     }
-    if ($adminApiToken !== '') {
-        $env['PBB_ACCOUNT_ADMIN_API_TOKEN'] = $adminApiToken;
-    }
     if (support_data_prep_any_path_present($config, [
         'support.data_prep.apply_settings.account.sso_enabled',
         'support.account.sso_enabled',
@@ -346,18 +363,6 @@ function support_data_prep_env_plan(array $config): array
             'account.sso_enabled',
         ], $clientSecret !== '');
     }
-    if (support_data_prep_any_path_present($config, [
-        'support.data_prep.apply_settings.account.admin_api_enabled',
-        'support.account.admin_api_enabled',
-        'account.admin_api_enabled',
-    ]) || $adminApiToken !== '') {
-        $env['PBB_ACCOUNT_ADMIN_API_ENABLED'] = support_data_prep_bool_string($config, [
-            'support.data_prep.apply_settings.account.admin_api_enabled',
-            'support.account.admin_api_enabled',
-            'account.admin_api_enabled',
-        ], $adminApiToken !== '');
-    }
-
     if ($caBundle !== '') {
         $env['PBB_ACCOUNT_CA_BUNDLE'] = $caBundle;
     }
@@ -480,8 +485,8 @@ function support_data_prep_public_setting_value(string $key, mixed $value): arra
         'realtimeBackendIngressSecret' => true,
         'realtimeTokenSigningSecret' => true,
         'sourceHeartbeatWebhookToken' => true,
+        'accountAdminApiToken' => true,
         'PBB_ACCOUNT_CLIENT_SECRET' => true,
-        'PBB_ACCOUNT_ADMIN_API_TOKEN' => true,
     ];
 
     if (!isset($secretKeys[$key])) {
@@ -548,6 +553,11 @@ function support_data_prep_missing_required_settings(array $settings): array
         }
     }
 
+    if (filter_var($settings['accountAdminApiEnabled'] ?? false, FILTER_VALIDATE_BOOLEAN)
+        && trim((string) ($settings['accountAdminApiToken'] ?? '')) === '') {
+        $missing[] = 'accountAdminApiToken';
+    }
+
     return $missing;
 }
 
@@ -561,11 +571,6 @@ function support_data_prep_missing_required_env(array $env): array
                 $missing[] = $key;
             }
         }
-    }
-
-    if (filter_var((string) ($env['PBB_ACCOUNT_ADMIN_API_ENABLED'] ?? 'false'), FILTER_VALIDATE_BOOLEAN)
-        && trim((string) ($env['PBB_ACCOUNT_ADMIN_API_TOKEN'] ?? '')) === '') {
-        $missing[] = 'PBB_ACCOUNT_ADMIN_API_TOKEN';
     }
 
     return $missing;

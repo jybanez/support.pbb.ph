@@ -110,7 +110,7 @@ PATCH /api/account-admin/users/{pbb_user_id}/status
 It requires:
 
 ```text
-Authorization: Bearer <PBB_ACCOUNT_ADMIN_API_TOKEN>
+Authorization: Bearer <accountAdminApiToken>
 X-PBB-Account-Client: pbb-account
 ```
 
@@ -123,21 +123,24 @@ Readiness handoffs must distinguish package state from runtime state:
 ```text
 code-ready:
   endpoints, middleware, config, and tests exist.
-  PBB_ACCOUNT_ADMIN_API_ENABLED remains false by default.
-  PBB_ACCOUNT_ADMIN_API_TOKEN remains empty by default.
+  accountAdminApiEnabled remains false by default.
+  accountAdminApiToken remains empty by default.
 
 runtime-ready:
-  PBB_ACCOUNT_ADMIN_API_ENABLED=true
-  PBB_ACCOUNT_ADMIN_API_TOKEN=<dedicated app-admin token>
-  PBB_ACCOUNT_ADMIN_API_CLIENT=pbb-account
+  accountAdminApiEnabled=true in Support settings.
+  accountAdminApiToken=<dedicated app-admin token> in Support settings.
+  accountAdminApiClient=pbb-account in Support settings.
   Account trusted client pbb-support has the same token, base URL, and
   app_admin_enabled=true.
   GET https://support.pbb.ph/api/account-admin/meta is callable from Account.
 ```
 
-Do not reuse `PBB_ACCOUNT_CLIENT_SECRET` as `PBB_ACCOUNT_ADMIN_API_TOKEN`.
+Do not reuse `PBB_ACCOUNT_CLIENT_SECRET` as `accountAdminApiToken`.
 The OAuth client secret is for Support-to-Account OAuth token exchange; the
 app-admin token is for Account-to-Support privileged role/user orchestration.
+Support stores app-admin runtime credentials in encrypted app-local DB settings,
+not request-time `.env`, to prevent shared WAMP/Apache/PHP env bleed across PBB
+apps.
 
 Kit/Data Prep may supply Account values using:
 

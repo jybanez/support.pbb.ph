@@ -171,9 +171,10 @@
       "required_client_header": "X-PBB-Account-Client: pbb-account",
       "roles": ["admin", "command", "operator"],
       "statuses": ["active"],
-      "env": {
-        "enabled": "PBB_ACCOUNT_ADMIN_API_ENABLED",
-        "token": "PBB_ACCOUNT_ADMIN_API_TOKEN"
+      "settings": {
+        "enabled": "accountAdminApiEnabled",
+        "token": "accountAdminApiToken",
+        "client": "accountAdminApiClient"
       }
     }
   },
