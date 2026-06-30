@@ -9,6 +9,8 @@ const helperLoaderUrl = '/vendor/helpers.pbb.ph/js/ui/ui.loader.js';
 const APP_ICON_URL = '/assets/launcher/app-icon.png';
 const LOGIN_BACKGROUND_IMAGE_URL = '';
 const LOGIN_EMAIL_STORAGE_KEY = 'pbb.support.login.email';
+const ACCOUNT_SSO_ERROR_PARAM = 'account_sso_error';
+const accountSsoErrorOnLoad = new URLSearchParams(window.location.search).has(ACCOUNT_SSO_ERROR_PARAM);
 const { uiLoader } = await import(/* @vite-ignore */ helperLoaderUrl);
 const helperLoadOptions = { preferBundles: true };
 uiLoader.setPreferBundles(true);
@@ -65,6 +67,13 @@ const state = {
     app: {
         name: root?.dataset.appName || 'PBB Support System',
         page: root?.dataset.page || 'dashboard',
+        accountSso: {
+            enabled: false,
+            ready: false,
+            loginUrl: '/auth/account/redirect',
+            logoutUrl: '/auth/logout',
+            baseUrl: 'https://account.pbb.ph',
+        },
     },
     account: null,
     csrfToken: csrfMeta?.getAttribute('content') || '',
@@ -475,6 +484,25 @@ const storeLoginEmail = (email) => {
     } catch {
         // localStorage can be unavailable in restricted browser contexts.
     }
+};
+
+const shouldUseAccountSso = () => {
+    const accountSso = state.app?.accountSso || {};
+
+    return Boolean(!accountSsoErrorOnLoad && accountSso.enabled && accountSso.ready && accountSso.loginUrl);
+};
+
+const redirectToAccountSso = () => {
+    const accountSso = state.app?.accountSso || {};
+    const loginUrl = new URL(accountSso.loginUrl || '/auth/account/redirect', window.location.origin);
+    const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}` || '/';
+    loginUrl.searchParams.set('return', returnTo);
+    window.location.assign(loginUrl.toString());
+};
+
+const redirectToAccountLogout = () => {
+    const accountSso = state.app?.accountSso || {};
+    window.location.assign(accountSso.logoutUrl || '/auth/logout');
 };
 
 const syncAuthFromBootstrap = async () => {
@@ -2313,13 +2341,20 @@ const render = () => {
 };
 
 const openLogin = ({ required = !state.account } = {}) => {
+    if (shouldUseAccountSso()) {
+        redirectToAccountSso();
+        return null;
+    }
+
     if (loginModal?.getState?.().open) {
         return loginModal;
     }
 
     const loginOptions = {
         title: 'Login',
-        message: `Welcome to ${state.app.name}`,
+        message: accountSsoErrorOnLoad
+            ? 'Unable to complete PBB Account sign in. You may try again or use local Support login.'
+            : `Welcome to ${state.app.name}`,
         className: required ? 'support-login-modal is-required-login' : 'support-login-modal',
         submitLabel: 'Login',
         busyMessage: 'Signing in...',
@@ -3771,6 +3806,11 @@ const openSettings = () => {
 };
 
 const logout = async () => {
+    if (state.app?.accountSso?.enabled && state.app?.accountSso?.logoutUrl) {
+        redirectToAccountLogout();
+        return;
+    }
+
     const data = await api('/api/logout', { method: 'POST', body: '{}' });
     closeSupportRequests();
     resetSupportRequestsCache();
