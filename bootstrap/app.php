@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(prepend: [
             \App\Http\Middleware\ExpireDomainScopedSupportCookies::class,
         ]);
+        $middleware->validateCsrfTokens(except: [
+            'api/account-admin/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
