@@ -78,6 +78,90 @@ Scheduled tasks:
 
 The Laravel scheduler must be running in production for cadence-based consolidation and retry.
 
+## PBB Account Integration
+
+Support uses PBB Account for browser SSO and exposes a service-only app-admin
+API so Account can manage Support-local user links and roles without writing
+directly to the Support database.
+
+Browser SSO is configured through environment values:
+
+```text
+PBB_ACCOUNT_SSO_ENABLED=true
+PBB_ACCOUNT_BASE_URL=https://account.pbb.ph
+PBB_ACCOUNT_CLIENT_ID=pbb-support
+PBB_ACCOUNT_CLIENT_SECRET=<support Account OAuth client secret>
+PBB_ACCOUNT_REDIRECT_URI=https://support.pbb.ph/auth/account/callback
+PBB_ACCOUNT_POST_LOGOUT_REDIRECT_URI=https://support.pbb.ph
+PBB_ACCOUNT_SCOPES="openid profile"
+PBB_ACCOUNT_TIMEOUT_SECONDS=10
+```
+
+The app-admin API is server-to-server only:
+
+```text
+GET   /api/account-admin/meta
+GET   /api/account-admin/users/{pbb_user_id}
+PUT   /api/account-admin/users/{pbb_user_id}
+PATCH /api/account-admin/users/{pbb_user_id}/role
+PATCH /api/account-admin/users/{pbb_user_id}/status
+```
+
+It requires:
+
+```text
+Authorization: Bearer <PBB_ACCOUNT_ADMIN_API_TOKEN>
+X-PBB-Account-Client: pbb-account
+```
+
+Support role vocabulary for Account is `admin`, `command`, and `operator`.
+Support v1 exposes only the local app status `active`; `blocked` and
+`suspended` are intentionally rejected until Support has local status fields.
+
+Readiness handoffs must distinguish package state from runtime state:
+
+```text
+code-ready:
+  endpoints, middleware, config, and tests exist.
+  PBB_ACCOUNT_ADMIN_API_ENABLED remains false by default.
+  PBB_ACCOUNT_ADMIN_API_TOKEN remains empty by default.
+
+runtime-ready:
+  PBB_ACCOUNT_ADMIN_API_ENABLED=true
+  PBB_ACCOUNT_ADMIN_API_TOKEN=<dedicated app-admin token>
+  PBB_ACCOUNT_ADMIN_API_CLIENT=pbb-account
+  Account trusted client pbb-support has the same token, base URL, and
+  app_admin_enabled=true.
+  GET https://support.pbb.ph/api/account-admin/meta is callable from Account.
+```
+
+Do not reuse `PBB_ACCOUNT_CLIENT_SECRET` as `PBB_ACCOUNT_ADMIN_API_TOKEN`.
+The OAuth client secret is for Support-to-Account OAuth token exchange; the
+app-admin token is for Account-to-Support privileged role/user orchestration.
+
+Kit/Data Prep may supply Account values using:
+
+```text
+support.data_prep.apply_settings.account.base_url
+support.data_prep.apply_settings.account.client_id
+support.data_prep.apply_settings.account.client_secret
+support.data_prep.apply_settings.account.redirect_uri
+support.data_prep.apply_settings.account.post_logout_redirect_uri
+support.data_prep.apply_settings.account.scopes
+support.data_prep.apply_settings.account.timeout_seconds
+support.data_prep.apply_settings.account.ca_bundle
+support.data_prep.apply_settings.account.sso_enabled
+support.data_prep.apply_settings.account.admin_api_enabled
+support.data_prep.apply_settings.account.admin_api_token
+```
+
+Supported shared secret aliases are:
+
+```text
+shared.secrets.values.support_account_client_secret
+shared.secrets.values.support_account_admin_api_token
+```
+
 ## Vendored SITREP SDKs
 
 Support vendors the PBB SITREP SDKs locally:

@@ -69,7 +69,8 @@
       "allowed_path_prefixes": [
         "/api/relay/support-requests",
         "/api/relay/support-request-lifecycle",
-        "/api/relay/source-heartbeats"
+        "/api/relay/source-heartbeats",
+        "/api/account-admin"
       ],
       "m2m_only": true,
       "exposure": "machine",
@@ -106,7 +107,7 @@
       "drops_columns": false,
       "overwrites_existing_data": false
     },
-    "requires_data_prep_rerun": false,
+    "requires_data_prep_rerun": true,
     "requires_service_restart": true,
     "rollback_supported": false
   },
@@ -144,6 +145,35 @@
         "path": "tools/data-prep/verify.php",
         "config_section": "support.data_prep.verify",
         "timeout_seconds": 30
+      }
+    }
+  },
+  "account": {
+    "sso": {
+      "client_id": "pbb-support",
+      "redirect_uri": "https://support.pbb.ph/auth/account/callback",
+      "post_logout_redirect_uri": "https://support.pbb.ph",
+      "env": {
+        "enabled": "PBB_ACCOUNT_SSO_ENABLED",
+        "base_url": "PBB_ACCOUNT_BASE_URL",
+        "client_id": "PBB_ACCOUNT_CLIENT_ID",
+        "client_secret": "PBB_ACCOUNT_CLIENT_SECRET",
+        "redirect_uri": "PBB_ACCOUNT_REDIRECT_URI",
+        "post_logout_redirect_uri": "PBB_ACCOUNT_POST_LOGOUT_REDIRECT_URI",
+        "scopes": "PBB_ACCOUNT_SCOPES",
+        "timeout_seconds": "PBB_ACCOUNT_TIMEOUT_SECONDS",
+        "ca_bundle": "PBB_ACCOUNT_CA_BUNDLE"
+      }
+    },
+    "app_admin_api": {
+      "base_path": "/api/account-admin",
+      "auth": "bearer",
+      "required_client_header": "X-PBB-Account-Client: pbb-account",
+      "roles": ["admin", "command", "operator"],
+      "statuses": ["active"],
+      "env": {
+        "enabled": "PBB_ACCOUNT_ADMIN_API_ENABLED",
+        "token": "PBB_ACCOUNT_ADMIN_API_TOKEN"
       }
     }
   },
