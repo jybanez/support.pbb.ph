@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Support\Settings\SupportSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,10 +15,7 @@ class AccountAdminApiTest extends TestCase
     {
         parent::setUp();
 
-        config([
-            'account.admin_api_enabled' => true,
-            'account.admin_api_token' => 'app-admin-token',
-        ]);
+        $this->accountSettings();
     }
 
     public function test_missing_or_invalid_app_admin_token_returns_401(): void
@@ -42,12 +40,44 @@ class AccountAdminApiTest extends TestCase
 
     public function test_disabled_admin_api_returns_503(): void
     {
-        config(['account.admin_api_enabled' => false]);
+        $this->accountSettings([
+            'accountAdminApiEnabled' => false,
+        ]);
 
         $this->withHeaders($this->accountHeaders())
             ->getJson('/api/account-admin/meta')
             ->assertStatus(503)
             ->assertJsonPath('error.code', 'account_admin_disabled');
+    }
+
+    public function test_runtime_auth_uses_support_settings_not_account_env_config(): void
+    {
+        config([
+            'account.admin_api_enabled' => true,
+            'account.admin_api_token' => 'env-style-token',
+        ]);
+
+        $this->accountSettings([
+            'accountAdminApiToken' => 'settings-token',
+        ]);
+
+        $this->withHeaders($this->accountHeaders('env-style-token'))
+            ->getJson('/api/account-admin/meta')
+            ->assertUnauthorized()
+            ->assertJsonPath('error.code', 'invalid_app_admin_token');
+
+        $this->withHeaders($this->accountHeaders('settings-token'))
+            ->getJson('/api/account-admin/meta')
+            ->assertOk();
+    }
+
+    public function test_account_admin_runtime_settings_are_not_public_settings(): void
+    {
+        $public = app(SupportSettings::class)->publicSettings();
+
+        $this->assertArrayNotHasKey('accountAdminApiEnabled', $public);
+        $this->assertArrayNotHasKey('accountAdminApiToken', $public);
+        $this->assertArrayNotHasKey('accountAdminApiClient', $public);
     }
 
     public function test_meta_returns_support_roles_statuses_and_capabilities(): void
@@ -263,5 +293,18 @@ class AccountAdminApiTest extends TestCase
             'Authorization' => 'Bearer '.$token,
             'X-PBB-Account-Client' => 'pbb-account',
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $overrides
+     */
+    private function accountSettings(array $overrides = []): void
+    {
+        app(SupportSettings::class)->update([
+            'accountAdminApiEnabled' => true,
+            'accountAdminApiToken' => 'app-admin-token',
+            'accountAdminApiClient' => 'pbb-account',
+            ...$overrides,
+        ]);
     }
 }

@@ -61,6 +61,9 @@ class SupportSettings
         unset($settings['realtimeBackendIngressSecret']);
         unset($settings['realtimeTokenSigningSecret']);
         unset($settings['sourceHeartbeatWebhookToken']);
+        unset($settings['accountAdminApiEnabled']);
+        unset($settings['accountAdminApiToken']);
+        unset($settings['accountAdminApiClient']);
 
         return $settings;
     }
@@ -91,6 +94,9 @@ class SupportSettings
             'realtimeBackendIngressSecret' => '',
             'realtimeTokenSigningSecret' => '',
             'sourceHeartbeatWebhookToken' => '',
+            'accountAdminApiEnabled' => false,
+            'accountAdminApiToken' => '',
+            'accountAdminApiClient' => 'pbb-account',
         ];
     }
 

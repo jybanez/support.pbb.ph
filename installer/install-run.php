@@ -452,13 +452,6 @@ function account_env_settings(array $config, string $appUrl, array $existing): a
         'shared.secrets.values.pbb_support_account_client_secret',
         'account.client_secret',
     ], '');
-    $adminApiToken = first_config_string($config, [
-        'support.data_prep.apply_settings.account.admin_api_token',
-        'support.account.admin_api_token',
-        'shared.secrets.values.support_account_admin_api_token',
-        'shared.secrets.values.pbb_support_account_admin_api_token',
-        'account.admin_api_token',
-    ], '');
     $redirectUri = first_config_string($config, [
         'support.data_prep.apply_settings.account.redirect_uri',
         'support.account.redirect_uri',
@@ -501,12 +494,6 @@ function account_env_settings(array $config, string $appUrl, array $existing): a
         'PBB_ACCOUNT_SCOPES' => $scopes,
         'PBB_ACCOUNT_TIMEOUT_SECONDS' => $timeout,
         'PBB_ACCOUNT_CA_BUNDLE' => $caBundle !== '' ? $caBundle : null,
-        'PBB_ACCOUNT_ADMIN_API_ENABLED' => config_bool_string($config, [
-            'support.data_prep.apply_settings.account.admin_api_enabled',
-            'support.account.admin_api_enabled',
-            'account.admin_api_enabled',
-        ], $adminApiToken !== '', $existing['PBB_ACCOUNT_ADMIN_API_ENABLED'] ?? null),
-        'PBB_ACCOUNT_ADMIN_API_TOKEN' => $adminApiToken !== '' ? $adminApiToken : null,
     ];
 }
 

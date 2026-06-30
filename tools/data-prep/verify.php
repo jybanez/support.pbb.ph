@@ -55,6 +55,9 @@ try {
                 'serverProjectCode' => $settings['serverProjectCode'] ?? '',
                 'adminProjectCode' => $settings['adminProjectCode'] ?? '',
                 'realtimeBackendIngressSecret' => $settings['realtimeBackendIngressSecret'] ?? '',
+                'accountAdminApiEnabled' => $settings['accountAdminApiEnabled'] ?? false,
+                'accountAdminApiToken' => $settings['accountAdminApiToken'] ?? '',
+                'accountAdminApiClient' => $settings['accountAdminApiClient'] ?? '',
             ]),
             'environment' => support_data_prep_public_settings(array_intersect_key($env, array_flip([
                 'PBB_ACCOUNT_SSO_ENABLED',
@@ -66,8 +69,6 @@ try {
                 'PBB_ACCOUNT_SCOPES',
                 'PBB_ACCOUNT_TIMEOUT_SECONDS',
                 'PBB_ACCOUNT_CA_BUNDLE',
-                'PBB_ACCOUNT_ADMIN_API_ENABLED',
-                'PBB_ACCOUNT_ADMIN_API_TOKEN',
             ]))),
             'missing' => array_merge($missing, $missingEnv),
         ]
