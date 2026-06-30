@@ -118,6 +118,27 @@ Support role vocabulary for Account is `admin`, `command`, and `operator`.
 Support v1 exposes only the local app status `active`; `blocked` and
 `suspended` are intentionally rejected until Support has local status fields.
 
+Readiness handoffs must distinguish package state from runtime state:
+
+```text
+code-ready:
+  endpoints, middleware, config, and tests exist.
+  PBB_ACCOUNT_ADMIN_API_ENABLED remains false by default.
+  PBB_ACCOUNT_ADMIN_API_TOKEN remains empty by default.
+
+runtime-ready:
+  PBB_ACCOUNT_ADMIN_API_ENABLED=true
+  PBB_ACCOUNT_ADMIN_API_TOKEN=<dedicated app-admin token>
+  PBB_ACCOUNT_ADMIN_API_CLIENT=pbb-account
+  Account trusted client pbb-support has the same token, base URL, and
+  app_admin_enabled=true.
+  GET https://support.pbb.ph/api/account-admin/meta is callable from Account.
+```
+
+Do not reuse `PBB_ACCOUNT_CLIENT_SECRET` as `PBB_ACCOUNT_ADMIN_API_TOKEN`.
+The OAuth client secret is for Support-to-Account OAuth token exchange; the
+app-admin token is for Account-to-Support privileged role/user orchestration.
+
 Kit/Data Prep may supply Account values using:
 
 ```text
