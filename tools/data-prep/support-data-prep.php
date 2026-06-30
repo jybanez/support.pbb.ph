@@ -239,6 +239,237 @@ function support_data_prep_setting_plan(array $config): array
     return $settings;
 }
 
+function support_data_prep_env_plan(array $config): array
+{
+    $baseUrl = support_data_prep_first_string($config, [
+        'support.data_prep.apply_settings.account.base_url',
+        'support.account.base_url',
+        'dependencies.account.base_url',
+        'account.base_url',
+    ]);
+    if ($baseUrl === '') {
+        $baseUrl = 'https://account.pbb.ph';
+    }
+
+    $clientId = support_data_prep_first_string($config, [
+        'support.data_prep.apply_settings.account.client_id',
+        'support.account.client_id',
+        'account.client_id',
+    ]);
+    if ($clientId === '') {
+        $clientId = 'pbb-support';
+    }
+
+    $clientSecret = support_data_prep_first_string($config, [
+        'support.data_prep.apply_settings.account.client_secret',
+        'support.account.client_secret',
+        'shared.secrets.values.support_account_client_secret',
+        'shared.secrets.values.pbb_support_account_client_secret',
+        'account.client_secret',
+    ]);
+
+    $adminApiToken = support_data_prep_first_string($config, [
+        'support.data_prep.apply_settings.account.admin_api_token',
+        'support.account.admin_api_token',
+        'shared.secrets.values.support_account_admin_api_token',
+        'shared.secrets.values.pbb_support_account_admin_api_token',
+        'account.admin_api_token',
+    ]);
+
+    $redirectUri = support_data_prep_first_string($config, [
+        'support.data_prep.apply_settings.account.redirect_uri',
+        'support.account.redirect_uri',
+        'account.redirect_uri',
+    ]);
+    if ($redirectUri === '') {
+        $redirectUri = 'https://support.pbb.ph/auth/account/callback';
+    }
+
+    $postLogoutUri = support_data_prep_first_string($config, [
+        'support.data_prep.apply_settings.account.post_logout_redirect_uri',
+        'support.account.post_logout_redirect_uri',
+        'account.post_logout_redirect_uri',
+    ]);
+    if ($postLogoutUri === '') {
+        $postLogoutUri = 'https://support.pbb.ph';
+    }
+
+    $scopes = support_data_prep_first_string($config, [
+        'support.data_prep.apply_settings.account.scopes',
+        'support.account.scopes',
+        'account.scopes',
+    ]);
+    if ($scopes === '') {
+        $scopes = 'openid profile';
+    }
+
+    $timeout = support_data_prep_first_string($config, [
+        'support.data_prep.apply_settings.account.timeout_seconds',
+        'support.account.timeout_seconds',
+        'account.timeout_seconds',
+    ]);
+    if ($timeout === '') {
+        $timeout = '10';
+    }
+
+    $caBundle = support_data_prep_first_string($config, [
+        'support.data_prep.apply_settings.account.ca_bundle',
+        'support.account.ca_bundle',
+        'dependencies.account.ca_bundle',
+        'account.ca_bundle',
+        'ssl.chain_file',
+    ]);
+
+    $env = [
+        'PBB_ACCOUNT_BASE_URL' => $baseUrl,
+        'PBB_ACCOUNT_CLIENT_ID' => $clientId,
+        'PBB_ACCOUNT_REDIRECT_URI' => $redirectUri,
+        'PBB_ACCOUNT_POST_LOGOUT_REDIRECT_URI' => $postLogoutUri,
+        'PBB_ACCOUNT_SCOPES' => $scopes,
+        'PBB_ACCOUNT_TIMEOUT_SECONDS' => $timeout,
+    ];
+
+    if ($clientSecret !== '') {
+        $env['PBB_ACCOUNT_CLIENT_SECRET'] = $clientSecret;
+    }
+    if ($adminApiToken !== '') {
+        $env['PBB_ACCOUNT_ADMIN_API_TOKEN'] = $adminApiToken;
+    }
+    if (support_data_prep_any_path_present($config, [
+        'support.data_prep.apply_settings.account.sso_enabled',
+        'support.account.sso_enabled',
+        'account.sso_enabled',
+    ]) || $clientSecret !== '') {
+        $env['PBB_ACCOUNT_SSO_ENABLED'] = support_data_prep_bool_string($config, [
+            'support.data_prep.apply_settings.account.sso_enabled',
+            'support.account.sso_enabled',
+            'account.sso_enabled',
+        ], $clientSecret !== '');
+    }
+    if (support_data_prep_any_path_present($config, [
+        'support.data_prep.apply_settings.account.admin_api_enabled',
+        'support.account.admin_api_enabled',
+        'account.admin_api_enabled',
+    ]) || $adminApiToken !== '') {
+        $env['PBB_ACCOUNT_ADMIN_API_ENABLED'] = support_data_prep_bool_string($config, [
+            'support.data_prep.apply_settings.account.admin_api_enabled',
+            'support.account.admin_api_enabled',
+            'account.admin_api_enabled',
+        ], $adminApiToken !== '');
+    }
+
+    if ($caBundle !== '') {
+        $env['PBB_ACCOUNT_CA_BUNDLE'] = $caBundle;
+    }
+
+    return $env;
+}
+
+function support_data_prep_any_path_present(array $config, array $paths): bool
+{
+    foreach ($paths as $path) {
+        if (support_data_prep_get($config, $path) !== null) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function support_data_prep_bool_string(array $config, array $paths, bool $default): string
+{
+    foreach ($paths as $path) {
+        $value = support_data_prep_get($config, $path);
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+        if (is_scalar($value)) {
+            $text = trim((string) $value);
+            if ($text !== '') {
+                return filter_var($text, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
+            }
+        }
+    }
+
+    return $default ? 'true' : 'false';
+}
+
+function support_data_prep_env_path(string $appRoot): string
+{
+    return rtrim($appRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.env';
+}
+
+function support_data_prep_apply_env(string $appRoot, array $env): void
+{
+    $path = support_data_prep_env_path($appRoot);
+    $existing = is_file($path) ? support_data_prep_parse_env_file($path) : [];
+    foreach ($env as $key => $value) {
+        if ($value !== null) {
+            $existing[$key] = (string) $value;
+        }
+    }
+    support_data_prep_write_env_file($path, $existing);
+}
+
+function support_data_prep_parse_env_file(string $path): array
+{
+    $rows = [];
+    foreach (file($path, FILE_IGNORE_NEW_LINES) ?: [] as $line) {
+        $line = trim($line);
+        if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) {
+            continue;
+        }
+        [$key, $value] = explode('=', $line, 2);
+        $rows[$key] = trim($value, "\"'");
+    }
+
+    return $rows;
+}
+
+function support_data_prep_write_env_file(string $path, array $settings): void
+{
+    $lines = [];
+    foreach ($settings as $key => $value) {
+        $value = (string) $value;
+        if (preg_match('/\s|#|=|"/', $value)) {
+            $value = '"' . str_replace('"', '\\"', $value) . '"';
+        }
+        $lines[] = $key . '=' . $value;
+    }
+    file_put_contents($path, implode("\n", $lines) . "\n");
+}
+
+function support_data_prep_run_artisan(string $appRoot, array $args): void
+{
+    $command = array_merge([PHP_BINARY, 'artisan'], $args);
+    $stdoutPath = tempnam(sys_get_temp_dir(), 'pbb-support-data-prep-out-');
+    $stderrPath = tempnam(sys_get_temp_dir(), 'pbb-support-data-prep-err-');
+    if ($stdoutPath === false || $stderrPath === false) {
+        throw new RuntimeException('Unable to allocate Data Prep command logs.');
+    }
+
+    $process = proc_open($command, [
+        1 => ['file', $stdoutPath, 'w'],
+        2 => ['file', $stderrPath, 'w'],
+    ], $pipes, $appRoot);
+
+    if (!is_resource($process)) {
+        @unlink($stdoutPath);
+        @unlink($stderrPath);
+        throw new RuntimeException('Unable to start artisan command.');
+    }
+
+    $code = proc_close($process);
+    $stdout = (string) @file_get_contents($stdoutPath);
+    $stderr = (string) @file_get_contents($stderrPath);
+    @unlink($stdoutPath);
+    @unlink($stderrPath);
+
+    if ($code !== 0) {
+        throw new RuntimeException(trim($stderr ?: $stdout) ?: 'Artisan command failed.');
+    }
+}
+
 function support_data_prep_public_setting_value(string $key, mixed $value): array|string|int|bool|null
 {
     $secretKeys = [
@@ -249,6 +480,8 @@ function support_data_prep_public_setting_value(string $key, mixed $value): arra
         'realtimeBackendIngressSecret' => true,
         'realtimeTokenSigningSecret' => true,
         'sourceHeartbeatWebhookToken' => true,
+        'PBB_ACCOUNT_CLIENT_SECRET' => true,
+        'PBB_ACCOUNT_ADMIN_API_TOKEN' => true,
     ];
 
     if (!isset($secretKeys[$key])) {
@@ -313,6 +546,26 @@ function support_data_prep_missing_required_settings(array $settings): array
         if (trim((string) ($settings[$key] ?? '')) === '') {
             $missing[] = $key;
         }
+    }
+
+    return $missing;
+}
+
+function support_data_prep_missing_required_env(array $env): array
+{
+    $missing = [];
+
+    if (filter_var((string) ($env['PBB_ACCOUNT_SSO_ENABLED'] ?? 'false'), FILTER_VALIDATE_BOOLEAN)) {
+        foreach (['PBB_ACCOUNT_BASE_URL', 'PBB_ACCOUNT_CLIENT_ID', 'PBB_ACCOUNT_CLIENT_SECRET', 'PBB_ACCOUNT_REDIRECT_URI'] as $key) {
+            if (trim((string) ($env[$key] ?? '')) === '') {
+                $missing[] = $key;
+            }
+        }
+    }
+
+    if (filter_var((string) ($env['PBB_ACCOUNT_ADMIN_API_ENABLED'] ?? 'false'), FILTER_VALIDATE_BOOLEAN)
+        && trim((string) ($env['PBB_ACCOUNT_ADMIN_API_TOKEN'] ?? '')) === '') {
+        $missing[] = 'PBB_ACCOUNT_ADMIN_API_TOKEN';
     }
 
     return $missing;

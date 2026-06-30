@@ -423,7 +423,91 @@ function write_env(string $installPath, array $config, array $release): void
         'RELEASE_BUILD_ID' => (string) data_get($release, 'build.id', ''),
     ]);
 
+    foreach (account_env_settings($config, $appUrl, $existing) as $key => $value) {
+        if ($value !== null) {
+            $settings[$key] = $value;
+        }
+    }
+
     write_env_file($envPath, $settings);
+}
+
+function account_env_settings(array $config, string $appUrl, array $existing): array
+{
+    $accountBaseUrl = first_config_string($config, [
+        'support.data_prep.apply_settings.account.base_url',
+        'support.account.base_url',
+        'dependencies.account.base_url',
+        'account.base_url',
+    ], 'https://account.pbb.ph');
+    $clientId = first_config_string($config, [
+        'support.data_prep.apply_settings.account.client_id',
+        'support.account.client_id',
+        'account.client_id',
+    ], 'pbb-support');
+    $clientSecret = first_config_string($config, [
+        'support.data_prep.apply_settings.account.client_secret',
+        'support.account.client_secret',
+        'shared.secrets.values.support_account_client_secret',
+        'shared.secrets.values.pbb_support_account_client_secret',
+        'account.client_secret',
+    ], '');
+    $adminApiToken = first_config_string($config, [
+        'support.data_prep.apply_settings.account.admin_api_token',
+        'support.account.admin_api_token',
+        'shared.secrets.values.support_account_admin_api_token',
+        'shared.secrets.values.pbb_support_account_admin_api_token',
+        'account.admin_api_token',
+    ], '');
+    $redirectUri = first_config_string($config, [
+        'support.data_prep.apply_settings.account.redirect_uri',
+        'support.account.redirect_uri',
+        'account.redirect_uri',
+    ], rtrim($appUrl, '/') . '/auth/account/callback');
+    $postLogoutUri = first_config_string($config, [
+        'support.data_prep.apply_settings.account.post_logout_redirect_uri',
+        'support.account.post_logout_redirect_uri',
+        'account.post_logout_redirect_uri',
+    ], rtrim($appUrl, '/'));
+    $scopes = first_config_string($config, [
+        'support.data_prep.apply_settings.account.scopes',
+        'support.account.scopes',
+        'account.scopes',
+    ], 'openid profile');
+    $timeout = first_config_string($config, [
+        'support.data_prep.apply_settings.account.timeout_seconds',
+        'support.account.timeout_seconds',
+        'account.timeout_seconds',
+    ], '10');
+    $caBundle = first_config_string($config, [
+        'support.data_prep.apply_settings.account.ca_bundle',
+        'support.account.ca_bundle',
+        'dependencies.account.ca_bundle',
+        'account.ca_bundle',
+        'ssl.chain_file',
+    ], '');
+
+    return [
+        'PBB_ACCOUNT_SSO_ENABLED' => config_bool_string($config, [
+            'support.data_prep.apply_settings.account.sso_enabled',
+            'support.account.sso_enabled',
+            'account.sso_enabled',
+        ], $clientSecret !== '', $existing['PBB_ACCOUNT_SSO_ENABLED'] ?? null),
+        'PBB_ACCOUNT_BASE_URL' => $accountBaseUrl,
+        'PBB_ACCOUNT_CLIENT_ID' => $clientId,
+        'PBB_ACCOUNT_CLIENT_SECRET' => $clientSecret !== '' ? $clientSecret : null,
+        'PBB_ACCOUNT_REDIRECT_URI' => $redirectUri,
+        'PBB_ACCOUNT_POST_LOGOUT_REDIRECT_URI' => $postLogoutUri,
+        'PBB_ACCOUNT_SCOPES' => $scopes,
+        'PBB_ACCOUNT_TIMEOUT_SECONDS' => $timeout,
+        'PBB_ACCOUNT_CA_BUNDLE' => $caBundle !== '' ? $caBundle : null,
+        'PBB_ACCOUNT_ADMIN_API_ENABLED' => config_bool_string($config, [
+            'support.data_prep.apply_settings.account.admin_api_enabled',
+            'support.account.admin_api_enabled',
+            'account.admin_api_enabled',
+        ], $adminApiToken !== '', $existing['PBB_ACCOUNT_ADMIN_API_ENABLED'] ?? null),
+        'PBB_ACCOUNT_ADMIN_API_TOKEN' => $adminApiToken !== '' ? $adminApiToken : null,
+    ];
 }
 
 function bootstrap_admin(string $installPath, array $config, string $mode): void
@@ -652,6 +736,43 @@ function data_get(array $data, string $path, mixed $default = null): mixed
     }
 
     return $value;
+}
+
+function first_config_string(array $config, array $paths, string $default = ''): string
+{
+    foreach ($paths as $path) {
+        $value = data_get($config, $path);
+        if (is_scalar($value)) {
+            $text = trim((string) $value);
+            if ($text !== '') {
+                return $text;
+            }
+        }
+    }
+
+    return $default;
+}
+
+function config_bool_string(array $config, array $paths, bool $default, mixed $existing = null): ?string
+{
+    foreach ($paths as $path) {
+        $value = data_get($config, $path);
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+        if (is_scalar($value)) {
+            $text = trim((string) $value);
+            if ($text !== '') {
+                return filter_var($text, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
+            }
+        }
+    }
+
+    if (is_scalar($existing) && trim((string) $existing) !== '') {
+        return null;
+    }
+
+    return $default ? 'true' : 'false';
 }
 
 function step(string $id, string $status, string $message): array

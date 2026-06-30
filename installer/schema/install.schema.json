@@ -50,7 +50,32 @@
       }
     },
     "dependencies": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "object",
+          "properties": {
+            "base_url": {"type": "string"},
+            "ca_bundle": {"type": "string"}
+          }
+        }
+      }
+    },
+    "account": {
+      "type": "object",
+      "properties": {
+        "sso_enabled": {"type": "boolean"},
+        "base_url": {"type": "string"},
+        "client_id": {"type": "string"},
+        "client_secret": {"type": "string"},
+        "redirect_uri": {"type": "string"},
+        "post_logout_redirect_uri": {"type": "string"},
+        "scopes": {"type": "string"},
+        "timeout_seconds": {"type": ["integer", "string"]},
+        "ca_bundle": {"type": "string"},
+        "admin_api_enabled": {"type": "boolean"},
+        "admin_api_token": {"type": "string"}
+      }
     },
     "options": {
       "type": "object",
