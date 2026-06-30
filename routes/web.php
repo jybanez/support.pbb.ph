@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminUsersController;
+use App\Http\Controllers\Api\AccountAdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BootstrapController;
 use App\Http\Controllers\Api\CurrentSitrepMediaController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Web\AccountSsoController;
 use App\Http\Controllers\Web\SitrepMediaController;
 use App\Http\Controllers\Web\SupportMapBoundaryController;
 use App\Http\Controllers\Web\SupportMapConfigController;
+use App\Http\Middleware\VerifyAccountAdminService;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -50,6 +52,16 @@ Route::prefix('api')->group(function (): void {
     Route::get('/bootstrap', [BootstrapController::class, 'show']);
     Route::get('/csrf-token', [AuthController::class, 'csrfToken']);
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
+
+    Route::prefix('account-admin')
+        ->middleware([VerifyAccountAdminService::class, 'throttle:120,1'])
+        ->group(function (): void {
+            Route::get('/meta', [AccountAdminController::class, 'meta']);
+            Route::get('/users/{pbbUserId}', [AccountAdminController::class, 'show']);
+            Route::put('/users/{pbbUserId}', [AccountAdminController::class, 'provision']);
+            Route::patch('/users/{pbbUserId}/role', [AccountAdminController::class, 'updateRole']);
+            Route::patch('/users/{pbbUserId}/status', [AccountAdminController::class, 'updateStatus']);
+        });
 
     Route::middleware('auth')->group(function (): void {
         Route::get('/user', [AuthController::class, 'user']);
