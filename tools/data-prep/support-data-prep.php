@@ -221,6 +221,46 @@ function support_data_prep_setting_plan(array $config): array
             'shared.secrets.values.support_source_heartbeat_webhook_token',
             'shared.secrets.values.source_heartbeat_webhook_token',
         ],
+        'accountBaseUrl' => [
+            'support.data_prep.apply_settings.account.base_url',
+            'support.account.base_url',
+            'dependencies.account.base_url',
+            'account.base_url',
+        ],
+        'accountClientId' => [
+            'support.data_prep.apply_settings.account.client_id',
+            'support.account.client_id',
+            'account.client_id',
+        ],
+        'accountClientSecret' => [
+            'support.data_prep.apply_settings.account.client_secret',
+            'support.account.client_secret',
+            'shared.secrets.values.support_account_client_secret',
+            'shared.secrets.values.pbb_support_account_client_secret',
+            'account.client_secret',
+        ],
+        'accountRedirectUri' => [
+            'support.data_prep.apply_settings.account.redirect_uri',
+            'support.account.redirect_uri',
+            'account.redirect_uri',
+        ],
+        'accountPostLogoutRedirectUri' => [
+            'support.data_prep.apply_settings.account.post_logout_redirect_uri',
+            'support.account.post_logout_redirect_uri',
+            'account.post_logout_redirect_uri',
+        ],
+        'accountScopes' => [
+            'support.data_prep.apply_settings.account.scopes',
+            'support.account.scopes',
+            'account.scopes',
+        ],
+        'accountCaBundle' => [
+            'support.data_prep.apply_settings.account.ca_bundle',
+            'support.account.ca_bundle',
+            'dependencies.account.ca_bundle',
+            'account.ca_bundle',
+            'ssl.chain_file',
+        ],
         'accountAdminApiToken' => [
             'support.data_prep.apply_settings.account.admin_api_token',
             'support.account.admin_api_token',
@@ -251,6 +291,29 @@ function support_data_prep_setting_plan(array $config): array
     if (($settings['accountAdminApiClient'] ?? '') === '') {
         $settings['accountAdminApiClient'] = 'pbb-account';
     }
+    if (($settings['accountBaseUrl'] ?? '') === '') {
+        $settings['accountBaseUrl'] = 'https://account.pbb.ph';
+    }
+    if (($settings['accountClientId'] ?? '') === '') {
+        $settings['accountClientId'] = 'pbb-support';
+    }
+    if (($settings['accountRedirectUri'] ?? '') === '') {
+        $settings['accountRedirectUri'] = 'https://support.pbb.ph/auth/account/callback';
+    }
+    if (($settings['accountPostLogoutRedirectUri'] ?? '') === '') {
+        $settings['accountPostLogoutRedirectUri'] = 'https://support.pbb.ph';
+    }
+    if (($settings['accountScopes'] ?? '') === '') {
+        $settings['accountScopes'] = 'openid profile';
+    }
+    $timeout = support_data_prep_first_string($config, [
+        'support.data_prep.apply_settings.account.timeout_seconds',
+        'support.account.timeout_seconds',
+        'account.timeout_seconds',
+    ]);
+    if ($timeout !== '') {
+        $settings['accountTimeoutSeconds'] = (int) $timeout;
+    }
 
     if (support_data_prep_any_path_present($config, [
         'support.data_prep.apply_settings.account.admin_api_enabled',
@@ -262,6 +325,17 @@ function support_data_prep_setting_plan(array $config): array
             'support.account.admin_api_enabled',
             'account.admin_api_enabled',
         ], ($settings['accountAdminApiToken'] ?? '') !== ''), FILTER_VALIDATE_BOOLEAN);
+    }
+    if (support_data_prep_any_path_present($config, [
+        'support.data_prep.apply_settings.account.sso_enabled',
+        'support.account.sso_enabled',
+        'account.sso_enabled',
+    ]) || ($settings['accountClientSecret'] ?? '') !== '') {
+        $settings['accountSsoEnabled'] = filter_var(support_data_prep_bool_string($config, [
+            'support.data_prep.apply_settings.account.sso_enabled',
+            'support.account.sso_enabled',
+            'account.sso_enabled',
+        ], ($settings['accountClientSecret'] ?? '') !== ''), FILTER_VALIDATE_BOOLEAN);
     }
 
     return $settings;
@@ -485,6 +559,7 @@ function support_data_prep_public_setting_value(string $key, mixed $value): arra
         'realtimeBackendIngressSecret' => true,
         'realtimeTokenSigningSecret' => true,
         'sourceHeartbeatWebhookToken' => true,
+        'accountClientSecret' => true,
         'accountAdminApiToken' => true,
         'PBB_ACCOUNT_CLIENT_SECRET' => true,
     ];

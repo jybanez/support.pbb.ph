@@ -185,23 +185,46 @@ class BaselineApiTest extends TestCase
                 'realtime_backend_ingress_secret' => 'ingress-secret',
                 'realtime_token_signing_secret' => 'token-signing-secret',
                 'source_heartbeat_webhook_token' => 'heartbeat-webhook-secret',
+                'account_sso_enabled' => true,
+                'account_base_url' => 'https://account.pbb.ph',
+                'account_client_id' => 'pbb-support',
+                'account_client_secret' => 'account-client-secret',
+                'account_redirect_uri' => 'https://support.pbb.ph/auth/account/callback',
+                'account_post_logout_redirect_uri' => 'https://support.pbb.ph',
+                'account_scopes' => 'openid profile',
+                'account_timeout_seconds' => 12,
+                'account_ca_bundle' => 'C:\\certs\\account-ca.pem',
+                'account_admin_api_enabled' => true,
+                'account_admin_api_client' => 'pbb-account',
+                'account_admin_api_token' => 'account-admin-token',
             ])
             ->assertOk()
             ->assertJsonPath('data.settings.alertLevel', 'Critical')
             ->assertJsonPath('data.settings.consolidationCadenceMinutes', 30)
             ->assertJsonPath('data.settings.sitrepRelayToken', 'sitrep-relay-secret')
             ->assertJsonPath('data.settings.supportRequestRelayToken', 'support-request-relay-secret')
-            ->assertJsonMissing(['ingress-secret', 'token-signing-secret', 'heartbeat-webhook-secret']);
+            ->assertJsonPath('data.settings.accountSsoEnabled', true)
+            ->assertJsonPath('data.settings.accountBaseUrl', 'https://account.pbb.ph')
+            ->assertJsonPath('data.settings.accountClientId', 'pbb-support')
+            ->assertJsonPath('data.settings.accountClientSecretConfigured', true)
+            ->assertJsonPath('data.settings.accountAdminApiEnabled', true)
+            ->assertJsonPath('data.settings.accountAdminApiClient', 'pbb-account')
+            ->assertJsonPath('data.settings.accountAdminApiTokenConfigured', true)
+            ->assertJsonMissing(['ingress-secret', 'token-signing-secret', 'heartbeat-webhook-secret', 'account-client-secret', 'account-admin-token']);
 
         $this->assertSame('ingress-secret', app(SupportSettings::class)->all()['realtimeBackendIngressSecret']);
         $this->assertSame('token-signing-secret', app(SupportSettings::class)->all()['realtimeTokenSigningSecret']);
         $this->assertSame('heartbeat-webhook-secret', app(SupportSettings::class)->all()['sourceHeartbeatWebhookToken']);
+        $this->assertSame('account-client-secret', app(SupportSettings::class)->all()['accountClientSecret']);
+        $this->assertSame('account-admin-token', app(SupportSettings::class)->all()['accountAdminApiToken']);
 
         $this->actingAs($admin)
             ->getJson('/api/settings')
             ->assertOk()
             ->assertJsonPath('data.settings.alertLevel', 'Critical')
-            ->assertJsonMissing(['ingress-secret', 'token-signing-secret', 'heartbeat-webhook-secret']);
+            ->assertJsonPath('data.settings.accountClientSecretConfigured', true)
+            ->assertJsonPath('data.settings.accountAdminApiTokenConfigured', true)
+            ->assertJsonMissing(['ingress-secret', 'token-signing-secret', 'heartbeat-webhook-secret', 'account-client-secret', 'account-admin-token']);
 
         $this->actingAs($admin)
             ->getJson('/api/bootstrap')
@@ -209,7 +232,9 @@ class BaselineApiTest extends TestCase
             ->assertJsonPath('data.settings.alertLevel', 'Critical')
             ->assertJsonPath('data.settings.consolidationCadenceMinutes', 30)
             ->assertJsonPath('data.settings.realtimeClientCode', 'client-code')
-            ->assertJsonMissing(['ingress-secret', 'token-signing-secret', 'heartbeat-webhook-secret']);
+            ->assertJsonPath('data.settings.accountSsoEnabled', true)
+            ->assertJsonPath('data.settings.accountAdminApiEnabled', true)
+            ->assertJsonMissing(['ingress-secret', 'token-signing-secret', 'heartbeat-webhook-secret', 'account-client-secret', 'account-admin-token']);
     }
 
     public function test_non_admin_cannot_update_support_settings(): void
