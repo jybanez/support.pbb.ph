@@ -122,6 +122,31 @@ class AccountAdminApiTest extends TestCase
         $this->assertSame('admin', $user->role);
     }
 
+    public function test_put_rejects_existing_linked_user_email_conflict(): void
+    {
+        $linked = User::factory()->create([
+            'pbb_user_id' => 'pbb-user-linked',
+            'email' => 'linked@support.pbb.local',
+            'role' => 'operator',
+        ]);
+        $other = User::factory()->create([
+            'pbb_user_id' => 'pbb-user-other',
+            'email' => 'other@support.pbb.local',
+            'role' => 'admin',
+        ]);
+
+        $this->withHeaders($this->accountHeaders())
+            ->putJson('/api/account-admin/users/pbb-user-linked', [
+                'name' => 'Linked User',
+                'email' => 'other@support.pbb.local',
+            ])
+            ->assertStatus(409)
+            ->assertJsonPath('error.code', 'identity_conflict');
+
+        $this->assertSame('linked@support.pbb.local', $linked->refresh()->email);
+        $this->assertSame('other@support.pbb.local', $other->refresh()->email);
+    }
+
     public function test_put_rejects_conflicting_email_identity_link(): void
     {
         User::factory()->create([
@@ -136,6 +161,30 @@ class AccountAdminApiTest extends TestCase
             ])
             ->assertStatus(409)
             ->assertJsonPath('error.code', 'identity_conflict');
+    }
+
+    public function test_put_rejects_invalid_default_role_with_stable_code(): void
+    {
+        $this->withHeaders($this->accountHeaders())
+            ->putJson('/api/account-admin/users/pbb-user-invalid-default-role', [
+                'name' => 'Invalid Default Role',
+                'email' => 'invalid-default-role@support.pbb.local',
+                'defaultRole' => 'viewer',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('error.code', 'invalid_default_role')
+            ->assertJsonPath('error.details.allowed.0', 'admin');
+    }
+
+    public function test_put_rejects_malformed_identity_payload_with_stable_code(): void
+    {
+        $this->withHeaders($this->accountHeaders())
+            ->putJson('/api/account-admin/users/pbb-user-malformed', [
+                'name' => '',
+                'email' => 'not-an-email',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('error.code', 'validation_failed');
     }
 
     public function test_patch_role_updates_valid_role(): void
@@ -167,7 +216,9 @@ class AccountAdminApiTest extends TestCase
             ->patchJson('/api/account-admin/users/pbb-user-005/role', [
                 'role' => 'viewer',
             ])
-            ->assertUnprocessable();
+            ->assertUnprocessable()
+            ->assertJsonPath('error.code', 'invalid_role')
+            ->assertJsonPath('error.details.allowed.0', 'admin');
     }
 
     public function test_patch_status_accepts_active(): void

@@ -7,7 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Validator;
 
 class AccountAdminController extends BaseApiController
 {
@@ -52,20 +52,37 @@ class AccountAdminController extends BaseApiController
 
     public function provision(Request $request, string $pbbUserId): JsonResponse
     {
-        $data = $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
             'mobile' => ['nullable', 'string', 'max:40'],
-            'defaultRole' => ['nullable', 'string', Rule::in(self::ROLES)],
+            'defaultRole' => ['nullable', 'string'],
         ]);
+        if ($validator->fails()) {
+            return $this->validationFail($validator->errors()->toArray());
+        }
 
+        $data = $validator->validated();
+        if (isset($data['defaultRole']) && ! in_array($data['defaultRole'], self::ROLES, true)) {
+            return $this->accountFail('invalid_default_role', 'The requested default role is not allowed.', 422, [
+                'allowed' => self::ROLES,
+            ]);
+        }
+
+        $email = strtolower($data['email']);
         $role = $data['defaultRole'] ?? 'operator';
 
         $linked = $this->findLinkedUser($pbbUserId);
         if ($linked) {
+            if ($this->emailBelongsToAnotherUser($email, $linked)) {
+                return $this->accountFail('identity_conflict', 'A different local user already uses this email.', 409, [
+                    'email' => $email,
+                ]);
+            }
+
             $linked->forceFill([
                 'name' => $data['name'],
-                'email' => strtolower($data['email']),
+                'email' => $email,
             ])->save();
 
             return $this->ok([
@@ -74,12 +91,12 @@ class AccountAdminController extends BaseApiController
         }
 
         $emailUser = User::query()
-            ->where('email', strtolower($data['email']))
+            ->where('email', $email)
             ->first();
 
         if ($emailUser && $emailUser->pbb_user_id && $emailUser->pbb_user_id !== $pbbUserId) {
             return $this->accountFail('identity_conflict', 'A user with this email is linked to a different Account identity.', 409, [
-                'email' => strtolower($data['email']),
+                'email' => $email,
             ]);
         }
 
@@ -87,7 +104,7 @@ class AccountAdminController extends BaseApiController
             $emailUser->forceFill([
                 'pbb_user_id' => $pbbUserId,
                 'name' => $data['name'],
-                'email' => strtolower($data['email']),
+                'email' => $email,
             ])->save();
 
             return $this->ok([
@@ -98,7 +115,7 @@ class AccountAdminController extends BaseApiController
         $user = User::query()->create([
             'pbb_user_id' => $pbbUserId,
             'name' => $data['name'],
-            'email' => strtolower($data['email']),
+            'email' => $email,
             'role' => $role,
             'password' => Hash::make(Str::random(48)),
         ]);
@@ -110,10 +127,20 @@ class AccountAdminController extends BaseApiController
 
     public function updateRole(Request $request, string $pbbUserId): JsonResponse
     {
-        $data = $request->validate([
-            'role' => ['required', 'string', Rule::in(self::ROLES)],
+        $validator = Validator::make($request->all(), [
+            'role' => ['required', 'string'],
             'reason' => ['nullable', 'string', 'max:500'],
         ]);
+        if ($validator->fails()) {
+            return $this->validationFail($validator->errors()->toArray());
+        }
+
+        $data = $validator->validated();
+        if (! in_array($data['role'], self::ROLES, true)) {
+            return $this->accountFail('invalid_role', 'The requested role is not allowed.', 422, [
+                'allowed' => self::ROLES,
+            ]);
+        }
 
         $user = $this->findLinkedUser($pbbUserId);
         if (! $user) {
@@ -131,12 +158,16 @@ class AccountAdminController extends BaseApiController
 
     public function updateStatus(Request $request, string $pbbUserId): JsonResponse
     {
-        $data = $request->validate([
+        $validator = Validator::make($request->all(), [
             'status' => ['required', 'string'],
             'durationMinutes' => ['nullable', 'integer', 'min:1', 'max:5256000'],
             'reason' => ['nullable', 'string', 'max:500'],
         ]);
+        if ($validator->fails()) {
+            return $this->validationFail($validator->errors()->toArray());
+        }
 
+        $data = $validator->validated();
         $user = $this->findLinkedUser($pbbUserId);
         if (! $user) {
             return $this->accountFail('linked_user_not_found', 'Linked user not found.', 404);
@@ -158,6 +189,14 @@ class AccountAdminController extends BaseApiController
         return User::query()
             ->where('pbb_user_id', $pbbUserId)
             ->first();
+    }
+
+    private function emailBelongsToAnotherUser(string $email, User $user): bool
+    {
+        return User::query()
+            ->where('email', $email)
+            ->whereKeyNot($user->id)
+            ->exists();
     }
 
     /**
@@ -190,6 +229,16 @@ class AccountAdminController extends BaseApiController
         ], $status, [
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
             'Pragma' => 'no-cache',
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $errors
+     */
+    private function validationFail(array $errors): JsonResponse
+    {
+        return $this->accountFail('validation_failed', 'The request payload is invalid.', 422, [
+            'errors' => $errors,
         ]);
     }
 }
