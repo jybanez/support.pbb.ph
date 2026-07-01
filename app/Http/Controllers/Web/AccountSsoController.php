@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Account\AccountClientFactory;
+use App\Support\Settings\SupportSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +17,7 @@ class AccountSsoController extends Controller
 {
     public function redirect(Request $request, AccountClientFactory $accounts): RedirectResponse
     {
-        abort_unless((bool) config('account.enabled', false), 404);
+        abort_unless($this->accountEnabled(), 404);
 
         $request->session()->put(
             'pbb_account.return_to',
@@ -28,7 +29,7 @@ class AccountSsoController extends Controller
 
     public function callback(Request $request, AccountClientFactory $accounts): RedirectResponse
     {
-        abort_unless((bool) config('account.enabled', false), 404);
+        abort_unless($this->accountEnabled(), 404);
 
         try {
             $identity = $accounts->make($request)->handleCallback($request->query())->toArray();
@@ -51,7 +52,7 @@ class AccountSsoController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        if (! (bool) config('account.enabled', false)) {
+        if (! $this->accountEnabled()) {
             return redirect('/');
         }
 
@@ -160,11 +161,17 @@ class AccountSsoController extends Controller
 
     private function accountLogoutUrl(): string
     {
-        $baseUrl = rtrim((string) config('account.base_url', 'https://account.pbb.ph'), '/');
+        $settings = app(SupportSettings::class)->all();
+        $baseUrl = rtrim((string) ($settings['accountBaseUrl'] ?? 'https://account.pbb.ph'), '/');
 
         return $baseUrl.'/oauth/logout?'.http_build_query([
-            'client_id' => config('account.client_id', 'pbb-support'),
-            'post_logout_redirect_uri' => config('account.post_logout_redirect_uri', url('/')),
+            'client_id' => $settings['accountClientId'] ?? 'pbb-support',
+            'post_logout_redirect_uri' => $settings['accountPostLogoutRedirectUri'] ?? url('/'),
         ]);
+    }
+
+    private function accountEnabled(): bool
+    {
+        return filter_var(app(SupportSettings::class)->all()['accountSsoEnabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
     }
 }

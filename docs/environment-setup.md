@@ -84,17 +84,19 @@ Support uses PBB Account for browser SSO and exposes a service-only app-admin
 API so Account can manage Support-local user links and roles without writing
 directly to the Support database.
 
-Browser SSO is configured through environment values:
+Browser SSO is configured through encrypted Support settings. Installer/Data
+Prep may still seed the legacy environment values as bootstrap inputs, but
+runtime Account SSO and the navbar Settings modal read/write app-local settings:
 
 ```text
-PBB_ACCOUNT_SSO_ENABLED=true
-PBB_ACCOUNT_BASE_URL=https://account.pbb.ph
-PBB_ACCOUNT_CLIENT_ID=pbb-support
-PBB_ACCOUNT_CLIENT_SECRET=<support Account OAuth client secret>
-PBB_ACCOUNT_REDIRECT_URI=https://support.pbb.ph/auth/account/callback
-PBB_ACCOUNT_POST_LOGOUT_REDIRECT_URI=https://support.pbb.ph
-PBB_ACCOUNT_SCOPES="openid profile"
-PBB_ACCOUNT_TIMEOUT_SECONDS=10
+accountSsoEnabled=true
+accountBaseUrl=https://account.pbb.ph
+accountClientId=pbb-support
+accountClientSecret=<support Account OAuth client secret>
+accountRedirectUri=https://support.pbb.ph/auth/account/callback
+accountPostLogoutRedirectUri=https://support.pbb.ph
+accountScopes="openid profile"
+accountTimeoutSeconds=10
 ```
 
 The app-admin API is server-to-server only:
@@ -142,6 +144,11 @@ Support stores app-admin runtime credentials in encrypted app-local DB settings,
 not request-time `.env`, to prevent shared WAMP/Apache/PHP env bleed across PBB
 apps.
 
+The admin Settings modal exposes Account non-secret fields and configured
+secret status. `accountClientSecret` and `accountAdminApiToken` are write-only:
+leaving them blank keeps the current value, and entering a new value rotates the
+stored secret.
+
 Kit/Data Prep may supply Account values using:
 
 ```text
@@ -155,6 +162,7 @@ support.data_prep.apply_settings.account.timeout_seconds
 support.data_prep.apply_settings.account.ca_bundle
 support.data_prep.apply_settings.account.sso_enabled
 support.data_prep.apply_settings.account.admin_api_enabled
+support.data_prep.apply_settings.account.admin_api_client
 support.data_prep.apply_settings.account.admin_api_token
 ```
 

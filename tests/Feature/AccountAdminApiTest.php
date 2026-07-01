@@ -71,13 +71,14 @@ class AccountAdminApiTest extends TestCase
             ->assertOk();
     }
 
-    public function test_account_admin_runtime_settings_are_not_public_settings(): void
+    public function test_account_admin_token_is_not_public_setting(): void
     {
         $public = app(SupportSettings::class)->publicSettings();
 
-        $this->assertArrayNotHasKey('accountAdminApiEnabled', $public);
+        $this->assertArrayHasKey('accountAdminApiEnabled', $public);
+        $this->assertArrayHasKey('accountAdminApiClient', $public);
+        $this->assertArrayHasKey('accountAdminApiTokenConfigured', $public);
         $this->assertArrayNotHasKey('accountAdminApiToken', $public);
-        $this->assertArrayNotHasKey('accountAdminApiClient', $public);
     }
 
     public function test_meta_returns_support_roles_statuses_and_capabilities(): void

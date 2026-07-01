@@ -3695,6 +3695,18 @@ const openSettings = () => {
             realtime_client_code: state.settings.realtimeClientCode || '',
             server_project_code: state.settings.serverProjectCode || '',
             admin_project_code: state.settings.adminProjectCode || '',
+            account_sso_enabled: state.settings.accountSsoEnabled ? '1' : '0',
+            account_base_url: state.settings.accountBaseUrl || 'https://account.pbb.ph',
+            account_client_id: state.settings.accountClientId || 'pbb-support',
+            account_client_secret: '',
+            account_redirect_uri: state.settings.accountRedirectUri || 'https://support.pbb.ph/auth/account/callback',
+            account_post_logout_redirect_uri: state.settings.accountPostLogoutRedirectUri || 'https://support.pbb.ph',
+            account_scopes: state.settings.accountScopes || 'openid profile',
+            account_timeout_seconds: state.settings.accountTimeoutSeconds || 10,
+            account_ca_bundle: state.settings.accountCaBundle || '',
+            account_admin_api_enabled: state.settings.accountAdminApiEnabled ? '1' : '0',
+            account_admin_api_client: state.settings.accountAdminApiClient || 'pbb-account',
+            account_admin_api_token: '',
         },
         rows: [
             [
@@ -3783,6 +3795,120 @@ const openSettings = () => {
                     name: 'admin_project_code',
                     label: 'Admin Project Code',
                     placeholder: 'Enter Admin Project Code',
+                },
+            ],
+            [
+                {
+                    type: 'select',
+                    name: 'account_sso_enabled',
+                    label: 'Enable Account SSO',
+                    options: [
+                        { value: '1', label: 'Enabled' },
+                        { value: '0', label: 'Disabled' },
+                    ],
+                },
+            ],
+            [
+                {
+                    type: 'input',
+                    input: 'url',
+                    name: 'account_base_url',
+                    label: 'Account URL',
+                    placeholder: 'https://account.pbb.ph',
+                },
+            ],
+            [
+                {
+                    type: 'input',
+                    name: 'account_client_id',
+                    label: 'Account Client ID',
+                    placeholder: 'pbb-support',
+                },
+            ],
+            [
+                {
+                    type: 'input',
+                    input: 'password',
+                    name: 'account_client_secret',
+                    label: state.settings.accountClientSecretConfigured
+                        ? 'Account Client Secret (configured; enter new value to rotate)'
+                        : 'Account Client Secret',
+                    placeholder: state.settings.accountClientSecretConfigured ? 'Leave blank to keep current secret' : 'Enter client secret',
+                },
+            ],
+            [
+                {
+                    type: 'input',
+                    input: 'url',
+                    name: 'account_redirect_uri',
+                    label: 'Account Callback URL',
+                    placeholder: 'https://support.pbb.ph/auth/account/callback',
+                },
+            ],
+            [
+                {
+                    type: 'input',
+                    input: 'url',
+                    name: 'account_post_logout_redirect_uri',
+                    label: 'Account Post Logout URL',
+                    placeholder: 'https://support.pbb.ph',
+                },
+            ],
+            [
+                {
+                    type: 'input',
+                    name: 'account_scopes',
+                    label: 'Account Scopes',
+                    placeholder: 'openid profile',
+                },
+            ],
+            [
+                {
+                    type: 'input',
+                    input: 'number',
+                    name: 'account_timeout_seconds',
+                    label: 'Account timeout (seconds)',
+                    min: 1,
+                    step: 1,
+                    placeholder: '10',
+                },
+            ],
+            [
+                {
+                    type: 'input',
+                    name: 'account_ca_bundle',
+                    label: 'Account CA bundle path',
+                    placeholder: 'Optional local CA bundle path',
+                },
+            ],
+            [
+                {
+                    type: 'select',
+                    name: 'account_admin_api_enabled',
+                    label: 'Enable Account App Admin API',
+                    options: [
+                        { value: '1', label: 'Enabled' },
+                        { value: '0', label: 'Disabled' },
+                    ],
+                },
+            ],
+            [
+                {
+                    type: 'input',
+                    name: 'account_admin_api_client',
+                    label: 'Account App Admin Client',
+                    placeholder: 'pbb-account',
+                },
+            ],
+            [
+                {
+                    type: 'input',
+                    input: 'password',
+                    name: 'account_admin_api_token',
+                    label: state.settings.accountAdminApiTokenConfigured
+                        ? 'Account App Admin Token (configured; enter new value to rotate)'
+                        : 'Account App Admin Token',
+                    placeholder: state.settings.accountAdminApiTokenConfigured ? 'Leave blank to keep current token' : 'Enter app-admin token',
                 },
             ],
         ],
