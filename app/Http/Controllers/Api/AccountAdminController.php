@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\AccountAdminAuditEvent;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,6 +33,7 @@ class AccountAdminController extends BaseApiController
             'capabilities' => [
                 'provisionUser' => true,
                 'updateRole' => true,
+                'removeUser' => true,
                 'blockLogin' => false,
                 'suspendLogin' => false,
             ],
@@ -184,6 +186,58 @@ class AccountAdminController extends BaseApiController
         ]);
     }
 
+    public function removeAccess(Request $request, string $pbbUserId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'reason' => ['nullable', 'string', 'max:500'],
+        ]);
+        if ($validator->fails()) {
+            return $this->validationFail($validator->errors()->toArray());
+        }
+
+        $reason = $validator->validated()['reason'] ?? null;
+        $user = $this->findLinkedUser($pbbUserId);
+
+        if (! $user) {
+            $this->auditAccountAdminAction($request, 'remove_access_missing', $pbbUserId, null, $reason, [
+                'status' => 'not_linked',
+            ]);
+
+            return $this->ok([
+                'removed' => false,
+                'status' => 'not_linked',
+                'pbbUserId' => $pbbUserId,
+            ]);
+        }
+
+        $previous = $this->accountUserPayload($user);
+
+        $user->forceFill([
+            'pbb_user_id' => null,
+        ])->save();
+
+        $this->auditAccountAdminAction($request, 'remove_access', $pbbUserId, $user, $reason, [
+            'status' => 'unlinked',
+            'previous_user' => $previous,
+        ]);
+
+        return $this->ok([
+            'removed' => true,
+            'status' => 'unlinked',
+            'pbbUserId' => $pbbUserId,
+            'localUserId' => (string) $user->id,
+            'user' => [
+                'localUserId' => (string) $user->id,
+                'pbbUserId' => null,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'status' => 'active',
+                'updatedAt' => $user->updated_at?->toIso8601String(),
+            ],
+        ]);
+    }
+
     private function findLinkedUser(string $pbbUserId): ?User
     {
         return User::query()
@@ -213,6 +267,27 @@ class AccountAdminController extends BaseApiController
             'status' => 'active',
             'updatedAt' => $user->updated_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function auditAccountAdminAction(
+        Request $request,
+        string $action,
+        string $pbbUserId,
+        ?User $user,
+        ?string $reason,
+        array $payload = [],
+    ): void {
+        AccountAdminAuditEvent::query()->create([
+            'action' => $action,
+            'pbb_user_id' => $pbbUserId,
+            'local_user_id' => $user?->id,
+            'account_client' => trim((string) $request->header('X-PBB-Account-Client')) ?: null,
+            'reason' => $reason,
+            'payload' => $payload,
+        ]);
     }
 
     /**
