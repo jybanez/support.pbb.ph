@@ -59,6 +59,7 @@ Route::prefix('api')->group(function (): void {
             Route::get('/meta', [AccountAdminController::class, 'meta']);
             Route::get('/users/{pbbUserId}', [AccountAdminController::class, 'show']);
             Route::put('/users/{pbbUserId}', [AccountAdminController::class, 'provision']);
+            Route::delete('/users/{pbbUserId}', [AccountAdminController::class, 'removeAccess']);
             Route::patch('/users/{pbbUserId}/role', [AccountAdminController::class, 'updateRole']);
             Route::patch('/users/{pbbUserId}/status', [AccountAdminController::class, 'updateStatus']);
         });

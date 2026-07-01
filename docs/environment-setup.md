@@ -105,6 +105,7 @@ The app-admin API is server-to-server only:
 GET   /api/account-admin/meta
 GET   /api/account-admin/users/{pbb_user_id}
 PUT   /api/account-admin/users/{pbb_user_id}
+DELETE /api/account-admin/users/{pbb_user_id}
 PATCH /api/account-admin/users/{pbb_user_id}/role
 PATCH /api/account-admin/users/{pbb_user_id}/status
 ```
@@ -119,6 +120,9 @@ X-PBB-Account-Client: pbb-account
 Support role vocabulary for Account is `admin`, `command`, and `operator`.
 Support v1 exposes only the local app status `active`; `blocked` and
 `suspended` are intentionally rejected until Support has local status fields.
+Remove Access unlinks `users.pbb_user_id` and preserves the local Support user
+record. The operation writes an `account_admin_audit_events` row and is
+idempotent when the Account identity is already unlinked.
 
 Readiness handoffs must distinguish package state from runtime state:
 
