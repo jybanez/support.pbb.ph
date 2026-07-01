@@ -92,6 +92,7 @@ class AccountAdminApiTest extends TestCase
             ->assertJsonPath('data.statuses.0.value', 'active')
             ->assertJsonPath('data.capabilities.provisionUser', true)
             ->assertJsonPath('data.capabilities.updateRole', true)
+            ->assertJsonPath('data.capabilities.removeUser', true)
             ->assertJsonPath('data.capabilities.blockLogin', false)
             ->assertJsonPath('data.capabilities.suspendLogin', false);
     }
@@ -282,6 +283,60 @@ class AccountAdminApiTest extends TestCase
                 ->assertUnprocessable()
                 ->assertJsonPath('error.code', 'unsupported_status');
         }
+    }
+
+    public function test_delete_removes_account_access_by_unlinking_local_user(): void
+    {
+        $user = User::factory()->create([
+            'pbb_user_id' => 'pbb-user-remove',
+            'email' => 'remove@support.pbb.local',
+            'role' => 'operator',
+        ]);
+
+        $this->withHeaders($this->accountHeaders())
+            ->deleteJson('/api/account-admin/users/pbb-user-remove', [
+                'reason' => 'Account access removed by central admin',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.removed', true)
+            ->assertJsonPath('data.status', 'unlinked')
+            ->assertJsonPath('data.pbbUserId', 'pbb-user-remove')
+            ->assertJsonPath('data.localUserId', (string) $user->id)
+            ->assertJsonPath('data.user.pbbUserId', null)
+            ->assertJsonPath('data.user.email', 'remove@support.pbb.local');
+
+        $user->refresh();
+        $this->assertNull($user->pbb_user_id);
+        $this->assertSame('remove@support.pbb.local', $user->email);
+        $this->assertSame('operator', $user->role);
+
+        $this->assertDatabaseHas('account_admin_audit_events', [
+            'action' => 'remove_access',
+            'pbb_user_id' => 'pbb-user-remove',
+            'local_user_id' => $user->id,
+            'account_client' => 'pbb-account',
+            'reason' => 'Account access removed by central admin',
+        ]);
+    }
+
+    public function test_delete_missing_linked_user_is_idempotent_and_audited(): void
+    {
+        $this->withHeaders($this->accountHeaders())
+            ->deleteJson('/api/account-admin/users/pbb-user-missing', [
+                'reason' => 'Repeated removal request',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.removed', false)
+            ->assertJsonPath('data.status', 'not_linked')
+            ->assertJsonPath('data.pbbUserId', 'pbb-user-missing');
+
+        $this->assertDatabaseHas('account_admin_audit_events', [
+            'action' => 'remove_access_missing',
+            'pbb_user_id' => 'pbb-user-missing',
+            'local_user_id' => null,
+            'account_client' => 'pbb-account',
+            'reason' => 'Repeated removal request',
+        ]);
     }
 
     /**
